@@ -2,6 +2,8 @@
 
 ## 项目说明
 
+
+
 本项目后台管理系统采用：
 
 - 后端：ASP.NET Core + ABP Framework
@@ -20,6 +22,12 @@ ABP 后端位于：
 
 F:\Dev\abpvnext\Rctea.IM
 
+
+
+abpvnext 后端已经做好，使用vben admin 5 做后台管理，UI使用antdv next，
+
+## 
+
 ---
 
 ## 基本原则
@@ -34,10 +42,65 @@ F:\Dev\abpvnext\Rctea.IM
 8. TypeScript 禁止无必要地使用 any。
 9. 不允许在页面组件中直接调用 axios。
 10. 所有 HTTP 请求必须通过统一 API 层。
+10. 只能修改端项目：F:\Dev\abpvnext\abp-admin-vben\vue-vben-admin
+10. 不得修改后端项目
 
 ---
 
+## 环境变量
+
+### 参考：
+
+```
+# Development endpoints. Do not put secrets in this file.
+API_BASE_URL="http://10.0.5.20:8044"
+AUTH_BASE_URL="http://10.0.5.20:8043"
+AUTH_TOKEN_PATH="/connect/token"
+AUTH_CLIENT_ID="IM_Mobile"
+AUTH_CLIENT_SECRET='1q2w3e*'
+AUTH_SCOPE="IM offline_access roles profile phone email address"
+
+AUTH_USER_INFO_PATH=/connect/userinfo
+#"password"
+# AUTH_LOGIN_GRANT_TYPE="erp-token" 
+AUTH_LOGIN_GRANT_TYPE="password" 
+
+
+SIGNALR_BASE_URL="http://10.0.5.20:8044"
+SIGNALR_HUB_PATH="/signalr-hubs/chat"
+SCAN_LOGIN_HUB_PATH="/signalr-hubs/scan-login"
+SCAN_LOGIN_SIGNALR_BASE_URL="http://10.0.5.20:8044"
+SCAN_LOGIN_TEMPLATE="gotoim://scan-login?code={code}"
+SCAN_LOGIN_QR_EXPIRES_SECONDS=90
+SCAN_LOGIN_AUTH_BASE_URL="http://10.0.5.20:8043"
+SCAN_LOGIN_AUTH_TOKEN_PATH="/connect/token"
+SCAN_LOGIN_AUTH_CLIENT_ID="IM_Mobile"
+SCAN_LOGIN_AUTH_CLIENT_SECRET="1q2w3e*"
+SCAN_LOGIN_AUTH_SCOPE="IM"
+SIGNALR_SKIP_NEGOTIATION=true
+SIGNALR_RECONNECT_DELAYS_MS=0,2000,10000,30000
+JS_BRIDGE_HARNESS_URL="http://10.0.5.20:4173"
+JS_BRIDGE_UPLOAD_URL="http://10.0.5.20:4173/upload"
+JS_BRIDGE_UPLOAD_ALLOWED_HOSTS="10.0.5.20,127.0.0.1,localhost"
+ENABLE_NETWORK_LOGGING=true
+DEEP_LINK_SCHEMES="gotoim-dev,gotoim"
+DEEP_LINK_ALLOWED_HOSTS="gotoim.com"
+
+```
+
+
+
 ## API 规范
+
+### swagger 
+
+```
+/swagger/swagger.json
+```
+
+认证服务器: 
+
+
 
 API 地址必须来自环境变量：
 

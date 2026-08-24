@@ -38,7 +38,11 @@ function hasAuthority(route: RouteRecordRaw, access: string[]) {
   if (!authority) {
     return true;
   }
-  const canAccess = access.some((value) => authority.includes(value));
+  const canAccess = access.some((value) =>
+    Array.isArray(authority)
+      ? (authority as string[]).includes(value)
+      : authority === value,
+  );
 
   return canAccess || (!canAccess && menuHasVisibleWithForbidden(route));
 }

@@ -32,6 +32,13 @@ minimumReleaseAge: 0
 overrides:
   '@ast-grep/napi': 'catalog:'
   '@ctrl/tinycolor': 'catalog:'
+  '@vue/compiler-core': 'catalog:'
+  '@vue/compiler-dom': 'catalog:'
+  '@vue/compiler-sfc': 'catalog:'
+  '@vue/reactivity': 'catalog:'
+  '@vue/runtime-core': 'catalog:'
+  '@vue/runtime-dom': 'catalog:'
+  '@vue/shared': 'catalog:'
   clsx: 'catalog:'
   pinia: 'catalog:'
   vue: 'catalog:'
@@ -93,7 +100,13 @@ catalog:
   '@vite-pwa/vitepress': ^1.1.0
   '@vitejs/plugin-vue': ^6.0.8
   '@vitejs/plugin-vue-jsx': ^5.1.6
-  '@vue/shared': ^3.5.40
+  '@vue/compiler-core': 3.5.41
+  '@vue/compiler-dom': 3.5.41
+  '@vue/compiler-sfc': 3.5.41
+  '@vue/reactivity': 3.5.41
+  '@vue/runtime-core': 3.5.41
+  '@vue/runtime-dom': 3.5.41
+  '@vue/shared': 3.5.41
   '@vue/test-utils': ^2.4.11
   '@vueuse/core': ^14.3.0
   '@vueuse/integrations': ^14.3.0
@@ -190,6 +203,7 @@ catalog:
   unplugin-dts: ^1.0.3
   unplugin-element-plus: ^0.11.2
   unplugin-vue: ^7.2.0
+  unrun: ^0.3.1
   vite: ^8.2.1
   vite-plugin-compression: ^0.5.1
   vite-plugin-lazy-import: ^1.0.7
@@ -198,7 +212,7 @@ catalog:
   vitepress: ^2.0.0-alpha.18
   vitepress-plugin-group-icons: ^1.7.5
   vitest: ^4.1.10
-  vue: ^3.5.40
+  vue: 3.5.41
   vue-eslint-parser: ^10.4.1
   vue-i18n: ^11.4.7
   vue-json-pretty: ^2.6.0
