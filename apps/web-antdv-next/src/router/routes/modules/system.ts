@@ -33,16 +33,6 @@ const routes: RouteRecordRaw[] = [
         path: 'roles',
       },
       {
-        component: () => import('#/views/identity/organization-unit/index.vue'),
-        meta: {
-          authority: ['AbpIdentity.OrganizationUnits', 'admin'],
-          icon: 'lucide:network',
-          title: $t('page.identity.dept.title', '部门管理'),
-        },
-        name: 'SystemOrganizationUnits',
-        path: 'organization-units',
-      },
-      {
         component: () => import('#/views/openiddict/application/index.vue'),
         meta: {
           authority: ['OpenIddict.Applications', 'admin'],

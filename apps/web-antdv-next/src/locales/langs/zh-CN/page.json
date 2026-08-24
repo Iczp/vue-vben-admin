@@ -13,21 +13,6 @@
     "workspace": "工作台"
   },
   "identity": {
-    "dept": {
-      "addChild": "添加子部门",
-      "create": "新建根部门",
-      "deleteConfirm": "确定要删除部门【{0}】及其下级架构吗？",
-      "depth": "层级",
-      "description": "部门说明",
-      "name": "部门名称",
-      "namePlaceholder": "请输入部门名称，如：技术研发中心",
-      "nameRequired": "请输入部门名称",
-      "parent": "上级部门",
-      "root": "顶级根部门 (无上级)",
-      "sorting": "排序",
-      "title": "部门管理",
-      "type": "类型"
-    },
     "role": {
       "custom": "自定义",
       "deleteConfirm": "确定要删除角色【{0}】吗？",
