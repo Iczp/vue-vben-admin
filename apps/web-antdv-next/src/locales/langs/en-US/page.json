@@ -13,6 +13,21 @@
     "workspace": "Workspace"
   },
   "identity": {
+    "dept": {
+      "addChild": "Add Sub-Department",
+      "create": "New Root Department",
+      "deleteConfirm": "Are you sure you want to delete department [{0}] and its sub-structure?",
+      "depth": "Depth",
+      "description": "Description",
+      "name": "Department Name",
+      "namePlaceholder": "Please enter department name",
+      "nameRequired": "Please enter department name",
+      "parent": "Parent Department",
+      "root": "Root Department (No Parent)",
+      "sorting": "Order",
+      "title": "Departments",
+      "type": "Type"
+    },
     "role": {
       "custom": "Custom",
       "deleteConfirm": "Are you sure you want to delete role [{0}]?",
@@ -24,7 +39,7 @@
       "title": "Roles",
       "type": "Type"
     },
-    "title": "Identity & Security",
+    "title": "Identity & Permissions",
     "user": {
       "adminEmail": "Admin Email",
       "adminPassword": "Admin Password",

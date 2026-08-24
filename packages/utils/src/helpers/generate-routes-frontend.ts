@@ -38,6 +38,18 @@ function hasAuthority(route: RouteRecordRaw, access: string[]) {
   if (!authority) {
     return true;
   }
+
+  // 超级管理员/管理员或 '*' 通配符拥有所有菜单访问权限
+  if (
+    access.some((role) =>
+      ['*', 'admin', 'administrator', 'superadmin'].includes(
+        role.toLowerCase(),
+      ),
+    )
+  ) {
+    return true;
+  }
+
   const canAccess = access.some((value) =>
     Array.isArray(authority)
       ? (authority as string[]).includes(value)

@@ -6,12 +6,52 @@ const routes: RouteRecordRaw[] = [
   {
     meta: {
       icon: 'lucide:settings-2',
-      order: 40,
+      order: 10,
       title: $t('page.system.title', '系统管理'),
     },
     name: 'SystemManagement',
     path: '/system',
     children: [
+      {
+        component: () => import('#/views/identity/user/index.vue'),
+        meta: {
+          authority: ['AbpIdentity.Users', 'admin'],
+          icon: 'lucide:users',
+          title: $t('page.identity.user.title', '用户管理'),
+        },
+        name: 'SystemUsers',
+        path: 'users',
+      },
+      {
+        component: () => import('#/views/identity/role/index.vue'),
+        meta: {
+          authority: ['AbpIdentity.Roles', 'admin'],
+          icon: 'lucide:user-check',
+          title: $t('page.identity.role.title', '角色管理'),
+        },
+        name: 'SystemRoles',
+        path: 'roles',
+      },
+      {
+        component: () => import('#/views/identity/organization-unit/index.vue'),
+        meta: {
+          authority: ['AbpIdentity.OrganizationUnits', 'admin'],
+          icon: 'lucide:network',
+          title: $t('page.identity.dept.title', '部门管理'),
+        },
+        name: 'SystemOrganizationUnits',
+        path: 'organization-units',
+      },
+      {
+        component: () => import('#/views/openiddict/application/index.vue'),
+        meta: {
+          authority: ['OpenIddict.Applications', 'admin'],
+          icon: 'lucide:key-round',
+          title: $t('page.openiddict.title', 'OpenIddict 认证'),
+        },
+        name: 'SystemOpenIddict',
+        path: 'openiddict',
+      },
       {
         component: () => import('#/views/system/security-log/index.vue'),
         meta: {
