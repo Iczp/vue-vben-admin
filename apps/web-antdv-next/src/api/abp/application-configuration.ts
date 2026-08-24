@@ -9,7 +9,7 @@ export async function getApplicationConfigurationApi(params?: {
   includeLocalizationResources?: boolean;
 }) {
   return requestClient.get<ApplicationConfigurationDto>(
-    '/api/abp/application-configuration',
+    '/abp/application-configuration',
     { params },
   );
 }

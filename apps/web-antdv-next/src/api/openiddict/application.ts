@@ -13,7 +13,7 @@ import { requestClient } from '#/api/request';
  */
 export async function getApplicationsApi(params?: GetApplicationsInput) {
   return requestClient.get<PagedResultDto<ApplicationDto>>(
-    '/api/openiddict/application',
+    '/openiddict/application',
     { params },
   );
 }
@@ -22,7 +22,7 @@ export async function getApplicationsApi(params?: GetApplicationsInput) {
  * 获取应用详情
  */
 export async function getApplicationApi(id: string) {
-  return requestClient.get<ApplicationDto>(`/api/openiddict/application/${id}`);
+  return requestClient.get<ApplicationDto>(`/openiddict/application/${id}`);
 }
 
 /**
@@ -30,7 +30,7 @@ export async function getApplicationApi(id: string) {
  */
 export async function createApplicationApi(data: ApplicationCreateInput) {
   return requestClient.post<ApplicationDto>(
-    '/api/openiddict/application',
+    '/openiddict/application',
     data,
   );
 }
@@ -43,7 +43,7 @@ export async function updateApplicationApi(
   data: ApplicationUpdateInput,
 ) {
   return requestClient.put<ApplicationDto>(
-    `/api/openiddict/application/${id}`,
+    `/openiddict/application/${id}`,
     data,
   );
 }
@@ -52,7 +52,7 @@ export async function updateApplicationApi(
  * 删除应用
  */
 export async function deleteApplicationApi(id: string) {
-  return requestClient.delete<void>(`/api/openiddict/application/${id}`);
+  return requestClient.delete<void>(`/openiddict/application/${id}`);
 }
 
 /**
@@ -60,6 +60,6 @@ export async function deleteApplicationApi(id: string) {
  */
 export async function generateClientSecretApi() {
   return requestClient.post<string>(
-    '/api/openiddict/application/generate-client-secret',
+    '/openiddict/application/generate-client-secret',
   );
 }

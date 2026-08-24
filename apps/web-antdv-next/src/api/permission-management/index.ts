@@ -11,7 +11,7 @@ import { requestClient } from '#/api/request';
  */
 export async function getPermissionsApi(params: GetPermissionParams) {
   return requestClient.get<GetPermissionListResultDto>(
-    '/api/permission-management/permissions',
+    '/permission-management/permissions',
     { params },
   );
 }
@@ -24,7 +24,7 @@ export async function updatePermissionsApi(
   data: UpdatePermissionsDto,
 ) {
   return requestClient.put<void>(
-    '/api/permission-management/permissions',
+    '/permission-management/permissions',
     data,
     { params },
   );

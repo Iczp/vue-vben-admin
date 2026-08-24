@@ -13,7 +13,7 @@ import { requestClient } from '#/api/request';
  */
 export async function getTenantsApi(params?: GetTenantsInput) {
   return requestClient.get<PagedResultDto<TenantDto>>(
-    '/api/multi-tenancy/tenants',
+    '/multi-tenancy/tenants',
     { params },
   );
 }
@@ -22,28 +22,28 @@ export async function getTenantsApi(params?: GetTenantsInput) {
  * 获取租户详情
  */
 export async function getTenantApi(id: string) {
-  return requestClient.get<TenantDto>(`/api/multi-tenancy/tenants/${id}`);
+  return requestClient.get<TenantDto>(`/multi-tenancy/tenants/${id}`);
 }
 
 /**
  * 创建租户
  */
 export async function createTenantApi(data: TenantCreateDto) {
-  return requestClient.post<TenantDto>('/api/multi-tenancy/tenants', data);
+  return requestClient.post<TenantDto>('/multi-tenancy/tenants', data);
 }
 
 /**
  * 更新租户
  */
 export async function updateTenantApi(id: string, data: TenantUpdateDto) {
-  return requestClient.put<TenantDto>(`/api/multi-tenancy/tenants/${id}`, data);
+  return requestClient.put<TenantDto>(`/multi-tenancy/tenants/${id}`, data);
 }
 
 /**
  * 删除租户
  */
 export async function deleteTenantApi(id: string) {
-  return requestClient.delete<void>(`/api/multi-tenancy/tenants/${id}`);
+  return requestClient.delete<void>(`/multi-tenancy/tenants/${id}`);
 }
 
 /**
@@ -51,7 +51,7 @@ export async function deleteTenantApi(id: string) {
  */
 export async function getDefaultConnectionStringApi(id: string) {
   return requestClient.get<string>(
-    `/api/multi-tenancy/tenants/${id}/default-connection-string`,
+    `/multi-tenancy/tenants/${id}/default-connection-string`,
   );
 }
 
@@ -63,7 +63,7 @@ export async function updateDefaultConnectionStringApi(
   defaultConnectionString: string,
 ) {
   return requestClient.put<void>(
-    `/api/multi-tenancy/tenants/${id}/default-connection-string`,
+    `/multi-tenancy/tenants/${id}/default-connection-string`,
     undefined,
     { params: { defaultConnectionString } },
   );
@@ -74,6 +74,6 @@ export async function updateDefaultConnectionStringApi(
  */
 export async function deleteDefaultConnectionStringApi(id: string) {
   return requestClient.delete<void>(
-    `/api/multi-tenancy/tenants/${id}/default-connection-string`,
+    `/multi-tenancy/tenants/${id}/default-connection-string`,
   );
 }

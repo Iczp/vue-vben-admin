@@ -14,7 +14,7 @@ import { requestClient } from '#/api/request';
  */
 export async function getUsersApi(params?: GetIdentityUsersInput) {
   return requestClient.get<PagedResultDto<IdentityUserDto>>(
-    '/api/identity/users',
+    '/identity/users',
     { params },
   );
 }
@@ -23,28 +23,28 @@ export async function getUsersApi(params?: GetIdentityUsersInput) {
  * 根据 ID 获取用户详情
  */
 export async function getUserApi(id: string) {
-  return requestClient.get<IdentityUserDto>(`/api/identity/users/${id}`);
+  return requestClient.get<IdentityUserDto>(`/identity/users/${id}`);
 }
 
 /**
  * 创建新用户
  */
 export async function createUserApi(data: IdentityUserCreateDto) {
-  return requestClient.post<IdentityUserDto>('/api/identity/users', data);
+  return requestClient.post<IdentityUserDto>('/identity/users', data);
 }
 
 /**
  * 更新用户信息
  */
 export async function updateUserApi(id: string, data: IdentityUserUpdateDto) {
-  return requestClient.put<IdentityUserDto>(`/api/identity/users/${id}`, data);
+  return requestClient.put<IdentityUserDto>(`/identity/users/${id}`, data);
 }
 
 /**
  * 删除用户
  */
 export async function deleteUserApi(id: string) {
-  return requestClient.delete<void>(`/api/identity/users/${id}`);
+  return requestClient.delete<void>(`/identity/users/${id}`);
 }
 
 /**
@@ -52,7 +52,7 @@ export async function deleteUserApi(id: string) {
  */
 export async function getUserRolesApi(id: string) {
   return requestClient.get<ListResultDto<IdentityRoleDto>>(
-    `/api/identity/users/${id}/roles`,
+    `/identity/users/${id}/roles`,
   );
 }
 
@@ -61,6 +61,6 @@ export async function getUserRolesApi(id: string) {
  */
 export async function getAssignableRolesApi() {
   return requestClient.get<ListResultDto<IdentityRoleDto>>(
-    '/api/identity/users/assignable-roles',
+    '/identity/users/assignable-roles',
   );
 }

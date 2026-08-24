@@ -13,7 +13,7 @@ import { requestClient } from '#/api/request';
  */
 export async function getRolesApi(params?: GetIdentityRolesInput) {
   return requestClient.get<PagedResultDto<IdentityRoleDto>>(
-    '/api/identity/roles',
+    '/identity/roles',
     { params },
   );
 }
@@ -23,7 +23,7 @@ export async function getRolesApi(params?: GetIdentityRolesInput) {
  */
 export async function getAllRolesApi() {
   return requestClient.get<ListResultDto<IdentityRoleDto>>(
-    '/api/identity/roles/all',
+    '/identity/roles/all',
   );
 }
 
@@ -31,26 +31,26 @@ export async function getAllRolesApi() {
  * 获取指定角色详情
  */
 export async function getRoleApi(id: string) {
-  return requestClient.get<IdentityRoleDto>(`/api/identity/roles/${id}`);
+  return requestClient.get<IdentityRoleDto>(`/identity/roles/${id}`);
 }
 
 /**
  * 创建新角色
  */
 export async function createRoleApi(data: IdentityRoleCreateDto) {
-  return requestClient.post<IdentityRoleDto>('/api/identity/roles', data);
+  return requestClient.post<IdentityRoleDto>('/identity/roles', data);
 }
 
 /**
  * 更新角色信息
  */
 export async function updateRoleApi(id: string, data: IdentityRoleUpdateDto) {
-  return requestClient.put<IdentityRoleDto>(`/api/identity/roles/${id}`, data);
+  return requestClient.put<IdentityRoleDto>(`/identity/roles/${id}`, data);
 }
 
 /**
  * 删除角色
  */
 export async function deleteRoleApi(id: string) {
-  return requestClient.delete<void>(`/api/identity/roles/${id}`);
+  return requestClient.delete<void>(`/identity/roles/${id}`);
 }

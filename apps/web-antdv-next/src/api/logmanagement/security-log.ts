@@ -39,7 +39,7 @@ export async function getCurrentUserSecurityLogsApi(
   params?: GetSecurityLogInput,
 ) {
   return requestClient.get<PagedResultDto<SecurityLogDto>>(
-    '/api/logmanagement/current-user-security-log',
+    '/logmanagement/current-user-security-log',
     { params },
   );
 }
