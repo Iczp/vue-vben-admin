@@ -1,12 +1,10 @@
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { IdentityUserDto } from '#/api/identity';
 
-import dayjs from 'dayjs';
-
 import { $t } from '#/locales';
 
 /**
- * 纯 JSON 配置的表格列定义
+ * 纯 JSON 配置的表格列定义 (支持 formatter, cellRender, slots 等丰富特性)
  */
 export function useColumns(
   onActionClick: OnActionClickFn<IdentityUserDto>,
@@ -18,8 +16,11 @@ export function useColumns(
       width: 50,
     },
     {
+      cellRender: {
+        name: 'CellCopyable',
+      },
       field: 'userName',
-      minWidth: 120,
+      minWidth: 130,
       title: $t('page.identity.user.userName', '用户名'),
     },
     {
@@ -28,12 +29,16 @@ export function useColumns(
       title: $t('page.identity.user.name', '姓名'),
     },
     {
+      cellRender: {
+        name: 'CellCopyable',
+      },
       field: 'email',
-      minWidth: 160,
+      minWidth: 180,
       title: $t('page.identity.user.email', '邮箱'),
     },
     {
       field: 'phoneNumber',
+      formatter: 'formatEmpty',
       minWidth: 120,
       title: $t('page.identity.user.phoneNumber', '手机号'),
     },
@@ -63,10 +68,9 @@ export function useColumns(
     },
     {
       field: 'creationTime',
-      formatter: ({ cellValue }) =>
-        cellValue ? dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss') : '-',
+      formatter: 'formatDateTime',
       title: $t('common.creationTime', '创建时间'),
-      width: 160,
+      width: 170,
     },
     {
       cellRender: {

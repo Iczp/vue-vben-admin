@@ -8,7 +8,7 @@ import { defineComponent, h } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { VbenTableAction as VbenTableActionCore } from '@vben/common-ui';
-import { IconifyIcon } from '@vben/icons';
+import { Copy, IconifyIcon } from '@vben/icons';
 import { $te } from '@vben/locales';
 import {
   setupVbenVxeTable,
@@ -17,7 +17,18 @@ import {
 import { get, isFunction, isString } from '@vben/utils';
 
 import { objectOmit } from '@vueuse/core';
-import { Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
+import {
+  Badge,
+  Button,
+  Image,
+  message,
+  Popconfirm,
+  Progress,
+  Switch,
+  Tag,
+  Tooltip,
+} from 'antdv-next';
+import dayjs from 'dayjs';
 
 import { $t } from '#/locales';
 
@@ -62,7 +73,83 @@ setupVbenVxeTable({
       }
     });
 
-    // 表格配置项可以用 cellRender: { name: 'CellImage' }
+    // ==========================================
+    // 1. 全局格式化函数 (DevExpress 风格 formatters)
+    // ==========================================
+
+    // 日期时间格式化: YYYY-MM-DD HH:mm:ss
+    vxeUI.formats.add('formatDateTime', {
+      cellFormatMethod({ cellValue }, format) {
+        if (!cellValue) return '-';
+        return dayjs(cellValue).format(
+          isString(format) ? format : 'YYYY-MM-DD HH:mm:ss',
+        );
+      },
+    });
+
+    // 日期格式化: YYYY-MM-DD
+    vxeUI.formats.add('formatDate', {
+      cellFormatMethod({ cellValue }, format) {
+        if (!cellValue) return '-';
+        return dayjs(cellValue).format(
+          isString(format) ? format : 'YYYY-MM-DD',
+        );
+      },
+    });
+
+    // 时间格式化: HH:mm:ss
+    vxeUI.formats.add('formatTime', {
+      cellFormatMethod({ cellValue }, format) {
+        if (!cellValue) return '-';
+        return dayjs(cellValue).format(isString(format) ? format : 'HH:mm:ss');
+      },
+    });
+
+    // 布尔值格式化: true -> '是', false -> '否'
+    vxeUI.formats.add('formatBool', {
+      cellFormatMethod(
+        { cellValue },
+        trueText = $t('common.yes', '是'),
+        falseText = $t('common.no', '否'),
+      ) {
+        if (cellValue === undefined || cellValue === null) return '-';
+        return cellValue ? trueText : falseText;
+      },
+    });
+
+    // 金额/数字千分位格式化: 12345.67 -> ￥12,345.67
+    vxeUI.formats.add('formatAmount', {
+      cellFormatMethod({ cellValue }, prefix = '￥', digits = 2) {
+        if (cellValue === undefined || cellValue === null || isNaN(Number(cellValue))) return '-';
+        const num = Number(cellValue).toFixed(digits);
+        const parts = num.split('.');
+        parts[0] = (parts[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return `${prefix}${parts.join('.')}`;
+      },
+    });
+
+    // 百分比格式化: 0.856 -> 85.60%
+    vxeUI.formats.add('formatPercent', {
+      cellFormatMethod({ cellValue }, digits = 2) {
+        if (cellValue === undefined || cellValue === null || isNaN(Number(cellValue))) return '-';
+        return `${(Number(cellValue) * 100).toFixed(digits)}%`;
+      },
+    });
+
+    // 空值兜底: null/undefined/'' -> '-'
+    vxeUI.formats.add('formatEmpty', {
+      cellFormatMethod({ cellValue }, fallback = '-') {
+        return cellValue === undefined || cellValue === null || cellValue === ''
+          ? fallback
+          : cellValue;
+      },
+    });
+
+    // ==========================================
+    // 2. 自定义单元格渲染器 (DevExpress 风格 Renderers)
+    // ==========================================
+
+    // 图片渲染
     vxeUI.renderer.add('CellImage', {
       renderTableDefault(renderOpts, params) {
         const { props } = renderOpts;
@@ -71,7 +158,7 @@ setupVbenVxeTable({
       },
     });
 
-    // 表格配置项可以用 cellRender: { name: 'CellLink' }
+    // 链接/按钮渲染
     vxeUI.renderer.add('CellLink', {
       renderTableDefault(renderOpts) {
         const { props } = renderOpts;
@@ -83,7 +170,7 @@ setupVbenVxeTable({
       },
     });
 
-    // 单元格渲染：Tag 标签 (Pure JSON options)
+    // 状态/枚举 Tag 标签渲染
     vxeUI.renderer.add('CellTag', {
       renderTableDefault({ options, props }, { column, row }) {
         const value = get(row, column.field);
@@ -103,7 +190,68 @@ setupVbenVxeTable({
       },
     });
 
-    // 单元格渲染：Switch 开关 (Pure JSON attrs)
+    // 徽标/圆点渲染
+    vxeUI.renderer.add('CellBadge', {
+      renderTableDefault({ options, props }, { column, row }) {
+        const value = get(row, column.field);
+        const badgeOptions = options ?? [
+          { status: 'success', text: $t('common.enabled', '在线'), value: true },
+          { status: 'default', text: $t('common.disabled', '离线'), value: false },
+        ];
+        const item = badgeOptions.find((b: any) => b.value === value);
+        return h(Badge, {
+          status: item?.status || 'default',
+          text: item?.text || String(value),
+          ...props,
+        });
+      },
+    });
+
+    // 进度条渲染
+    vxeUI.renderer.add('CellProgress', {
+      renderTableDefault({ props }, { column, row }) {
+        const percent = Number(get(row, column.field)) || 0;
+        return h(Progress, {
+          percent,
+          size: 'small',
+          ...props,
+        });
+      },
+    });
+
+    // 可一键复制文本渲染
+    vxeUI.renderer.add('CellCopyable', {
+      renderTableDefault(_opts, { column, row }) {
+        const text = String(get(row, column.field) ?? '');
+        if (!text) return h('span', '-');
+
+        return h('div', { class: 'inline-flex items-center gap-1 group' }, [
+          h('span', { class: 'truncate max-w-[200px]', title: text }, text),
+          h(
+            Tooltip,
+            { title: $t('common.copy', '点击复制') },
+            {
+              default: () =>
+                h(
+                  'a',
+                  {
+                    class:
+                      'text-gray-400 hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer',
+                    onClick: (e: MouseEvent) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(text);
+                      message.success($t('common.copySuccess', '复制成功'));
+                    },
+                  },
+                  [h(Copy, { class: 'size-3.5' })],
+                ),
+            },
+          ),
+        ]);
+      },
+    });
+
+    // 开关 Switch 渲染
     vxeUI.renderer.add('CellSwitch', {
       renderTableDefault({ attrs, props }, { column, row }) {
         const loadingKey = `__loading_${column.field}`;
@@ -132,9 +280,7 @@ setupVbenVxeTable({
       },
     });
 
-    /**
-     * 注册表格的操作按钮渲染器 (Pure JSON options)
-     */
+    // 表格操作按钮渲染器
     vxeUI.renderer.add('CellOperation', {
       renderTableDefault({ attrs, options, props }, { column, row }) {
         const defaultProps = { size: 'small', type: 'link', ...props };
