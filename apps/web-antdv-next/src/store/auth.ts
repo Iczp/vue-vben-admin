@@ -10,45 +10,63 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { notification } from 'antdv-next';
 import { defineStore } from 'pinia';
 
-import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
+import { getUserInfoApi, loginApi, logoutApi } from '#/api';
 import { $t } from '#/locales';
+
+import { useAbpStore } from './abp';
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
+  const abpStore = useAbpStore();
   const router = useRouter();
 
   const loginLoading = ref(false);
 
   /**
    * 异步处理登录操作
-   * Asynchronously handle the login process
    * @param params 登录表单数据
+   * @param onSuccess 成功回调
    */
   async function authLogin(
     params: Recordable<any>,
     onSuccess?: () => Promise<void> | void,
   ) {
-    // 异步处理用户登录操作并获取 accessToken
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
-      const { accessToken } = await loginApi(params);
+      const res = await loginApi(params);
+      const accessToken = (res as any)?.accessToken || (res as any)?.access_token;
 
-      // 如果成功获取到 accessToken
       if (accessToken) {
         accessStore.setAccessToken(accessToken);
 
-        // 获取用户信息并存储到 accessStore 中
-        const [fetchUserInfoResult, accessCodes] = await Promise.all([
-          fetchUserInfo(),
-          getAccessCodesApi(),
-        ]);
+        // 加载 ABP 全局应用配置与权限
+        try {
+          await abpStore.fetchApplicationConfiguration();
+        } catch (e) {
+          console.warn('Fetch ABP application configuration error:', e);
+        }
 
-        userInfo = fetchUserInfoResult;
-
-        userStore.setUserInfo(userInfo);
-        accessStore.setAccessCodes(accessCodes);
+        // 获取用户信息
+        try {
+          userInfo = await fetchUserInfo();
+        } catch {
+          userInfo = {
+            avatar: '',
+            desc: '',
+            homePath: preferences.app.defaultHomePath || '/dashboard',
+            realName:
+              abpStore.currentUser?.name ||
+              abpStore.currentUser?.userName ||
+              '',
+            roles: abpStore.currentUser?.roles || [],
+            token: accessToken,
+            userId: abpStore.currentUser?.id || '',
+            username: abpStore.currentUser?.userName || '',
+          };
+          userStore.setUserInfo(userInfo);
+        }
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -56,13 +74,13 @@ export const useAuthStore = defineStore('auth', () => {
           onSuccess
             ? await onSuccess?.()
             : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
+                userInfo?.homePath || preferences.app.defaultHomePath,
               );
         }
 
-        if (userInfo?.realName) {
+        if (userInfo?.realName || abpStore.currentUser?.name) {
           notification.success({
-            description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName}`,
+            description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName || abpStore.currentUser?.name || ''}`,
             duration: 3,
             title: $t('authentication.loginSuccess'),
           });
@@ -84,9 +102,9 @@ export const useAuthStore = defineStore('auth', () => {
       // 不做任何处理
     }
     resetAllStores();
+    abpStore.$reset();
     accessStore.setLoginExpired(false);
 
-    // 回登录页带上当前路由地址
     await router.replace({
       path: LOGIN_PATH,
       query: redirect
@@ -98,7 +116,24 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUserInfo() {
-    const userInfo = await getUserInfoApi();
+    let userInfo: UserInfo;
+    try {
+      userInfo = await getUserInfoApi();
+    } catch {
+      userInfo = {
+        avatar: '',
+        desc: '',
+        homePath: preferences.app.defaultHomePath || '/dashboard',
+        realName:
+          abpStore.currentUser?.name ||
+          abpStore.currentUser?.userName ||
+          '',
+        roles: abpStore.currentUser?.roles || [],
+        token: accessStore.accessToken || '',
+        userId: abpStore.currentUser?.id || '',
+        username: abpStore.currentUser?.userName || '',
+      };
+    }
     userStore.setUserInfo(userInfo);
     return userInfo;
   }

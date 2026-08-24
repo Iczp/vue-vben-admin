@@ -32,7 +32,7 @@ setupVbenVxeTable({
           autoLoad: true,
           response: {
             result: 'items',
-            total: 'total',
+            total: 'totalCount',
             list: 'items',
           },
           showActiveMsg: true,

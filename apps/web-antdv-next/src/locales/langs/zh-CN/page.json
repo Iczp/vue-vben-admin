@@ -1,15 +1,96 @@
 {
   "auth": {
-    "login": "登录",
-    "register": "注册",
     "codeLogin": "验证码登录",
-    "qrcodeLogin": "二维码登录",
     "forgetPassword": "忘记密码",
-    "profile": "个人中心"
+    "login": "登录",
+    "profile": "个人中心",
+    "qrcodeLogin": "二维码登录",
+    "register": "注册"
   },
   "dashboard": {
-    "title": "概览",
     "analytics": "分析页",
+    "title": "概览",
     "workspace": "工作台"
+  },
+  "identity": {
+    "role": {
+      "custom": "自定义",
+      "deleteConfirm": "确定要删除角色【{0}】吗？",
+      "isDefault": "默认角色",
+      "isPublic": "公共角色",
+      "name": "角色名称",
+      "nameRequired": "请输入角色名称",
+      "static": "系统静态",
+      "title": "角色管理",
+      "type": "类型"
+    },
+    "title": "身份认证管理",
+    "user": {
+      "adminEmail": "管理员邮箱",
+      "adminPassword": "初始密码",
+      "deleteConfirm": "确定要删除用户【{0}】吗？",
+      "email": "邮箱",
+      "emailRequired": "请输入邮箱地址",
+      "lockout": "锁定保护",
+      "name": "姓名",
+      "password": "密码",
+      "passwordRequired": "请输入登录密码",
+      "phoneNumber": "手机号",
+      "status": "状态",
+      "surname": "姓氏",
+      "tabBasic": "基础信息",
+      "tabRoles": "所属角色",
+      "title": "用户管理",
+      "userName": "用户名",
+      "userNameRequired": "请输入用户名"
+    }
+  },
+  "openiddict": {
+    "applications": "客户端应用",
+    "clientId": "客户端 ID (ClientId)",
+    "clientIdRequired": "请输入客户端 ID",
+    "clientSecret": "客户端密钥 (Client Secret)",
+    "clientType": "客户端类型",
+    "consentType": "授权许可类型",
+    "deleteConfirm": "确定要删除客户端应用【{0}】吗？",
+    "displayName": "应用显示名称",
+    "generateSecret": "生成密钥",
+    "generateSecretSuccess": "密钥已生成",
+    "postLogoutUris": "登出重定向地址",
+    "redirectUris": "回调地址",
+    "tabBasic": "基础配置",
+    "tabUris": "回调与重定向",
+    "title": "OpenIddict 认证"
+  },
+  "permission": {
+    "modalTitle": "权限管理",
+    "selectAll": "全选本组",
+    "title": "权限"
+  },
+  "system": {
+    "log": {
+      "action": "操作行为",
+      "applicationName": "应用名",
+      "browserInfo": "浏览器/客户端信息",
+      "clientIp": "IP 地址",
+      "searchPlaceholder": "按行为筛选 (如: LoginSucceeded)...",
+      "title": "安全审计日志"
+    },
+    "title": "系统管理"
+  },
+  "tenant": {
+    "adminEmail": "管理员邮箱",
+    "adminEmailRequired": "请输入管理员邮箱",
+    "adminPassword": "初始密码",
+    "adminPasswordRequired": "请输入管理员密码",
+    "connStringRequired": "请输入数据库连接字符串",
+    "connStringTip": "配置此租户专用的独立数据库连接字符串",
+    "connectionString": "数据库连接",
+    "deleteConfirm": "确定要删除租户【{0}】吗？",
+    "id": "租户标识 (Tenant ID)",
+    "name": "租户名称",
+    "nameRequired": "请输入租户名称",
+    "title": "多租户管理",
+    "useSharedDatabase": "使用共享数据库（默认宿主数据库）"
   }
 }

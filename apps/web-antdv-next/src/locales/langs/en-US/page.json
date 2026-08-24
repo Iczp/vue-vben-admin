@@ -1,15 +1,96 @@
 {
   "auth": {
-    "login": "Login",
-    "register": "Register",
     "codeLogin": "Code Login",
-    "qrcodeLogin": "Qr Code Login",
-    "forgetPassword": "Forget Password",
-    "profile": "Profile"
+    "forgetPassword": "Forgot Password",
+    "login": "Login",
+    "profile": "Profile",
+    "qrcodeLogin": "QR Code Login",
+    "register": "Register"
   },
   "dashboard": {
-    "title": "Dashboard",
     "analytics": "Analytics",
+    "title": "Dashboard",
     "workspace": "Workspace"
+  },
+  "identity": {
+    "role": {
+      "custom": "Custom",
+      "deleteConfirm": "Are you sure you want to delete role [{0}]?",
+      "isDefault": "Default Role",
+      "isPublic": "Public Role",
+      "name": "Role Name",
+      "nameRequired": "Please enter role name",
+      "static": "System Static",
+      "title": "Roles",
+      "type": "Type"
+    },
+    "title": "Identity & Security",
+    "user": {
+      "adminEmail": "Admin Email",
+      "adminPassword": "Admin Password",
+      "deleteConfirm": "Are you sure you want to delete user [{0}]?",
+      "email": "Email",
+      "emailRequired": "Please enter email address",
+      "lockout": "Lockout",
+      "name": "Name",
+      "password": "Password",
+      "passwordRequired": "Please enter password",
+      "phoneNumber": "Phone Number",
+      "status": "Status",
+      "surname": "Surname",
+      "tabBasic": "Basic Info",
+      "tabRoles": "Roles",
+      "title": "Users",
+      "userName": "Username",
+      "userNameRequired": "Please enter username"
+    }
+  },
+  "openiddict": {
+    "applications": "Applications",
+    "clientId": "Client ID",
+    "clientIdRequired": "Please enter Client ID",
+    "clientSecret": "Client Secret",
+    "clientType": "Client Type",
+    "consentType": "Consent Type",
+    "deleteConfirm": "Are you sure you want to delete client application [{0}]?",
+    "displayName": "Display Name",
+    "generateSecret": "Generate Secret",
+    "generateSecretSuccess": "Secret generated successfully",
+    "postLogoutUris": "Post Logout Redirect URIs",
+    "redirectUris": "Redirect URIs",
+    "tabBasic": "Basic Config",
+    "tabUris": "URIs & Callbacks",
+    "title": "OpenIddict"
+  },
+  "permission": {
+    "modalTitle": "Permission Management",
+    "selectAll": "Select All",
+    "title": "Permissions"
+  },
+  "system": {
+    "log": {
+      "action": "Action",
+      "applicationName": "Application",
+      "browserInfo": "Browser Info",
+      "clientIp": "Client IP",
+      "searchPlaceholder": "Filter by action (e.g. LoginSucceeded)...",
+      "title": "Security Logs"
+    },
+    "title": "System"
+  },
+  "tenant": {
+    "adminEmail": "Admin Email",
+    "adminEmailRequired": "Please enter admin email",
+    "adminPassword": "Admin Password",
+    "adminPasswordRequired": "Please enter admin password",
+    "connStringRequired": "Please enter connection string",
+    "connStringTip": "Set dedicated database connection string for this tenant",
+    "connectionString": "Connection String",
+    "deleteConfirm": "Are you sure you want to delete tenant [{0}]?",
+    "id": "Tenant ID",
+    "name": "Tenant Name",
+    "nameRequired": "Please enter tenant name",
+    "title": "Tenants",
+    "useSharedDatabase": "Use shared database (host database)"
   }
 }
