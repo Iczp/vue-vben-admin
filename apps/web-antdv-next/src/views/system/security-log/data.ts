@@ -1,14 +1,14 @@
-import type { VxeGridPropTypes } from '#/adapter/vxe-table';
+import type { VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SecurityLogDto } from '#/api/logmanagement';
 
-import { h } from 'vue';
-
-import { Tag } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { $t } from '#/locales';
 
-export function useColumns(): VxeGridPropTypes.Columns<SecurityLogDto> {
+/**
+ * 纯 JSON 配置的表格列定义
+ */
+export function useColumns(): VxeTableGridColumns<SecurityLogDto> {
   return [
     {
       title: '#',
@@ -16,17 +16,16 @@ export function useColumns(): VxeGridPropTypes.Columns<SecurityLogDto> {
       width: 50,
     },
     {
-      field: 'action',
-      minWidth: 120,
-      slots: {
-        default: ({ row }) => {
-          return h(
-            Tag,
-            { color: 'blue' },
-            () => row.action || 'Unknown',
-          );
-        },
+      cellRender: {
+        name: 'CellTag',
+        options: [
+          { color: 'success', label: 'LoginSucceeded', value: 'LoginSucceeded' },
+          { color: 'error', label: 'LoginFailed', value: 'LoginFailed' },
+          { color: 'warning', label: 'Logout', value: 'Logout' },
+        ],
       },
+      field: 'action',
+      minWidth: 140,
       title: $t('page.system.log.action', '操作行为'),
     },
     {

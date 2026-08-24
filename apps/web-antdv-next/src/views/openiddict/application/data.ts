@@ -1,15 +1,14 @@
-import type { VxeGridPropTypes } from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { ApplicationDto } from '#/api/openiddict';
-
-import { h } from 'vue';
-
-import { Tag } from 'antdv-next';
 
 import { $t } from '#/locales';
 
+/**
+ * 纯 JSON 配置的表格列定义
+ */
 export function useColumns(
-  onActionClick: (params: { code: string; row: ApplicationDto }) => void,
-): VxeGridPropTypes.Columns<ApplicationDto> {
+  onActionClick: OnActionClickFn<ApplicationDto>,
+): VxeTableGridColumns<ApplicationDto> {
   return [
     {
       title: '#',
@@ -27,69 +26,51 @@ export function useColumns(
       title: $t('page.openiddict.displayName', '应用显示名称'),
     },
     {
-      field: 'clientType',
-      slots: {
-        default: ({ row }) => {
-          const isConfidential = row.clientType === 'confidential';
-          return h(
-            Tag,
-            { color: isConfidential ? 'blue' : 'orange' },
-            () => row.clientType || 'public',
-          );
-        },
+      cellRender: {
+        name: 'CellTag',
+        options: [
+          { color: 'blue', label: 'confidential', value: 'confidential' },
+          { color: 'orange', label: 'public', value: 'public' },
+        ],
       },
+      field: 'clientType',
       title: $t('page.openiddict.clientType', '客户端类型'),
       width: 130,
     },
     {
-      field: 'consentType',
-      slots: {
-        default: ({ row }) => {
-          return h(
-            Tag,
-            { color: 'default' },
-            () => row.consentType || 'explicit',
-          );
-        },
+      cellRender: {
+        name: 'CellTag',
+        options: [
+          { color: 'default', label: 'explicit', value: 'explicit' },
+          { color: 'purple', label: 'implicit', value: 'implicit' },
+          { color: 'cyan', label: 'systematic', value: 'systematic' },
+        ],
       },
+      field: 'consentType',
       title: $t('page.openiddict.consentType', '授权确认类型'),
       width: 140,
     },
     {
       field: 'redirectUris',
+      formatter: ({ cellValue }) =>
+        Array.isArray(cellValue) && cellValue.length > 0
+          ? cellValue.join(', ')
+          : '-',
       minWidth: 200,
-      slots: {
-        default: ({ row }) => {
-          const uris = row.redirectUris || [];
-          return uris.length > 0 ? uris.join(', ') : '-';
-        },
-      },
       title: $t('page.openiddict.redirectUris', '回调地址'),
     },
     {
-      fixed: 'right',
-      slots: {
-        default: ({ row }) => {
-          return h('div', { class: 'flex items-center justify-center gap-2' }, [
-            h(
-              'a',
-              {
-                class: 'text-primary hover:underline cursor-pointer',
-                onClick: () => onActionClick({ code: 'edit', row }),
-              },
-              $t('common.edit', '编辑'),
-            ),
-            h(
-              'a',
-              {
-                class: 'text-red-500 hover:underline cursor-pointer',
-                onClick: () => onActionClick({ code: 'delete', row }),
-              },
-              $t('common.delete', '删除'),
-            ),
-          ]);
+      cellRender: {
+        attrs: {
+          nameField: 'clientId',
+          onClick: onActionClick,
+          usePopconfirm: false,
         },
+        name: 'CellOperation',
+        options: ['edit', 'delete'],
       },
+      field: 'operation',
+      fixed: 'right',
       title: $t('common.action', '操作'),
       width: 140,
     },

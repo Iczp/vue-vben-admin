@@ -1,13 +1,14 @@
-import type { VxeGridPropTypes } from '#/adapter/vxe-table';
+import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { TenantDto } from '#/api/multi-tenancy';
-
-import { h } from 'vue';
 
 import { $t } from '#/locales';
 
+/**
+ * 纯 JSON 配置的表格列定义
+ */
 export function useColumns(
-  onActionClick: (params: { code: string; row: TenantDto }) => void,
-): VxeGridPropTypes.Columns<TenantDto> {
+  onActionClick: OnActionClickFn<TenantDto>,
+): VxeTableGridColumns<TenantDto> {
   return [
     {
       title: '#',
@@ -21,51 +22,31 @@ export function useColumns(
     },
     {
       field: 'id',
-      minWidth: 220,
+      minWidth: 260,
       title: $t('page.tenant.id', '租户标识 (Tenant ID)'),
     },
     {
-      fixed: 'right',
-      slots: {
-        default: ({ row }) => {
-          return h('div', { class: 'flex items-center justify-center gap-2' }, [
-            h(
-              'a',
-              {
-                class: 'text-primary hover:underline cursor-pointer',
-                onClick: () => onActionClick({ code: 'edit', row }),
-              },
-              $t('common.edit', '编辑'),
-            ),
-            h(
-              'a',
-              {
-                class: 'text-primary hover:underline cursor-pointer',
-                onClick: () => onActionClick({ code: 'connection-string', row }),
-              },
-              $t('page.tenant.connectionString', '数据库连接'),
-            ),
-            h(
-              'a',
-              {
-                class: 'text-primary hover:underline cursor-pointer',
-                onClick: () => onActionClick({ code: 'permission', row }),
-              },
-              $t('page.permission.title', '权限'),
-            ),
-            h(
-              'a',
-              {
-                class: 'text-red-500 hover:underline cursor-pointer',
-                onClick: () => onActionClick({ code: 'delete', row }),
-              },
-              $t('common.delete', '删除'),
-            ),
-          ]);
+      cellRender: {
+        attrs: {
+          nameField: 'name',
+          onClick: onActionClick,
+          usePopconfirm: false,
         },
+        name: 'CellOperation',
+        options: [
+          { code: 'edit', text: $t('common.edit', '编辑') },
+          {
+            code: 'connection-string',
+            text: $t('page.tenant.connectionString', '数据库连接'),
+          },
+          { code: 'permission', text: $t('page.permission.title', '权限') },
+          { code: 'delete', text: $t('common.delete', '删除') },
+        ],
       },
+      field: 'operation',
+      fixed: 'right',
       title: $t('common.action', '操作'),
-      width: 220,
+      width: 260,
     },
   ];
 }
