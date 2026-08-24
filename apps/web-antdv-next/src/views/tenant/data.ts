@@ -21,6 +21,9 @@ export function useColumns(
       title: $t('page.tenant.name', '租户名称'),
     },
     {
+      cellRender: {
+        name: 'CellCopyable',
+      },
       field: 'id',
       minWidth: 260,
       title: $t('page.tenant.id', '租户标识 (Tenant ID)'),
@@ -36,6 +39,10 @@ export function useColumns(
         options: [
           { code: 'edit', text: $t('common.edit', '编辑') },
           {
+            code: 'features',
+            text: $t('page.tenant.features', '功能特性'),
+          },
+          {
             code: 'connection-string',
             text: $t('page.tenant.connectionString', '数据库连接'),
           },
@@ -46,7 +53,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: $t('common.action', '操作'),
-      width: 260,
+      width: 300,
     },
   ];
 }

@@ -60,7 +60,7 @@
     "redirectUris": "回调地址",
     "tabBasic": "基础配置",
     "tabUris": "回调与重定向",
-    "title": "OpenIddict 认证"
+    "title": "OpenIddict 客户端"
   },
   "permission": {
     "modalTitle": "权限管理",
@@ -71,10 +71,12 @@
     "log": {
       "action": "操作行为",
       "applicationName": "应用名",
+      "auditDetail": "审计日志详情",
+      "auditTitle": "系统审计日志",
       "browserInfo": "浏览器/客户端信息",
       "clientIp": "IP 地址",
       "searchPlaceholder": "按行为筛选 (如: LoginSucceeded)...",
-      "title": "安全审计日志"
+      "title": "安全登录日志"
     },
     "title": "系统管理"
   },
@@ -87,6 +89,7 @@
     "connStringTip": "配置此租户专用的独立数据库连接字符串",
     "connectionString": "数据库连接",
     "deleteConfirm": "确定要删除租户【{0}】吗？",
+    "features": "功能特性",
     "id": "租户标识 (Tenant ID)",
     "name": "租户名称",
     "nameRequired": "请输入租户名称",

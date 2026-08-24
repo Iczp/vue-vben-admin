@@ -37,19 +37,66 @@ const routes: RouteRecordRaw[] = [
         meta: {
           authority: ['OpenIddict.Applications', 'admin'],
           icon: 'lucide:key-round',
-          title: $t('page.openiddict.title', 'OpenIddict 认证'),
+          title: $t('page.openiddict.title', 'OpenIddict 客户端'),
         },
-        name: 'SystemOpenIddict',
-        path: 'openiddict',
+        name: 'SystemOpenIddictApps',
+        path: 'openiddict-apps',
+      },
+      {
+        component: () => import('#/views/openiddict/scope/index.vue'),
+        meta: {
+          authority: ['OpenIddict.Scopes', 'admin'],
+          icon: 'lucide:shield-plus',
+          title: 'OpenIddict 作用域',
+        },
+        name: 'SystemOpenIddictScopes',
+        path: 'openiddict-scopes',
+      },
+      {
+        component: () => import('#/views/system/audit-log/index.vue'),
+        meta: {
+          icon: 'lucide:file-search',
+          title: $t('page.system.log.auditTitle', '系统审计日志'),
+        },
+        name: 'SystemAuditLogs',
+        path: 'audit-logs',
       },
       {
         component: () => import('#/views/system/security-log/index.vue'),
         meta: {
           icon: 'lucide:shield-alert',
-          title: $t('page.system.log.title', '安全审计日志'),
+          title: $t('page.system.log.title', '安全登录日志'),
         },
         name: 'SystemSecurityLogs',
         path: 'security-logs',
+      },
+      {
+        component: () => import('#/views/system/device/index.vue'),
+        meta: {
+          icon: 'lucide:smartphone',
+          title: '登录设备管理',
+        },
+        name: 'SystemDevices',
+        path: 'devices',
+      },
+      {
+        component: () => import('#/views/system/app-version/index.vue'),
+        meta: {
+          icon: 'lucide:download-cloud',
+          title: 'App 版本管理',
+        },
+        name: 'SystemAppVersions',
+        path: 'app-versions',
+      },
+      {
+        component: () => import('#/views/system/settings/index.vue'),
+        meta: {
+          authority: ['SettingManagement.Emailing', 'admin'],
+          icon: 'lucide:sliders',
+          title: '系统全局设置',
+        },
+        name: 'SystemSettings',
+        path: 'settings',
       },
     ],
   },

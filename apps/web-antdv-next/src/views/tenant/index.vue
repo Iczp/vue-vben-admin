@@ -16,6 +16,7 @@ import PermissionModal from '#/views/permission/permission-modal.vue';
 
 import { useColumns } from './data';
 import ConnectionStringModal from './modules/connection-string-modal.vue';
+import FeatureModal from './modules/feature-modal.vue';
 import TenantModal from './modules/tenant-modal.vue';
 
 const filterText = ref('');
@@ -35,12 +36,27 @@ const [TenantPermModal, tenantPermModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
+const [TenantFeatureModal, tenantFeatureModalApi] = useVbenModal({
+  connectedComponent: FeatureModal,
+  destroyOnClose: true,
+});
+
 function onCreate() {
   tenantFormModalApi.setData(null).open();
 }
 
 function onEdit(row: TenantDto) {
   tenantFormModalApi.setData(row).open();
+}
+
+function onFeatures(row: TenantDto) {
+  tenantFeatureModalApi
+    .setData({
+      providerKey: row.id,
+      providerName: 'T',
+      title: `${$t('page.tenant.features', '功能特性')} - ${row.name}`,
+    })
+    .open();
 }
 
 function onConnectionString(row: TenantDto) {
@@ -59,9 +75,9 @@ function onPermission(row: TenantDto) {
 
 function onDelete(row: TenantDto) {
   Modal.confirm({
+    cancelText: $t('common.cancel', '取消'),
     content: $t('page.tenant.deleteConfirm', [row.name]),
     okText: $t('common.confirm', '确认'),
-    cancelText: $t('common.cancel', '取消'),
     okType: 'danger',
     async onOk() {
       await deleteTenantApi(row.id);
@@ -89,6 +105,10 @@ function onActionClick({
     }
     case 'edit': {
       onEdit(row);
+      break;
+    }
+    case 'features': {
+      onFeatures(row);
       break;
     }
     case 'permission': {
@@ -142,6 +162,7 @@ function refreshGrid() {
     <TenantFormModal @success="refreshGrid" />
     <ConnStrModal />
     <TenantPermModal />
+    <TenantFeatureModal />
     <Grid :table-title="$t('page.tenant.title', '租户列表')">
       <template #toolbar-tools>
         <div class="flex items-center gap-2">

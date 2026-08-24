@@ -71,6 +71,8 @@
     "log": {
       "action": "Action",
       "applicationName": "Application",
+      "auditDetail": "Audit Log Details",
+      "auditTitle": "Audit Logs",
       "browserInfo": "Browser Info",
       "clientIp": "Client IP",
       "searchPlaceholder": "Filter by action (e.g. LoginSucceeded)...",
@@ -87,6 +89,7 @@
     "connStringTip": "Set dedicated database connection string for this tenant",
     "connectionString": "Connection String",
     "deleteConfirm": "Are you sure you want to delete tenant [{0}]?",
+    "features": "Features",
     "id": "Tenant ID",
     "name": "Tenant Name",
     "nameRequired": "Please enter tenant name",
