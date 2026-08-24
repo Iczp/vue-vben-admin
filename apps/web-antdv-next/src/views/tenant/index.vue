@@ -119,7 +119,11 @@ function onActionClick({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onEdit(params.row as TenantDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',
@@ -175,7 +179,7 @@ function refreshGrid() {
           />
           <Button
             type="primary"
-            v-access="['AbpTenantManagement.Tenants.Create']"
+            v-access="['AbpTenantManagement.Tenants.Create', 'admin']"
             @click="onCreate"
           >
             <Plus class="size-4 mr-1" />

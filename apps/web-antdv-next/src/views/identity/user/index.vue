@@ -41,7 +41,7 @@ function onPermission(row: IdentityUserDto) {
   userPermModalApi
     .setData({
       displayName: row.userName,
-      providerKey: row.id,
+      providerKey: row.userName,
       providerName: 'U',
     })
     .open();
@@ -49,9 +49,9 @@ function onPermission(row: IdentityUserDto) {
 
 function onDelete(row: IdentityUserDto) {
   Modal.confirm({
+    cancelText: $t('common.cancel', '取消'),
     content: $t('page.identity.user.deleteConfirm', [row.userName]),
     okText: $t('common.confirm', '确认'),
-    cancelText: $t('common.cancel', '取消'),
     okType: 'danger',
     async onOk() {
       await deleteUserApi(row.id);
@@ -85,7 +85,11 @@ function onActionClick({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onEdit(params.row as IdentityUserDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',
@@ -139,7 +143,7 @@ function refreshGrid() {
           />
           <Button
             type="primary"
-            v-access="['AbpIdentity.Users.Create']"
+            v-access="['AbpIdentity.Users.Create', 'admin']"
             @click="onCreate"
           >
             <Plus class="size-4 mr-1" />

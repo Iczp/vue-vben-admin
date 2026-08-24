@@ -41,7 +41,11 @@ function onActionClick({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onDetail(params.row as AuditLogDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',

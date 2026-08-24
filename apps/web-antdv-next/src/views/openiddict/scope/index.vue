@@ -65,7 +65,11 @@ function onActionClick({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onEdit(params.row as ScopeDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',

@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { SecurityLogDto } from '#/api/logmanagement';
 
 import { ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 
 import { Input } from 'antdv-next';
 
@@ -12,11 +13,25 @@ import { getCurrentUserSecurityLogsApi } from '#/api/logmanagement';
 import { $t } from '#/locales';
 
 import { useColumns } from './data';
+import SecurityLogModal from './modules/security-log-modal.vue';
 
 const actionFilter = ref('');
 
+const [DetailModal, detailModalApi] = useVbenModal({
+  connectedComponent: SecurityLogModal,
+  destroyOnClose: true,
+});
+
+function onDetail(row: SecurityLogDto) {
+  detailModalApi.setData(row).open();
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onDetail(params.row as SecurityLogDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(),
     height: 'auto',
@@ -56,6 +71,7 @@ function refreshGrid() {
 
 <template>
   <Page auto-content-height>
+    <DetailModal />
     <Grid :table-title="$t('page.system.log.title', '安全审计日志')">
       <template #toolbar-tools>
         <div class="flex items-center gap-2">

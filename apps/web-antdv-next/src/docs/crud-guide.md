@@ -41,8 +41,9 @@ src/
 `useAbpCrud`（位于 `#/composables/use-abp-crud`）专为对接 ABP 后端开发，自动解决以下通用逻辑：
 - **分页转换**：前端页码 `currentPage + pageSize` $\rightarrow$ ABP 的 `skipCount + maxResultCount`；
 - **排序转换**：表格多列/单列排序 $\rightarrow$ ABP 的 `sorting: "FieldName asc|desc"`；
+- **双击交互**：统一行双击（`cellDblclick`）行为：**有详情进入详情，无详情进入编辑**；
 - **删除确认**：自动弹出危险操作确认框（二次确认），成功后自动刷新表格；
-- **弹窗联动**：自动管理新增、编辑、权限分配弹窗的开关与数据传递；
+- **弹窗联动**：自动管理新增、编辑、详情、权限分配弹窗的开关与数据传递；
 - **数据响应**：自动对接 ABP `PagedResultDto<T>` 返回格式（`items` 和 `totalCount`）。
 
 ### 1. 参数选项 `UseAbpCrudOptions<TEntity, TQuery>`

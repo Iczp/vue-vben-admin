@@ -10,7 +10,10 @@ import { Plus } from '@vben/icons';
 import { Button, Input, Modal, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteApplicationApi, getApplicationsApi } from '#/api/openiddict';
+import {
+  deleteApplicationApi,
+  getApplicationsApi,
+} from '#/api/openiddict';
 import { $t } from '#/locales';
 
 import { useColumns } from './data';
@@ -33,9 +36,11 @@ function onEdit(row: ApplicationDto) {
 
 function onDelete(row: ApplicationDto) {
   Modal.confirm({
-    content: $t('page.openiddict.deleteConfirm', [row.clientId]),
-    okText: $t('common.confirm', '确认'),
     cancelText: $t('common.cancel', '取消'),
+    content: $t('page.openiddict.deleteConfirm', [
+      row.displayName || row.clientId,
+    ]),
+    okText: $t('common.confirm', '确认'),
     okType: 'danger',
     async onOk() {
       await deleteApplicationApi(row.id);
@@ -65,7 +70,11 @@ function onActionClick({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onEdit(params.row as ApplicationDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',
@@ -116,7 +125,11 @@ function refreshGrid() {
             class="w-64"
             @search="refreshGrid"
           />
-          <Button type="primary" @click="onCreate">
+          <Button
+            type="primary"
+            v-access="['OpenIddict.Applications', 'admin']"
+            @click="onCreate"
+          >
             <Plus class="size-4 mr-1" />
             {{ $t('common.create', '新建应用') }}
           </Button>

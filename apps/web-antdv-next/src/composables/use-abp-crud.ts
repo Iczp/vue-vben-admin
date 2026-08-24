@@ -10,7 +10,7 @@ import { type VxeTableGridOptions, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 
 export interface UseAbpCrudOptions<
-  TEntity extends { id?: string },
+  TEntity extends { id?: number | string },
   TQuery extends Record<string, any> = Record<string, any>,
 > {
   /**
@@ -19,6 +19,7 @@ export interface UseAbpCrudOptions<
   columns: (helpers: {
     onAction: (params: { code: string; row: TEntity }) => void;
     onDelete: (row: TEntity) => void;
+    onDetail?: (row: TEntity) => void;
     onEdit: (row: TEntity) => void;
     onPermission: (row: TEntity, providerName?: string) => void;
   }) => any[];
@@ -27,6 +28,11 @@ export interface UseAbpCrudOptions<
    * 默认初始查询参数
    */
   defaultQueryParams?: TQuery;
+
+  /**
+   * 详情弹窗组件
+   */
+  detailComponent?: any;
 
   /**
    * 表单弹窗组件（新增/编辑）
@@ -39,9 +45,19 @@ export interface UseAbpCrudOptions<
   getEntityTitle?: (row: TEntity) => string;
 
   /**
+   * 自定义 Grid 事件
+   */
+  gridEvents?: Record<string, any>;
+
+  /**
    * 实体名称或多语言键
    */
   name?: string;
+
+  /**
+   * 自定义详情处理函数
+   */
+  onDetail?: (row: TEntity) => void;
 
   /**
    * 默认分页大小，默认 10
@@ -58,10 +74,10 @@ export interface UseAbpCrudOptions<
    */
   service: {
     create?: (data: any) => Promise<any>;
-    delete?: (id: string) => Promise<any>;
-    get?: (id: string) => Promise<TEntity>;
+    delete?: (id: any) => Promise<any>;
+    get?: (id: any) => Promise<TEntity>;
     list: (params: any) => Promise<PagedResultDto<TEntity>>;
-    update?: (id: string, data: any) => Promise<any>;
+    update?: (id: any, data: any) => Promise<any>;
   };
 }
 
@@ -70,13 +86,14 @@ export interface UseAbpCrudOptions<
  * 统一封装了：
  * 1. ABP 分页参数转换 (currentPage + pageSize -> skipCount + maxResultCount)
  * 2. 排序参数转换 (sorts -> sorting: "Field asc|desc")
- * 3. 搜索过滤与自动刷新
- * 4. 新增/编辑弹窗状态管理 (useVbenModal)
- * 5. 删除确认对话框与统一提示
- * 6. 权限弹窗快捷唤起
+ * 3. 表格行双击统一行为：有详情进入详情，无详情进入编辑 (cellDblclick)
+ * 4. 搜索过滤与自动刷新
+ * 5. 新增/编辑/详情弹窗状态管理 (useVbenModal)
+ * 6. 删除确认对话框与统一提示
+ * 7. 权限弹窗快捷唤起
  */
 export function useAbpCrud<
-  TEntity extends { id?: string },
+  TEntity extends { id?: number | string },
   TQuery extends Record<string, any> = Record<string, any>,
 >(options: UseAbpCrudOptions<TEntity, TQuery>) {
   const queryParams = ref<TQuery>((options.defaultQueryParams || {}) as TQuery);
@@ -85,6 +102,14 @@ export function useAbpCrud<
   const [FormModal, formModalApi] = options.formComponent
     ? useVbenModal({
         connectedComponent: options.formComponent,
+        destroyOnClose: true,
+      })
+    : [null, null];
+
+  // 详情弹窗
+  const [DetailModal, detailModalApi] = options.detailComponent
+    ? useVbenModal({
+        connectedComponent: options.detailComponent,
         destroyOnClose: true,
       })
     : [null, null];
@@ -109,6 +134,19 @@ export function useAbpCrud<
    */
   function onEdit(row: TEntity) {
     formModalApi?.setData(row).open();
+  }
+
+  /**
+   * 打开详情弹窗
+   */
+  function onDetail(row: TEntity) {
+    if (options.onDetail) {
+      options.onDetail(row);
+    } else if (detailModalApi) {
+      detailModalApi.setData(row).open();
+    } else {
+      onEdit(row);
+    }
   }
 
   /**
@@ -163,6 +201,10 @@ export function useAbpCrud<
         onDelete(row);
         break;
       }
+      case 'detail': {
+        onDetail(row);
+        break;
+      }
       case 'edit': {
         onEdit(row);
         break;
@@ -176,11 +218,22 @@ export function useAbpCrud<
 
   // 初始化表格 Grid
   const [Grid, gridApi] = useVbenVxeGrid({
-    gridEvents: {},
+    gridEvents: {
+      // 统一双击事件：有详情打开详情，无详情打开修改/编辑
+      cellDblclick: (params: { row: TEntity }) => {
+        if (options.detailComponent || options.onDetail) {
+          onDetail(params.row);
+        } else {
+          onEdit(params.row);
+        }
+      },
+      ...options.gridEvents,
+    },
     gridOptions: {
       columns: options.columns({
         onAction: onActionClick,
         onDelete,
+        onDetail,
         onEdit,
         onPermission,
       }),
@@ -251,14 +304,17 @@ export function useAbpCrud<
   }
 
   return {
+    DetailModal,
     FormModal,
     Grid,
     PermModal,
+    detailModalApi,
     formModalApi,
     gridApi,
     onActionClick,
     onCreate,
     onDelete,
+    onDetail,
     onEdit,
     onPermission,
     permModalApi,

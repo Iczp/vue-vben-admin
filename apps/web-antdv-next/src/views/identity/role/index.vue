@@ -49,9 +49,9 @@ function onPermission(row: IdentityRoleDto) {
 
 function onDelete(row: IdentityRoleDto) {
   Modal.confirm({
+    cancelText: $t('common.cancel', '取消'),
     content: $t('page.identity.role.deleteConfirm', [row.name]),
     okText: $t('common.confirm', '确认'),
-    cancelText: $t('common.cancel', '取消'),
     okType: 'danger',
     async onOk() {
       await deleteRoleApi(row.id);
@@ -85,7 +85,11 @@ function onActionClick({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onEdit(params.row as IdentityRoleDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',
@@ -139,7 +143,7 @@ function refreshGrid() {
           />
           <Button
             type="primary"
-            v-access="['AbpIdentity.Roles.Create']"
+            v-access="['AbpIdentity.Roles.Create', 'admin']"
             @click="onCreate"
           >
             <Plus class="size-4 mr-1" />
