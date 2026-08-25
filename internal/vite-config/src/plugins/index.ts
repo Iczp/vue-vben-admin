@@ -146,7 +146,7 @@ async function loadApplicationPlugins(
       },
     },
     {
-      condition: !isBuild,
+      condition: false,
       plugins: () => [viteFormFieldSlotMigrationWarningPlugin()],
     },
     {
