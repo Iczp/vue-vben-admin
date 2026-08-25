@@ -7,14 +7,29 @@ import { initStores } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/antdv-next';
 
+import { message, notification } from 'antdv-next';
 import { useTitle } from '@vueuse/core';
 
 import { $t, setupI18n } from '#/locales';
+import '#/styles/message.css';
 
 import { initComponentAdapter } from './adapter/component';
 import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
 import { router } from './router';
+
+// 限制全局消息提示数量与位置，防止堆叠遮挡
+message.config({
+  duration: 3.5,
+  maxCount: 2,
+  top: 24,
+});
+
+notification.config({
+  duration: 4.5,
+  maxCount: 3,
+  top: 24,
+});
 
 async function bootstrap(namespace: string) {
   // 初始化组件适配器

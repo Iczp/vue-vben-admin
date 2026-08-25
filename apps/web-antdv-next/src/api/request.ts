@@ -3,7 +3,10 @@
  */
 import type { RequestClientOptions } from '@vben/request';
 
+import { h } from 'vue';
+
 import { useAppConfig } from '@vben/hooks';
+import { Copy } from '@vben/icons';
 import { preferences } from '@vben/preferences';
 import {
   authenticateResponseInterceptor,
@@ -16,8 +19,79 @@ import { useAccessStore } from '@vben/stores';
 import { message } from 'antdv-next';
 
 import { useAuthStore } from '#/store';
+import { copyToClipboard } from '#/utils/clipboard';
 
 import { refreshTokenApi } from './core';
+
+/**
+ * 构造支持两行展示且支持一键复制的全局错误提示 VNode
+ */
+function renderErrorMessageNode(title: string, detail?: string) {
+  const fullText = detail ? `${title}\n${detail}` : title;
+
+  return h(
+    'div',
+    {
+      class: 'inline-flex items-center gap-2 max-w-[500px] text-left select-text',
+      style: { cursor: 'text', userSelect: 'text', WebkitUserSelect: 'text' },
+    },
+    [
+      h(
+        'div',
+        {
+          class: 'flex-1 min-w-0 flex flex-col justify-center leading-snug',
+        },
+        [
+          h(
+            'div',
+            {
+              class: 'font-medium text-[13px] text-foreground truncate max-w-[440px]',
+              title,
+            },
+            title,
+          ),
+          detail
+            ? h(
+                'div',
+                {
+                  class:
+                    'text-[12px] text-muted-foreground truncate max-w-[440px] opacity-85 mt-0.5 font-normal',
+                  title: detail,
+                },
+                detail,
+              )
+            : null,
+        ].filter(Boolean),
+      ),
+      h(
+        'button',
+        {
+          class:
+            'p-1 text-muted-foreground hover:text-primary hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors cursor-pointer shrink-0 ml-1',
+          title: '复制错误信息',
+          onClick: async (e: MouseEvent) => {
+            e.stopPropagation();
+            try {
+              await copyToClipboard(fullText);
+              message.success({
+                content: '错误信息已复制',
+                duration: 1.5,
+                key: 'copy-toast',
+              });
+            } catch {
+              message.warning({
+                content: '复制失败，请手动选中文本',
+                duration: 1.5,
+                key: 'copy-toast',
+              });
+            }
+          },
+        },
+        [h(Copy, { class: 'size-3.5' })],
+      ),
+    ],
+  );
+}
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 const authURL = (import.meta.env.VITE_GLOB_AUTH_URL as string) || '/auth-server';
@@ -104,36 +178,37 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     errorMessageResponseInterceptor((msg: string, error) => {
       const responseData = error?.response?.data ?? {};
       const abpError = responseData?.error;
-      let errorMsg = '';
+      let title = msg || '请求失败';
+      let detail = '';
 
       if (typeof abpError === 'object' && abpError !== null) {
         if (abpError.message) {
-          errorMsg = abpError.message;
-        }
-        if (abpError.details && abpError.details !== abpError.message) {
-          errorMsg += `\n${abpError.details}`;
+          title = abpError.message;
         }
         if (
           Array.isArray(abpError.validationErrors) &&
           abpError.validationErrors.length > 0
         ) {
-          const valMsgs = abpError.validationErrors
+          detail = abpError.validationErrors
             .map((v: { message?: string }) => v.message)
             .filter(Boolean)
             .join('; ');
-          if (valMsgs) {
-            errorMsg += ` (${valMsgs})`;
-          }
+        } else if (abpError.details && abpError.details !== abpError.message) {
+          detail = abpError.details;
         }
       } else if (responseData?.error_description) {
-        errorMsg = responseData.error_description;
+        title = typeof abpError === 'string' ? abpError : '认证失败';
+        detail = responseData.error_description;
       } else if (typeof abpError === 'string') {
-        errorMsg = abpError;
+        title = abpError;
       } else if (responseData?.message) {
-        errorMsg = responseData.message;
+        title = responseData.message;
       }
 
-      message.error(errorMsg || msg);
+      message.error({
+        content: renderErrorMessageNode(title, detail),
+        duration: 4,
+      });
     }),
   );
 
