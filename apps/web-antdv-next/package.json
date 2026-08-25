@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^5.2.0",
+    "@microsoft/signalr": "catalog:",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
@@ -42,10 +43,15 @@
     "@vben/types": "workspace:*",
     "@vben/utils": "workspace:*",
     "@vueuse/core": "catalog:",
+    "@vueuse/integrations": "catalog:",
     "antdv-next": "catalog:",
     "dayjs": "catalog:",
+    "qrcode": "catalog:",
     "pinia": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@types/qrcode": "catalog:"
   }
 }
