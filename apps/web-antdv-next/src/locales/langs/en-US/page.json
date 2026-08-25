@@ -60,7 +60,7 @@
     "redirectUris": "Redirect URIs",
     "tabBasic": "Basic Config",
     "tabUris": "URIs & Callbacks",
-    "title": "OpenIddict"
+    "title": "OpenIddict Services"
   },
   "permission": {
     "modalTitle": "Permission Management",

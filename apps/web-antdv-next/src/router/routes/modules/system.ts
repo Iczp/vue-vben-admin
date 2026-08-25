@@ -33,26 +33,6 @@ const routes: RouteRecordRaw[] = [
         path: 'roles',
       },
       {
-        component: () => import('#/views/openiddict/application/index.vue'),
-        meta: {
-          authority: ['OpenIddict.Applications', 'admin'],
-          icon: 'lucide:key-round',
-          title: $t('page.openiddict.title', 'OpenIddict 客户端'),
-        },
-        name: 'SystemOpenIddictApps',
-        path: 'openiddict-apps',
-      },
-      {
-        component: () => import('#/views/openiddict/scope/index.vue'),
-        meta: {
-          authority: ['OpenIddict.Scopes', 'admin'],
-          icon: 'lucide:shield-plus',
-          title: 'OpenIddict 作用域',
-        },
-        name: 'SystemOpenIddictScopes',
-        path: 'openiddict-scopes',
-      },
-      {
         component: () => import('#/views/system/audit-log/index.vue'),
         meta: {
           icon: 'lucide:file-search',

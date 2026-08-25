@@ -7,22 +7,27 @@ import { ref } from 'vue';
 import { Page, useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { Button, Input, Modal, message } from 'antdv-next';
+import { Button, Input, message, Modal, Select } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  deleteApplicationApi,
-  getApplicationsApi,
-} from '#/api/openiddict';
+import { deleteApplicationApi, getApplicationsApi } from '#/api/openiddict';
 import { $t } from '#/locales';
 
 import { useColumns } from './data';
 import ApplicationModal from './modules/application-modal.vue';
+import SecretModal from './modules/secret-modal.vue';
 
-const filterText = ref('');
+const keyword = ref('');
+const clientTypeFilter = ref<string | undefined>(undefined);
+const consentTypeFilter = ref<string | undefined>(undefined);
 
 const [AppFormModal, appFormModalApi] = useVbenModal({
   connectedComponent: ApplicationModal,
+  destroyOnClose: true,
+});
+
+const [SecretFormModal, secretFormModalApi] = useVbenModal({
+  connectedComponent: SecretModal,
   destroyOnClose: true,
 });
 
@@ -32,6 +37,10 @@ function onCreate() {
 
 function onEdit(row: ApplicationDto) {
   appFormModalApi.setData(row).open();
+}
+
+function onSetSecret(row: ApplicationDto) {
+  secretFormModalApi.setData(row).open();
 }
 
 function onDelete(row: ApplicationDto) {
@@ -66,6 +75,10 @@ function onActionClick({
       onEdit(row);
       break;
     }
+    case 'set-secret': {
+      onSetSecret(row);
+      break;
+    }
   }
 }
 
@@ -87,13 +100,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page, sorts }) => {
           const skipCount = (page.currentPage - 1) * page.pageSize;
           const maxResultCount = page.pageSize;
+          let sorting: string | undefined;
+          if (sorts && sorts.length > 0 && sorts[0]) {
+            sorting = `${sorts[0].field} ${sorts[0].order}`;
+          }
+
           return await getApplicationsApi({
-            filter: filterText.value || undefined,
+            clientType: clientTypeFilter.value,
+            consentType: consentTypeFilter.value,
+            keyword: keyword.value || undefined,
             maxResultCount,
             skipCount,
+            sorting,
           });
         },
       },
@@ -115,15 +136,39 @@ function refreshGrid() {
 <template>
   <Page auto-content-height>
     <AppFormModal @success="refreshGrid" />
+    <SecretFormModal @success="refreshGrid" />
     <Grid :table-title="$t('page.openiddict.title', '客户端应用列表')">
       <template #toolbar-tools>
         <div class="flex items-center gap-2">
           <Input.Search
-            v-model:value="filterText"
-            :placeholder="$t('common.searchPlaceholder', '关键字搜索...')"
+            v-model:value="keyword"
+            placeholder="搜索客户端 ID 或名称..."
             allow-clear
-            class="w-64"
+            class="w-56"
             @search="refreshGrid"
+          />
+          <Select
+            v-model:value="clientTypeFilter"
+            placeholder="客户端类型"
+            allow-clear
+            class="w-32"
+            :options="[
+              { label: '机密 (Confidential)', value: 'confidential' },
+              { label: '公共 (Public)', value: 'public' },
+            ]"
+            @change="refreshGrid"
+          />
+          <Select
+            v-model:value="consentTypeFilter"
+            placeholder="许可类型"
+            allow-clear
+            class="w-32"
+            :options="[
+              { label: '明确同意', value: 'explicit' },
+              { label: '隐式同意', value: 'implicit' },
+              { label: '系统默认', value: 'systematic' },
+            ]"
+            @change="refreshGrid"
           />
           <Button
             type="primary"

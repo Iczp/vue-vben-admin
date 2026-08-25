@@ -60,7 +60,7 @@
     "redirectUris": "回调地址",
     "tabBasic": "基础配置",
     "tabUris": "回调与重定向",
-    "title": "OpenIddict 客户端"
+    "title": "OpenIddict 认证服务"
   },
   "permission": {
     "modalTitle": "权限管理",
