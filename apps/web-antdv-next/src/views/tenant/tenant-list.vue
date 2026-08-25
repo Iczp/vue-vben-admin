@@ -198,7 +198,6 @@ function refreshGrid() {
           <div class="flex items-center gap-2">
             <Button
               type="primary"
-              v-access="['AbpTenantManagement.Tenants.Create', 'admin']"
               @click="onCreate"
             >
               <Plus class="size-4 mr-1" />

@@ -67,45 +67,20 @@ export async function loginApi(data: AuthApi.LoginParams) {
   authPayload.append('username', username);
   authPayload.append('password', password);
 
-  try {
-    const res = await authRequestClient.post<AuthApi.LoginResult>(
-      DEFAULT_AUTH_TOKEN_PATH,
-      authPayload,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+  const res = await authRequestClient.post<AuthApi.LoginResult>(
+    DEFAULT_AUTH_TOKEN_PATH,
+    authPayload,
+    {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-    );
-    if (res?.access_token || res?.accessToken) {
-      return {
-        accessToken: res.access_token || res.accessToken || '',
-        ...res,
-      };
-    }
-  } catch (error) {
-    console.warn(
-      'OpenIddict token endpoint request failed, attempting fallback API...',
-      error,
-    );
-    // 降级尝试业务服务器 /api/account/login
-    try {
-      return await requestClient.post<AuthApi.LoginResult>(
-        '/account/login',
-        {
-          password,
-          userNameOrEmailAddress: username,
-        },
-      );
-    } catch {
-      return await requestClient.post<AuthApi.LoginResult>('/auth/login', {
-        password,
-        username,
-      });
-    }
-  }
+    },
+  );
 
-  return requestClient.post<AuthApi.LoginResult>('/auth/login', data);
+  return {
+    accessToken: res.access_token || res.accessToken || '',
+    ...res,
+  };
 }
 
 /**

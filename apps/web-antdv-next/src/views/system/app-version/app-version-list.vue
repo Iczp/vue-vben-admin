@@ -163,7 +163,6 @@ function refreshGrid() {
           <div class="flex items-center gap-2">
             <Button
               type="primary"
-              v-access="['Chat.AppVersion', 'admin']"
               @click="onCreate"
             >
               <Plus class="size-4 mr-1" />

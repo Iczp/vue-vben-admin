@@ -191,7 +191,6 @@ function refreshGrid() {
           <div class="flex items-center gap-2">
             <Button
               type="primary"
-              v-access="['OpenIddict.Applications', 'admin']"
               @click="onCreate"
             >
               <Plus class="size-4 mr-1" />

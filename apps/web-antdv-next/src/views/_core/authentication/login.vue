@@ -50,13 +50,13 @@ const formSchema = computed((): VbenFormSchema[] => {
         placeholder: $t('authentication.usernameTip'),
       },
       dependencies: {
-        trigger(values, form) {
+        resolve({ actions, values }) {
           if (values.selectAccount) {
             const findUser = MOCK_USER_OPTIONS.find(
               (item) => item.value === values.selectAccount,
             );
             if (findUser) {
-              form.setValues({
+              actions.setValues({
                 password: '123456',
                 username: findUser.value,
               });

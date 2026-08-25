@@ -125,6 +125,8 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
             errorMsg += ` (${valMsgs})`;
           }
         }
+      } else if (responseData?.error_description) {
+        errorMsg = responseData.error_description;
       } else if (typeof abpError === 'string') {
         errorMsg = abpError;
       } else if (responseData?.message) {
