@@ -219,6 +219,34 @@ setupVbenVxeTable({
       },
     });
 
+    // 跨环境通用剪贴板复制工具函数 (兼容 HTTP / 非安全上下文)
+    function copyToClipboard(text: string) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise<void>((resolve, reject) => {
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          if (successful) {
+            resolve();
+          } else {
+            reject(new Error('execCommand failed'));
+          }
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }
+
     // 可一键复制文本渲染
     vxeUI.renderer.add('CellCopyable', {
       renderTableDefault(_opts, { column, row }) {
@@ -237,10 +265,14 @@ setupVbenVxeTable({
                   {
                     class:
                       'text-gray-400 hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer',
-                    onClick: (e: MouseEvent) => {
+                    onClick: async (e: MouseEvent) => {
                       e.stopPropagation();
-                      navigator.clipboard.writeText(text);
-                      message.success($t('common.copySuccess', '复制成功'));
+                      try {
+                        await copyToClipboard(text);
+                        message.success($t('common.copySuccess', '复制成功'));
+                      } catch {
+                        message.error('复制失败，请手动复制');
+                      }
                     },
                   },
                   [h(Copy, { class: 'size-3.5' })],
