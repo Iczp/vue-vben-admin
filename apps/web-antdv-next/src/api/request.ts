@@ -96,64 +96,149 @@ function renderErrorMessageNode(title: string, detail?: string) {
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 const authURL = (import.meta.env.VITE_GLOB_AUTH_URL as string) || '/auth-server';
 
-function createRequestClient(baseURL: string, options?: RequestClientOptions) {
+import {
+  getAppId,
+  getAppVersion,
+  getDeviceId,
+  getDeviceType,
+} from '#/utils/device';
+
+/**
+ * 重新认证逻辑
+ */
+async function doReAuthenticate() {
+  console.warn('Access token or refresh token is invalid or expired.');
+  const accessStore = useAccessStore();
+  const authStore = useAuthStore();
+  accessStore.setAccessToken(null);
+  if (
+    preferences.app.loginExpiredMode === 'modal' &&
+    accessStore.isAccessChecked
+  ) {
+    accessStore.setLoginExpired(true);
+  } else {
+    await authStore.logout();
+  }
+}
+
+/**
+ * 刷新token逻辑
+ */
+async function doRefreshToken() {
+  const accessStore = useAccessStore();
+  const resp = await refreshTokenApi();
+  const newToken = resp.data;
+  accessStore.setAccessToken(newToken);
+  return newToken;
+}
+
+function formatToken(token: null | string) {
+  return token ? `Bearer ${token}` : null;
+}
+
+/**
+ * 统一 ABP 与 OAuth2 错误弹窗提示
+ */
+function handleUnifiedError(msg: string, error: any) {
+  const responseData = error?.response?.data ?? {};
+  const abpError = responseData?.error;
+  let title = msg || '请求失败';
+  let detail = '';
+
+  if (typeof abpError === 'object' && abpError !== null) {
+    if (abpError.message) {
+      title = abpError.message;
+    }
+    if (
+      Array.isArray(abpError.validationErrors) &&
+      abpError.validationErrors.length > 0
+    ) {
+      detail = abpError.validationErrors
+        .map((v: { message?: string }) => v.message)
+        .filter(Boolean)
+        .join('; ');
+    } else if (abpError.details && abpError.details !== abpError.message) {
+      detail = abpError.details;
+    }
+  } else if (responseData?.error_description) {
+    title = typeof abpError === 'string' ? abpError : '认证失败';
+    detail = responseData.error_description;
+  } else if (typeof abpError === 'string') {
+    title = abpError;
+  } else if (responseData?.message) {
+    title = responseData.message;
+  }
+
+  message.error({
+    content: renderErrorMessageNode(title, detail),
+    duration: 4,
+  });
+}
+
+/**
+ * 为请求客户端统一注入公共 Header
+ * 包含：App-Id、App-Device-Id (浏览器指纹)、App-Device-Type、App-Version、Accept-Language、__tenant
+ */
+function applyCommonHeadersInterceptor(client: RequestClient) {
+  client.addRequestInterceptor({
+    fulfilled: async (config) => {
+      config.headers = config.headers || {};
+
+      const appId = getAppId();
+      const deviceId = await getDeviceId();
+      const deviceType = await getDeviceType();
+      const version = getAppVersion();
+
+      config.headers['App-Id'] = appId;
+      config.headers['App-Device-Id'] = deviceId;
+      config.headers['App-Device-Type'] = deviceType;
+      config.headers['App-Version'] = version;
+
+      if (preferences.app?.locale) {
+        config.headers['Accept-Language'] = preferences.app.locale;
+      }
+
+      const tenantId =
+        localStorage.getItem('__tenant') ||
+        sessionStorage.getItem('__tenant') ||
+        undefined;
+      if (tenantId) {
+        config.headers.__tenant = tenantId;
+      }
+
+      return config;
+    },
+  });
+}
+
+/**
+ * 创建业务 API 请求客户端
+ */
+function createBusinessRequestClient(
+  baseURL: string,
+  options?: RequestClientOptions,
+) {
   const client = new RequestClient({
     ...options,
     baseURL,
   });
 
-  /**
-   * 重新认证逻辑
-   */
-  async function doReAuthenticate() {
-    console.warn('Access token or refresh token is invalid or expired.');
-    const accessStore = useAccessStore();
-    const authStore = useAuthStore();
-    accessStore.setAccessToken(null);
-    if (
-      preferences.app.loginExpiredMode === 'modal' &&
-      accessStore.isAccessChecked
-    ) {
-      accessStore.setLoginExpired(true);
-    } else {
-      await authStore.logout();
-    }
-  }
+  // 1. 注入公共设备指纹与租户等 Headers
+  applyCommonHeadersInterceptor(client);
 
-  /**
-   * 刷新token逻辑
-   */
-  async function doRefreshToken() {
-    const accessStore = useAccessStore();
-    const resp = await refreshTokenApi();
-    const newToken = resp.data;
-    accessStore.setAccessToken(newToken);
-    return newToken;
-  }
-
-  function formatToken(token: null | string) {
-    return token ? `Bearer ${token}` : null;
-  }
-
-  // 请求头处理：注入 Token、Accept-Language 和 __tenant 租户头
+  // 2. 自动注入 Authorization Bearer Token
   client.addRequestInterceptor({
     fulfilled: async (config) => {
       const accessStore = useAccessStore();
-      const tenantId =
-        localStorage.getItem('__tenant') ||
-        sessionStorage.getItem('__tenant') ||
-        undefined;
-
-      config.headers.Authorization = formatToken(accessStore.accessToken);
-      config.headers['Accept-Language'] = preferences.app.locale;
-      if (tenantId) {
-        config.headers.__tenant = tenantId;
+      const token = formatToken(accessStore.accessToken);
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = token;
       }
       return config;
     },
   });
 
-  // 处理返回的响应数据格式：适配 ABP REST 响应与常规返回
+  // 3. 响应数据格式处理 (适配 ABP REST 响应与常规格式)
   client.addResponseInterceptor(
     defaultResponseInterceptor({
       codeField: 'code',
@@ -162,7 +247,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     }),
   );
 
-  // token过期的处理
+  // 4. 401 Token 无感刷新与重新认证
   client.addResponseInterceptor(
     authenticateResponseInterceptor({
       client,
@@ -173,60 +258,90 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     }),
   );
 
-  // ABP 统一错误处理拦截器
+  // 5. ABP 统一错误处理拦截器
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
-      const responseData = error?.response?.data ?? {};
-      const abpError = responseData?.error;
-      let title = msg || '请求失败';
-      let detail = '';
-
-      if (typeof abpError === 'object' && abpError !== null) {
-        if (abpError.message) {
-          title = abpError.message;
-        }
-        if (
-          Array.isArray(abpError.validationErrors) &&
-          abpError.validationErrors.length > 0
-        ) {
-          detail = abpError.validationErrors
-            .map((v: { message?: string }) => v.message)
-            .filter(Boolean)
-            .join('; ');
-        } else if (abpError.details && abpError.details !== abpError.message) {
-          detail = abpError.details;
-        }
-      } else if (responseData?.error_description) {
-        title = typeof abpError === 'string' ? abpError : '认证失败';
-        detail = responseData.error_description;
-      } else if (typeof abpError === 'string') {
-        title = abpError;
-      } else if (responseData?.message) {
-        title = responseData.message;
-      }
-
-      message.error({
-        content: renderErrorMessageNode(title, detail),
-        duration: 4,
-      });
+      handleUnifiedError(msg, error);
     }),
   );
 
   return client;
 }
 
+/**
+ * 创建 Auth 认证请求客户端
+ * (专门对接 OpenIddict /connect/token /connect/userinfo 等认证端点，严格禁用 401 自动刷新以避免死循环)
+ */
+function createAuthRequestClient(
+  baseURL: string,
+  options?: RequestClientOptions,
+) {
+  const client = new RequestClient({
+    ...options,
+    baseURL,
+  });
+
+  // 1. 注入公共设备指纹与租户等 Headers
+  applyCommonHeadersInterceptor(client);
+
+  // 2. Auth 请求按需注入已有 Token (例如 /connect/userinfo)
+  client.addRequestInterceptor({
+    fulfilled: async (config) => {
+      const accessStore = useAccessStore();
+      const token = formatToken(accessStore.accessToken);
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = token;
+      }
+      return config;
+    },
+  });
+
+  // 3. 响应数据格式处理
+  client.addResponseInterceptor(
+    defaultResponseInterceptor({
+      codeField: 'code',
+      dataField: (res) => (res && res.data !== undefined ? res.data : res),
+      successCode: (code) => code === 0 || code === 200 || code === undefined,
+    }),
+  );
+
+  // 4. 认证专用统一错误处理拦截器 (不添加 authenticateResponseInterceptor)
+  client.addResponseInterceptor(
+    errorMessageResponseInterceptor((msg: string, error) => {
+      handleUnifiedError(msg, error);
+    }),
+  );
+
+  return client;
+}
+
+/**
+ * 创建基础客户端 (带公共 Headers 注入)
+ */
+function createBaseRequestClient(
+  baseURL: string,
+  options?: RequestClientOptions,
+) {
+  const client = new RequestClient({
+    ...options,
+    baseURL,
+  });
+  applyCommonHeadersInterceptor(client);
+  return client;
+}
+
 // 业务 API 请求客户端 (基准前缀 /api)
-export const requestClient = createRequestClient(apiURL, {
+export const requestClient = createBusinessRequestClient(apiURL, {
   responseReturn: 'body',
 });
 
 // 基础 API 请求客户端
-export const baseRequestClient = new RequestClient({ baseURL: apiURL });
+export const baseRequestClient = createBaseRequestClient(apiURL);
 
 // OpenIddict 认证服务器请求客户端 (基准前缀 /auth-server 或 /connect)
-export const authRequestClient = createRequestClient(authURL, {
+export const authRequestClient = createAuthRequestClient(authURL, {
   responseReturn: 'body',
 });
 
 // 基础认证请求客户端
-export const authBaseRequestClient = new RequestClient({ baseURL: authURL });
+export const authBaseRequestClient = createBaseRequestClient(authURL);
