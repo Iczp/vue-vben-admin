@@ -445,24 +445,38 @@ const {
     <PermModal />
 
     <!-- 自动渲染数据网格 -->
-    <Grid table-title="角色管理">
-      <template #toolbar-tools>
-        <div class="flex items-center gap-2">
-          <Input.Search
-            v-model:value="queryParams.filter"
-            placeholder="按角色名检索..."
-            allow-clear
-            class="w-64"
-            @search="refresh"
-          />
-          <Button
-            type="primary"
-            v-access="['AbpIdentity.Roles.Create']"
-            @click="onCreate"
-          >
-            <Plus class="size-4 mr-1" />
-            新建角色
-          </Button>
+    <Grid>
+      <!-- 第一行左侧：面包屑与标题；第一行右侧自动由 VXE Grid 工具栏呈现（刷新、全屏、列个性化设置） -->
+      <template #table-title>
+        <div class="flex items-center gap-1.5 text-sm font-medium">
+          <span class="text-muted-foreground">系统管理</span>
+          <span class="text-muted-foreground/60">/</span>
+          <span class="font-bold text-base text-foreground">角色列表</span>
+        </div>
+      </template>
+
+      <!-- 第二行：左侧搜索表单，右侧操作按钮 -->
+      <template #top>
+        <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <Input.Search
+              v-model:value="queryParams.filter"
+              placeholder="按角色名检索..."
+              allow-clear
+              class="w-64"
+              @search="refresh"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <Button
+              type="primary"
+              v-access="['AbpIdentity.Roles.Create']"
+              @click="onCreate"
+            >
+              <Plus class="size-4 mr-1" />
+              新建角色
+            </Button>
+          </div>
         </div>
       </template>
     </Grid>

@@ -6,7 +6,7 @@ import { ref } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 
-import { Input, Modal, message, Select } from 'antdv-next';
+import { Input, message, Modal, Select } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDeviceApi, getDevicesApi } from '#/api/device';
@@ -61,7 +61,11 @@ function onActionClick({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  gridEvents: {},
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onEdit(params.row as DeviceDto);
+    },
+  },
   gridOptions: {
     columns: useColumns(onActionClick),
     height: 'auto',
@@ -109,30 +113,48 @@ function refreshGrid() {
 <template>
   <Page auto-content-height>
     <DeviceFormModal @success="refreshGrid" />
-    <Grid title="登录设备与安全监控">
-      <template #toolbar-tools>
-        <div class="flex items-center gap-2">
-          <Input.Search
-            v-model:value="filterText"
-            placeholder="搜索设备备注或 UUID..."
-            allow-clear
-            class="w-60"
-            @search="refreshGrid"
-          />
-          <Select
-            v-model:value="platformFilter"
-            placeholder="平台筛选"
-            allow-clear
-            class="w-32"
-            :options="[
-              { label: 'Android', value: 'android' },
-              { label: 'iOS', value: 'ios' },
-              { label: 'Windows', value: 'windows' },
-              { label: 'macOS', value: 'macos' },
-              { label: 'Web/H5', value: 'web' },
-            ]"
-            @change="refreshGrid"
-          />
+    <Grid>
+      <!-- 第一行左侧：面包屑与标题 -->
+      <template #table-title>
+        <div class="flex items-center gap-1.5 text-sm font-medium">
+          <span class="text-muted-foreground">{{
+            $t('page.system.title', '系统管理')
+          }}</span>
+          <span class="text-muted-foreground/60">/</span>
+          <span class="font-bold text-base text-foreground"
+            >登录设备与安全监控</span
+          >
+        </div>
+      </template>
+
+      <!-- 第二行：左侧搜索表单 -->
+      <template #top>
+        <div
+          class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1"
+        >
+          <div class="flex items-center gap-2 flex-wrap">
+            <Input.Search
+              v-model:value="filterText"
+              placeholder="搜索设备备注或 UUID..."
+              allow-clear
+              class="w-60"
+              @search="refreshGrid"
+            />
+            <Select
+              v-model:value="platformFilter"
+              placeholder="平台筛选"
+              allow-clear
+              class="w-32"
+              :options="[
+                { label: 'Android', value: 'android' },
+                { label: 'iOS', value: 'ios' },
+                { label: 'Windows', value: 'windows' },
+                { label: 'macOS', value: 'macos' },
+                { label: 'Web/H5', value: 'web' },
+              ]"
+              @change="refreshGrid"
+            />
+          </div>
         </div>
       </template>
     </Grid>

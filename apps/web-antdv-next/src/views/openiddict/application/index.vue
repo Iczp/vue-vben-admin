@@ -137,47 +137,67 @@ function refreshGrid() {
   <Page auto-content-height>
     <AppFormModal @success="refreshGrid" />
     <SecretFormModal @success="refreshGrid" />
-    <Grid :table-title="$t('page.openiddict.title', '客户端应用列表')">
-      <template #toolbar-tools>
-        <div class="flex items-center gap-2">
-          <Input.Search
-            v-model:value="keyword"
-            placeholder="搜索客户端 ID 或名称..."
-            allow-clear
-            class="w-56"
-            @search="refreshGrid"
-          />
-          <Select
-            v-model:value="clientTypeFilter"
-            placeholder="客户端类型"
-            allow-clear
-            class="w-32"
-            :options="[
-              { label: '机密 (Confidential)', value: 'confidential' },
-              { label: '公共 (Public)', value: 'public' },
-            ]"
-            @change="refreshGrid"
-          />
-          <Select
-            v-model:value="consentTypeFilter"
-            placeholder="许可类型"
-            allow-clear
-            class="w-32"
-            :options="[
-              { label: '明确同意', value: 'explicit' },
-              { label: '隐式同意', value: 'implicit' },
-              { label: '系统默认', value: 'systematic' },
-            ]"
-            @change="refreshGrid"
-          />
-          <Button
-            type="primary"
-            v-access="['OpenIddict.Applications', 'admin']"
-            @click="onCreate"
-          >
-            <Plus class="size-4 mr-1" />
-            {{ $t('common.create', '新建应用') }}
-          </Button>
+    <Grid>
+      <!-- 第一行左侧：面包屑与标题 -->
+      <template #table-title>
+        <div class="flex items-center gap-1.5 text-sm font-medium">
+          <span class="text-muted-foreground">{{
+            $t('page.openiddict.title', 'OpenIddict 认证服务')
+          }}</span>
+          <span class="text-muted-foreground/60">/</span>
+          <span class="font-bold text-base text-foreground">{{
+            $t('page.openiddict.applications', '客户端应用管理')
+          }}</span>
+        </div>
+      </template>
+
+      <!-- 第二行：左侧搜索表单，右侧操作按钮 -->
+      <template #top>
+        <div
+          class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1"
+        >
+          <div class="flex items-center gap-2 flex-wrap">
+            <Input.Search
+              v-model:value="keyword"
+              placeholder="搜索客户端 ID 或名称..."
+              allow-clear
+              class="w-56"
+              @search="refreshGrid"
+            />
+            <Select
+              v-model:value="clientTypeFilter"
+              placeholder="客户端类型"
+              allow-clear
+              class="w-36"
+              :options="[
+                { label: '机密 (Confidential)', value: 'confidential' },
+                { label: '公共 (Public)', value: 'public' },
+              ]"
+              @change="refreshGrid"
+            />
+            <Select
+              v-model:value="consentTypeFilter"
+              placeholder="许可类型"
+              allow-clear
+              class="w-32"
+              :options="[
+                { label: '明确同意', value: 'explicit' },
+                { label: '隐式同意', value: 'implicit' },
+                { label: '系统默认', value: 'systematic' },
+              ]"
+              @change="refreshGrid"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <Button
+              type="primary"
+              v-access="['OpenIddict.Applications', 'admin']"
+              @click="onCreate"
+            >
+              <Plus class="size-4 mr-1" />
+              {{ $t('common.create', '新建应用') }}
+            </Button>
+          </div>
         </div>
       </template>
     </Grid>

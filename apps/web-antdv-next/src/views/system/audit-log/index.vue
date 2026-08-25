@@ -63,8 +63,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           const maxResultCount = page.pageSize;
           let sorting: string | undefined;
           if (sorts && sorts.length > 0 && sorts[0]) {
-            const s = sorts[0];
-            sorting = `${s.field} ${s.order}`;
+            sorting = `${sorts[0].field} ${sorts[0].order}`;
           }
 
           const hasException =
@@ -102,40 +101,58 @@ function refreshGrid() {
 <template>
   <Page auto-content-height>
     <DetailModal />
-    <Grid :table-title="$t('page.system.log.auditTitle', '审计日志与实体变更')">
-      <template #toolbar-tools>
-        <div class="flex items-center gap-2 flex-wrap">
-          <Input.Search
-            v-model:value="urlFilter"
-            placeholder="按请求 URL 检索..."
-            allow-clear
-            class="w-56"
-            @search="refreshGrid"
-          />
-          <Select
-            v-model:value="methodFilter"
-            placeholder="请求方法"
-            allow-clear
-            class="w-28"
-            :options="[
-              { label: 'GET', value: 'GET' },
-              { label: 'POST', value: 'POST' },
-              { label: 'PUT', value: 'PUT' },
-              { label: 'DELETE', value: 'DELETE' },
-            ]"
-            @change="refreshGrid"
-          />
-          <Select
-            v-model:value="hasExceptionFilter"
-            placeholder="异常状态"
-            allow-clear
-            class="w-28"
-            :options="[
-              { label: '仅异常', value: 'true' },
-              { label: '仅正常', value: 'false' },
-            ]"
-            @change="refreshGrid"
-          />
+    <Grid>
+      <!-- 第一行左侧：面包屑与标题 -->
+      <template #table-title>
+        <div class="flex items-center gap-1.5 text-sm font-medium">
+          <span class="text-muted-foreground">{{
+            $t('page.system.title', '系统管理')
+          }}</span>
+          <span class="text-muted-foreground/60">/</span>
+          <span class="font-bold text-base text-foreground">{{
+            $t('page.system.log.auditTitle', '系统审计日志与实体变更')
+          }}</span>
+        </div>
+      </template>
+
+      <!-- 第二行：左侧搜索表单 -->
+      <template #top>
+        <div
+          class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1"
+        >
+          <div class="flex items-center gap-2 flex-wrap">
+            <Input.Search
+              v-model:value="urlFilter"
+              placeholder="按请求 URL 检索..."
+              allow-clear
+              class="w-56"
+              @search="refreshGrid"
+            />
+            <Select
+              v-model:value="methodFilter"
+              placeholder="请求方法"
+              allow-clear
+              class="w-28"
+              :options="[
+                { label: 'GET', value: 'GET' },
+                { label: 'POST', value: 'POST' },
+                { label: 'PUT', value: 'PUT' },
+                { label: 'DELETE', value: 'DELETE' },
+              ]"
+              @change="refreshGrid"
+            />
+            <Select
+              v-model:value="hasExceptionFilter"
+              placeholder="异常状态"
+              allow-clear
+              class="w-28"
+              :options="[
+                { label: '仅异常', value: 'true' },
+                { label: '仅正常', value: 'false' },
+              ]"
+              @change="refreshGrid"
+            />
+          </div>
         </div>
       </template>
     </Grid>

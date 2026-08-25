@@ -94,27 +94,45 @@ function refreshGrid() {
 
 <template>
   <Page auto-content-height>
-    <Grid title="OpenIddict 授权记录 (Authorizations)">
-      <template #toolbar-tools>
-        <div class="flex items-center gap-2">
-          <Input.Search
-            v-model:value="subjectFilter"
-            placeholder="搜索授权主体 (Subject)..."
-            allow-clear
-            class="w-60"
-            @search="refreshGrid"
-          />
-          <Select
-            v-model:value="statusFilter"
-            placeholder="状态筛选"
-            allow-clear
-            class="w-32"
-            :options="[
-              { label: '有效 (valid)', value: 'valid' },
-              { label: '已撤销 (revoked)', value: 'revoked' },
-            ]"
-            @change="refreshGrid"
-          />
+    <Grid>
+      <!-- 第一行左侧：面包屑与标题 -->
+      <template #table-title>
+        <div class="flex items-center gap-1.5 text-sm font-medium">
+          <span class="text-muted-foreground">{{
+            $t('page.openiddict.title', 'OpenIddict 认证服务')
+          }}</span>
+          <span class="text-muted-foreground/60">/</span>
+          <span class="font-bold text-base text-foreground"
+            >授权记录管理 (Authorizations)</span
+          >
+        </div>
+      </template>
+
+      <!-- 第二行：左侧搜索表单 -->
+      <template #top>
+        <div
+          class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1"
+        >
+          <div class="flex items-center gap-2 flex-wrap">
+            <Input.Search
+              v-model:value="subjectFilter"
+              placeholder="搜索授权主体 (Subject)..."
+              allow-clear
+              class="w-60"
+              @search="refreshGrid"
+            />
+            <Select
+              v-model:value="statusFilter"
+              placeholder="状态筛选"
+              allow-clear
+              class="w-32"
+              :options="[
+                { label: '有效 (valid)', value: 'valid' },
+                { label: '已撤销 (revoked)', value: 'revoked' },
+              ]"
+              @change="refreshGrid"
+            />
+          </div>
         </div>
       </template>
     </Grid>
