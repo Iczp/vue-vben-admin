@@ -5,20 +5,19 @@ import { $t } from '#/locales';
 const routes: RouteRecordRaw[] = [
   {
     meta: {
-      authority: ['AbpTenantManagement.Tenants'],
-      icon: 'lucide:building-2',
+      icon: 'lucide:hotel',
       order: 20,
       title: $t('page.tenant.title', '多租户管理'),
     },
     name: 'TenantManagement',
-    path: '/tenants',
+    path: '/tenant',
     children: [
       {
-        component: () => import('#/views/tenant/index.vue'),
+        component: () => import('#/views/tenant/tenant-list.vue'),
         meta: {
-          authority: ['AbpTenantManagement.Tenants'],
-          icon: 'lucide:building',
-          title: $t('page.tenant.title', '租户列表'),
+          authority: ['AbpTenantManagement.Tenants', 'admin'],
+          icon: 'lucide:hotel',
+          title: $t('page.tenant.title', '多租户列表'),
         },
         name: 'TenantList',
         path: 'list',

@@ -27,11 +27,12 @@ src/
 │       └── [entity].ts           # RESTful 接口调用 (get, create, update, delete, list)
 └── views/
     └── [module]/
-        └── [entity]/             # 业务视图目录
+        └── [entity]/             # 业务视图目录 (避免通用 index.vue 导致 IDE 标签难以区分)
             ├── data.ts           # 纯 JSON 表格列定义 (VxeTableGridColumns)
-            ├── index.vue         # 列表检索与工具栏组装页 (使用 useAbpCrud)
+            ├── [entity]-list.vue # 具名业务主列表页 (例如 user-list.vue, role-list.vue)
+            ├── index.vue         # 导出转发 (export { default } from './[entity]-list.vue')
             └── modules/
-                └── [entity]-modal.vue  # 新增 / 编辑表单弹窗 (使用 useVbenModal)
+                └── [entity]-modal.vue  # 业务表单弹窗 (使用 useVbenModal)
 ```
 
 ---

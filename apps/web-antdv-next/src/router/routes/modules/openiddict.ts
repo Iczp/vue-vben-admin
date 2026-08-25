@@ -14,7 +14,8 @@ const routes: RouteRecordRaw[] = [
     path: '/openiddict',
     children: [
       {
-        component: () => import('#/views/openiddict/application/index.vue'),
+        component: () =>
+          import('#/views/openiddict/application/application-list.vue'),
         meta: {
           authority: ['OpenIddict.Applications', 'admin'],
           icon: 'lucide:app-window',
@@ -24,7 +25,7 @@ const routes: RouteRecordRaw[] = [
         path: 'applications',
       },
       {
-        component: () => import('#/views/openiddict/scope/index.vue'),
+        component: () => import('#/views/openiddict/scope/scope-list.vue'),
         meta: {
           authority: ['OpenIddict.Scopes', 'admin'],
           icon: 'lucide:shield-plus',
@@ -34,7 +35,8 @@ const routes: RouteRecordRaw[] = [
         path: 'scopes',
       },
       {
-        component: () => import('#/views/openiddict/authorization/index.vue'),
+        component: () =>
+          import('#/views/openiddict/authorization/authorization-list.vue'),
         meta: {
           authority: ['OpenIddict.Authorizations', 'admin'],
           icon: 'lucide:key-round',
@@ -44,7 +46,7 @@ const routes: RouteRecordRaw[] = [
         path: 'authorizations',
       },
       {
-        component: () => import('#/views/openiddict/token/index.vue'),
+        component: () => import('#/views/openiddict/token/token-list.vue'),
         meta: {
           authority: ['OpenIddict.Tokens', 'admin'],
           icon: 'lucide:ticket',

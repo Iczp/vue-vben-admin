@@ -13,7 +13,7 @@ const routes: RouteRecordRaw[] = [
     path: '/system',
     children: [
       {
-        component: () => import('#/views/identity/user/index.vue'),
+        component: () => import('#/views/identity/user/user-list.vue'),
         meta: {
           authority: ['AbpIdentity.Users', 'admin'],
           icon: 'lucide:users',
@@ -23,7 +23,7 @@ const routes: RouteRecordRaw[] = [
         path: 'users',
       },
       {
-        component: () => import('#/views/identity/role/index.vue'),
+        component: () => import('#/views/identity/role/role-list.vue'),
         meta: {
           authority: ['AbpIdentity.Roles', 'admin'],
           icon: 'lucide:user-check',
@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
         path: 'roles',
       },
       {
-        component: () => import('#/views/system/audit-log/index.vue'),
+        component: () => import('#/views/system/audit-log/audit-log-list.vue'),
         meta: {
           icon: 'lucide:file-search',
           title: $t('page.system.log.auditTitle', '系统审计日志'),
@@ -42,7 +42,8 @@ const routes: RouteRecordRaw[] = [
         path: 'audit-logs',
       },
       {
-        component: () => import('#/views/system/security-log/index.vue'),
+        component: () =>
+          import('#/views/system/security-log/security-log-list.vue'),
         meta: {
           icon: 'lucide:shield-alert',
           title: $t('page.system.log.title', '安全登录日志'),
@@ -51,7 +52,7 @@ const routes: RouteRecordRaw[] = [
         path: 'security-logs',
       },
       {
-        component: () => import('#/views/system/device/index.vue'),
+        component: () => import('#/views/system/device/device-list.vue'),
         meta: {
           icon: 'lucide:smartphone',
           title: '登录设备管理',
@@ -60,7 +61,8 @@ const routes: RouteRecordRaw[] = [
         path: 'devices',
       },
       {
-        component: () => import('#/views/system/app-version/index.vue'),
+        component: () =>
+          import('#/views/system/app-version/app-version-list.vue'),
         meta: {
           icon: 'lucide:download-cloud',
           title: 'App 版本管理',
@@ -69,7 +71,7 @@ const routes: RouteRecordRaw[] = [
         path: 'app-versions',
       },
       {
-        component: () => import('#/views/system/settings/index.vue'),
+        component: () => import('#/views/system/settings/system-settings.vue'),
         meta: {
           authority: ['SettingManagement.Emailing', 'admin'],
           icon: 'lucide:sliders',
