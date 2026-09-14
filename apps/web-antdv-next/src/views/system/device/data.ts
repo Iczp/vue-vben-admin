@@ -93,6 +93,7 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
+          { code: 'detail', text: '查看' },
           { code: 'edit', text: $t('common.edit', '编辑') },
           { code: 'set-groups', text: '分组' },
           { code: 'delete', text: '下线' },
@@ -101,7 +102,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: $t('common.action', '操作'),
-      width: 150,
+      width: 180,
     },
   ];
 }

@@ -26,7 +26,64 @@ export interface DeviceDto {
   userName?: string;
 }
 
+export interface DeviceDetailDto extends DeviceDto {
+  app?: string;
+  appLanguage?: string;
+  appName?: string;
+  appPlatform?: string;
+  appVersion?: string;
+  appVersionCode?: number;
+  appWgtVersion?: string;
+  bluetoothEnabled?: boolean;
+  browserName?: string;
+  browserVersion?: string;
+  cacheLocation?: string;
+  deviceOrientation?: string;
+  devicePixelRatio?: number;
+  fontSizeSetting?: number;
+  host?: string;
+  hostFontSizeSetting?: string;
+  hostLanguage?: string;
+  hostName?: string;
+  hostPackageName?: string;
+  hostSdkVersion?: string;
+  hostTheme?: string;
+  hostVersion?: string;
+  language?: string;
+  locationEnabled?: boolean;
+  navigationBarHeight?: number;
+  osLanguage?: string;
+  osName?: string;
+  osTheme?: string;
+  osVersion?: string;
+  pixelRatio?: number;
+  remarks?: string;
+  romName?: string;
+  romVersion?: string;
+  safeArea?: string;
+  safeAreaInsets?: string;
+  screenHeight?: number;
+  screenWidth?: number;
+  sdkVersion?: string;
+  statusBarHeight?: number;
+  storage?: string;
+  swanNativeVersion?: string;
+  theme?: string;
+  titleBarHeight?: number;
+  ua?: string;
+  uniCompileVersion?: string;
+  uniPlatform?: string;
+  uniRuntimeVersion?: string;
+  version?: string;
+  wifiEnabled?: boolean;
+  windowBottom?: number;
+  windowHeight?: number;
+  windowTop?: number;
+  windowWidth?: number;
+}
+
 export interface DeviceCreateInput {
+  appId?: string;
   appVersion?: string;
   brand?: string;
   deviceId: string;
@@ -36,6 +93,7 @@ export interface DeviceCreateInput {
   model?: string;
   name?: string;
   platform?: string;
+  remarks?: string;
   systemVersion?: string;
 }
 
@@ -93,24 +151,24 @@ export async function getDevicesApi(params?: GetDeviceInput) {
 }
 
 /**
- * 获取设备详情
+ * 获取设备详情 (GET /api/chat/device/{id})
  */
 export async function getDeviceApi(id: string) {
-  return requestClient.get<DeviceDto>(`/chat/device/${id}`);
+  return requestClient.get<DeviceDetailDto>(`/chat/device/${id}`);
 }
 
 /**
- * 新增设备
+ * 新增设备 (POST /api/chat/device)
  */
 export async function createDeviceApi(data: DeviceCreateInput) {
-  return requestClient.post<DeviceDto>('/chat/device', data);
+  return requestClient.post<DeviceDetailDto>('/chat/device', data);
 }
 
 /**
- * 更新设备信息
+ * 更新设备信息 (POST /api/chat/device/{id}/update)
  */
 export async function updateDeviceApi(id: string, data: DeviceUpdateInput) {
-  return requestClient.post<DeviceDto>(`/chat/device/${id}/update`, data);
+  return requestClient.post<DeviceDetailDto>(`/chat/device/${id}/update`, data);
 }
 
 /**
