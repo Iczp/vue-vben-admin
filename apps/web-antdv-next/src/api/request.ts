@@ -20,6 +20,12 @@ import { message } from 'antdv-next';
 
 import { useAuthStore } from '#/store';
 import { copyToClipboard } from '#/utils/clipboard';
+import {
+  getAppId,
+  getAppVersion,
+  getDeviceId,
+  getDeviceType,
+} from '#/utils/device';
 
 import { refreshTokenApi } from './core';
 
@@ -99,12 +105,6 @@ const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 const authURL =
   (import.meta.env.VITE_GLOB_AUTH_URL as string) || '/auth-server';
 
-import {
-  getAppId,
-  getAppVersion,
-  getDeviceId,
-  getDeviceType,
-} from '#/utils/device';
 
 /**
  * 重新认证逻辑

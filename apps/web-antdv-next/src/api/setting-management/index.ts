@@ -47,17 +47,14 @@ export async function getEmailSettingsApi() {
  * 更新邮件配置
  */
 export async function updateEmailSettingsApi(data: UpdateEmailSettingsDto) {
-  return requestClient.post<void>('/setting-management/emailing', data);
+  return requestClient.post('/setting-management/emailing', data);
 }
 
 /**
  * 发送测试邮件
  */
 export async function sendTestEmailApi(data: SendTestEmailInput) {
-  return requestClient.post<void>(
-    '/setting-management/emailing/send-test-email',
-    data,
-  );
+  return requestClient.post('/setting-management/emailing/send-test-email', data);
 }
 
 /**
@@ -71,7 +68,7 @@ export async function getTimezoneApi() {
  * 设置系统时区
  */
 export async function setTimezoneApi(timezone: string) {
-  return requestClient.post<void>(
+  return requestClient.post(
     `/setting-management/timezone?timezone=${encodeURIComponent(timezone)}`,
   );
 }

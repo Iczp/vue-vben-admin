@@ -11,9 +11,13 @@ export function useColumns(
 ): VxeTableGridColumns<DeviceDto> {
   return [
     {
+      type: 'checkbox',
+      width: 50,
+    },
+    {
       title: '#',
       type: 'seq',
-      width: 60,
+      width: 50,
     },
     {
       cellRender: {
@@ -39,13 +43,13 @@ export function useColumns(
     {
       field: 'brand',
       formatter: 'formatEmpty',
-      minWidth: 100,
+      minWidth: 90,
       title: '品牌',
     },
     {
       field: 'model',
       formatter: 'formatEmpty',
-      minWidth: 120,
+      minWidth: 110,
       title: '型号',
     },
     {
@@ -53,13 +57,13 @@ export function useColumns(
         name: 'CellCopyable',
       },
       field: 'deviceId',
-      minWidth: 200,
+      minWidth: 190,
       title: '设备 UUID / ID',
     },
     {
       field: 'userName',
       formatter: 'formatEmpty',
-      minWidth: 120,
+      minWidth: 110,
       title: '登录账号',
     },
     {
@@ -72,13 +76,13 @@ export function useColumns(
       },
       field: 'isEnabled',
       title: '授权状态',
-      width: 100,
+      width: 95,
     },
     {
       field: 'lastActiveTime',
       formatter: 'formatDateTime',
       title: '最后活跃时间',
-      width: 170,
+      width: 165,
     },
     {
       cellRender: {
@@ -90,13 +94,14 @@ export function useColumns(
         name: 'CellOperation',
         options: [
           { code: 'edit', text: $t('common.edit', '编辑') },
-          { code: 'delete', text: '强制下线' },
+          { code: 'set-groups', text: '分组' },
+          { code: 'delete', text: '下线' },
         ],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action', '操作'),
-      width: 140,
+      width: 150,
     },
   ];
 }
