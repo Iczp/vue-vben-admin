@@ -5,13 +5,7 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Checkbox,
-  Input,
-  InputNumber,
-  message,
-  Select,
-} from 'antdv-next';
+import { Checkbox, Input, InputNumber, message, Select } from 'antdv-next';
 
 import { createAppVersionApi, updateAppVersionApi } from '#/api/app-version';
 import { $t } from '#/locales';
@@ -67,18 +61,18 @@ const [Modal, modalApi] = useVbenModal<AppVersionDto | null>({
     try {
       modalApi.lock();
       const payload = {
-        appId: appId.value,
-        content: content.value,
-        isEnabled: isEnabled.value,
-        isForce: isForce.value,
-        isPublic: isPublic.value,
-        isWidget: isWidget.value,
-        pageUrl: pageUrl.value,
-        pkgUrl: pkgUrl.value,
-        platform: platform.value,
+        appId: appId.value?.trim() || 'chat-app',
+        content: content.value || '',
+        isEnabled: Boolean(isEnabled.value),
+        isForce: Boolean(isForce.value),
+        isPublic: Boolean(isPublic.value),
+        isWidget: Boolean(isWidget.value),
+        pageUrl: pageUrl.value || '',
+        pkgUrl: pkgUrl.value || '',
+        platform: platform.value || 'android',
         title: title.value.trim(),
         version: version.value.trim(),
-        versionCode: versionCode.value,
+        versionCode: Number(versionCode.value) || 0,
       };
 
       if (isEdit.value && versionModel.value?.id) {
@@ -172,7 +166,10 @@ defineExpose({ modalApi });
         <div class="mb-1 font-medium">
           <span class="text-red-500">*</span> 更新标题
         </div>
-        <Input v-model:value="title" placeholder="如：V1.2.0 重磅更新，优化聊天性能" />
+        <Input
+          v-model:value="title"
+          placeholder="如：V1.2.0 重磅更新，优化聊天性能"
+        />
       </div>
 
       <div>
@@ -186,12 +183,18 @@ defineExpose({ modalApi });
 
       <div>
         <div class="mb-1 font-medium">安装包下载地址 (Package URL)</div>
-        <Input v-model:value="pkgUrl" placeholder="如：https://download.example.com/app-v1.2.0.apk" />
+        <Input
+          v-model:value="pkgUrl"
+          placeholder="如：https://download.example.com/app-v1.2.0.apk"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium">更新页面地址 (Web Page URL)</div>
-        <Input v-model:value="pageUrl" placeholder="选填，如：https://example.com/download" />
+        <Input
+          v-model:value="pageUrl"
+          placeholder="选填，如：https://example.com/download"
+        />
       </div>
 
       <div class="grid grid-cols-2 gap-3 pt-2">

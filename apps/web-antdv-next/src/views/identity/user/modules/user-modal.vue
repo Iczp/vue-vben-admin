@@ -20,6 +20,7 @@ import {
 import {
   createUserApi,
   getAssignableRolesApi,
+  getUserApi,
   getUserRolesApi,
   updateUserApi,
 } from '#/api/identity';
@@ -29,7 +30,7 @@ const emit = defineEmits(['success']);
 
 const activeTab = ref('basic');
 const loading = ref(false);
-const userModel = ref<null | IdentityUserDto>(null);
+const userModel = ref<IdentityUserDto | null>(null);
 
 // 表单字段
 const userName = ref('');
@@ -78,7 +79,9 @@ const [Modal, modalApi] = useVbenModal<IdentityUserDto | null>({
       return;
     }
     if (!isEdit.value && !password.value) {
-      message.error($t('page.identity.user.passwordRequired', '请输入登录密码'));
+      message.error(
+        $t('page.identity.user.passwordRequired', '请输入登录密码'),
+      );
       activeTab.value = 'basic';
       return;
     }
@@ -114,6 +117,8 @@ const [Modal, modalApi] = useVbenModal<IdentityUserDto | null>({
       message.success($t('common.saveSuccess', '保存成功'));
       modalApi.close();
       emit('success');
+    } catch {
+      // 错误已由全局响应拦截器统一提示
     } finally {
       modalApi.lock(false);
     }
@@ -121,7 +126,8 @@ const [Modal, modalApi] = useVbenModal<IdentityUserDto | null>({
   async onOpenChange(isOpen) {
     if (isOpen) {
       resetState();
-      userModel.value = modalApi.getData() || null;
+      const initialData = modalApi.getData() || null;
+      userModel.value = initialData;
 
       loading.value = true;
       try {
@@ -129,18 +135,33 @@ const [Modal, modalApi] = useVbenModal<IdentityUserDto | null>({
         const rolesRes = await getAssignableRolesApi();
         assignableRoles.value = rolesRes.items || [];
 
-        if (userModel.value?.id) {
-          userName.value = userModel.value.userName || '';
-          name.value = userModel.value.name || '';
-          surname.value = userModel.value.surname || '';
-          email.value = userModel.value.email || '';
-          phoneNumber.value = userModel.value.phoneNumber || '';
-          isActive.value = userModel.value.isActive ?? true;
-          lockoutEnabled.value = userModel.value.lockoutEnabled ?? true;
+        if (initialData?.id) {
+          userName.value = initialData.userName || '';
+          name.value = initialData.name || '';
+          surname.value = initialData.surname || '';
+          email.value = initialData.email || '';
+          phoneNumber.value = initialData.phoneNumber || '';
+          isActive.value = initialData.isActive ?? true;
+          lockoutEnabled.value = initialData.lockoutEnabled ?? true;
+
+          // 重新拉取服务端最新用户详情以获取最新的 concurrencyStamp
+          try {
+            const freshUser = await getUserApi(initialData.id);
+            userModel.value = freshUser;
+            userName.value = freshUser.userName || '';
+            name.value = freshUser.name || '';
+            surname.value = freshUser.surname || '';
+            email.value = freshUser.email || '';
+            phoneNumber.value = freshUser.phoneNumber || '';
+            isActive.value = freshUser.isActive ?? true;
+            lockoutEnabled.value = freshUser.lockoutEnabled ?? true;
+          } catch {}
 
           // 加载用户已有角色
-          const userRolesRes = await getUserRolesApi(userModel.value.id);
-          selectedRoleNames.value = (userRolesRes.items || []).map((r) => r.name);
+          const userRolesRes = await getUserRolesApi(initialData.id);
+          selectedRoleNames.value = (userRolesRes.items || []).map(
+            (r) => r.name,
+          );
         }
       } finally {
         loading.value = false;
@@ -160,7 +181,10 @@ defineExpose({ modalApi });
     <Spin :spinning="loading">
       <div class="p-3">
         <Tabs v-model:active-key="activeTab">
-          <Tabs.TabPane key="basic" :tab="$t('page.identity.user.tabBasic', '基础信息')">
+          <Tabs.TabPane
+            key="basic"
+            :tab="$t('page.identity.user.tabBasic', '基础信息')"
+          >
             <div class="space-y-4 pt-2">
               <Row :gutter="16">
                 <Col :span="12">
@@ -213,7 +237,9 @@ defineExpose({ modalApi });
                   </div>
                   <Input
                     v-model:value="phoneNumber"
-                    :placeholder="$t('page.identity.user.phoneNumber', '手机号')"
+                    :placeholder="
+                      $t('page.identity.user.phoneNumber', '手机号')
+                    "
                   />
                 </Col>
                 <Col v-if="!isEdit" :span="12">
@@ -249,25 +275,28 @@ defineExpose({ modalApi });
             </div>
           </Tabs.TabPane>
 
-          <Tabs.TabPane key="roles" :tab="$t('page.identity.user.tabRoles', '所属角色')">
+          <Tabs.TabPane
+            key="roles"
+            :tab="$t('page.identity.user.tabRoles', '所属角色')"
+          >
             <div class="max-h-[320px] overflow-y-auto p-2">
               <Row :gutter="[12, 12]">
-                <Col
-                  v-for="role in assignableRoles"
-                  :key="role.id"
-                  :span="12"
-                >
+                <Col v-for="role in assignableRoles" :key="role.id" :span="12">
                   <Card size="small" class="hover:border-primary">
                     <Checkbox
                       :value="role.name"
                       :checked="selectedRoleNames.includes(role.name)"
-                      @update:checked="(val: any) => {
-                        if (val) {
-                          selectedRoleNames.push(role.name);
-                        } else {
-                          selectedRoleNames = selectedRoleNames.filter(r => r !== role.name);
+                      @update:checked="
+                        (val: any) => {
+                          if (val) {
+                            selectedRoleNames.push(role.name);
+                          } else {
+                            selectedRoleNames = selectedRoleNames.filter(
+                              (r) => r !== role.name,
+                            );
+                          }
                         }
-                      }"
+                      "
                     >
                       <span class="font-medium">{{ role.name }}</span>
                     </Checkbox>

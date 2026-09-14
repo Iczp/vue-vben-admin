@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import type {
-  EmailSettingsDto,
-  NameValueDto,
-} from '#/api/setting-management';
+import type { EmailSettingsDto, NameValueDto } from '#/api/setting-management';
 
 import { onMounted, ref } from 'vue';
 
@@ -40,8 +37,8 @@ const savingTimezone = ref(false);
 const emailForm = ref<EmailSettingsDto>({
   defaultFromAddress: '',
   defaultFromDisplayName: '',
-  enableSsl: true,
   smtpDomain: '',
+  smtpEnableSsl: true,
   smtpHost: '',
   smtpPassword: '',
   smtpPort: 587,
@@ -62,7 +59,7 @@ async function loadData() {
   loading.value = true;
   try {
     const [emailRes, tzRes, tzListRes] = await Promise.all([
-      getEmailSettingsApi().catch(() => ({} as any)),
+      getEmailSettingsApi().catch(() => ({}) as any),
       getTimezoneApi().catch(() => ''),
       getTimezonesApi().catch(() => []),
     ]);
@@ -71,8 +68,8 @@ async function loadData() {
     emailForm.value = {
       defaultFromAddress: resObj.defaultFromAddress || '',
       defaultFromDisplayName: resObj.defaultFromDisplayName || '',
-      enableSsl: resObj.enableSsl ?? true,
       smtpDomain: resObj.smtpDomain || '',
+      smtpEnableSsl: resObj.smtpEnableSsl ?? true,
       smtpHost: resObj.smtpHost || '',
       smtpPassword: resObj.smtpPassword || '',
       smtpPort: resObj.smtpPort ?? 587,
@@ -91,9 +88,38 @@ async function loadData() {
 }
 
 async function onSaveEmail() {
+  if (!emailForm.value.defaultFromAddress?.trim()) {
+    message.error('发信人邮箱不能为空');
+    return;
+  }
+  if (!emailForm.value.defaultFromDisplayName?.trim()) {
+    message.error('发信人显示名称不能为空');
+    return;
+  }
+  if (
+    !emailForm.value.smtpPort ||
+    emailForm.value.smtpPort < 1 ||
+    emailForm.value.smtpPort > 65_535
+  ) {
+    message.error('SMTP 端口必须在 1 到 65535 之间');
+    return;
+  }
+
   savingEmail.value = true;
   try {
-    await updateEmailSettingsApi(emailForm.value);
+    await updateEmailSettingsApi({
+      defaultFromAddress: emailForm.value.defaultFromAddress.trim(),
+      defaultFromDisplayName: emailForm.value.defaultFromDisplayName.trim(),
+      smtpDomain: emailForm.value.smtpDomain || undefined,
+      smtpEnableSsl: emailForm.value.smtpEnableSsl,
+      smtpHost: emailForm.value.smtpHost || undefined,
+      smtpPassword: emailForm.value.smtpPassword || undefined,
+      smtpPort: Number(emailForm.value.smtpPort) || 587,
+      smtpUseDefaultCredentials: Boolean(
+        emailForm.value.smtpUseDefaultCredentials,
+      ),
+      smtpUserName: emailForm.value.smtpUserName || undefined,
+    });
     message.success($t('common.saveSuccess', '邮件配置保存成功'));
   } finally {
     savingEmail.value = false;
@@ -145,7 +171,7 @@ onMounted(() => {
 
 <template>
   <Page auto-content-height>
-    <Card :bordered="false" class="h-full">
+    <Card variant="borderless" class="h-full">
       <Spin :spinning="loading">
         <Tabs v-model:active-key="activeTab">
           <!-- 邮件设置 -->
@@ -154,7 +180,8 @@ onMounted(() => {
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <div class="mb-1 font-medium">
-                    <span class="text-red-500">*</span> 发信人邮箱 (From Address)
+                    <span class="text-red-500">*</span> 发信人邮箱 (From
+                    Address)
                   </div>
                   <Input
                     v-model:value="emailForm.defaultFromAddress"
@@ -163,7 +190,9 @@ onMounted(() => {
                 </div>
 
                 <div>
-                  <div class="mb-1 font-medium">发信人显示名称 (Display Name)</div>
+                  <div class="mb-1 font-medium">
+                    发信人显示名称 (Display Name)
+                  </div>
                   <Input
                     v-model:value="emailForm.defaultFromDisplayName"
                     placeholder="如：系统管理员"
@@ -222,7 +251,7 @@ onMounted(() => {
               </div>
 
               <div class="flex items-center gap-6 py-2">
-                <Checkbox v-model:checked="emailForm.enableSsl">
+                <Checkbox v-model:checked="emailForm.smtpEnableSsl">
                   启用 SSL 安全连接 (Enable SSL)
                 </Checkbox>
                 <Checkbox v-model:checked="emailForm.smtpUseDefaultCredentials">
@@ -238,9 +267,7 @@ onMounted(() => {
                 >
                   保存邮件配置
                 </Button>
-                <Button @click="openTestEmailModal">
-                  发送测试邮件
-                </Button>
+                <Button @click="openTestEmailModal"> 发送测试邮件 </Button>
               </div>
             </div>
           </Tabs.TabPane>

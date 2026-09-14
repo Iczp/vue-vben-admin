@@ -12,7 +12,7 @@ import { $t } from '#/locales';
 
 const emit = defineEmits(['success']);
 
-const scopeModel = ref<ScopeDto | null>(null);
+const scopeModel = ref<null | ScopeDto>(null);
 const name = ref('');
 const displayName = ref('');
 const description = ref('');
@@ -33,7 +33,7 @@ function resetState() {
   resources.value = [];
 }
 
-const [Modal, modalApi] = useVbenModal<ScopeDto | null>({
+const [Modal, modalApi] = useVbenModal<null | ScopeDto>({
   fullscreenButton: false,
   async onConfirm() {
     if (!name.value.trim()) {
@@ -62,6 +62,8 @@ const [Modal, modalApi] = useVbenModal<ScopeDto | null>({
       message.success($t('common.saveSuccess', '保存成功'));
       modalApi.close();
       emit('success');
+    } catch {
+      // 错误已由全局响应拦截器统一提示
     } finally {
       modalApi.lock(false);
     }

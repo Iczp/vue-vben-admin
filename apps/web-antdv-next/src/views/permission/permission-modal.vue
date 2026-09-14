@@ -40,7 +40,8 @@ const permissionStates = ref<Record<string, boolean>>({});
 const modalData = ref<null | PermissionModalData>(null);
 
 const getTitle = computed(() => {
-  const name = modalData.value?.displayName || modalData.value?.providerKey || '';
+  const name =
+    modalData.value?.displayName || modalData.value?.providerKey || '';
   return `${$t('page.permission.modalTitle', '权限管理')} - ${name}`;
 });
 
@@ -54,8 +55,10 @@ function getChildPermissionNames(
   const children = allPermissions.filter((p) => p.parentName === parentName);
   const result: string[] = [];
   for (const child of children) {
-    result.push(child.name);
-    result.push(...getChildPermissionNames(child.name, allPermissions));
+    result.push(
+      child.name,
+      ...getChildPermissionNames(child.name, allPermissions),
+    );
   }
   return result;
 }
@@ -96,10 +99,7 @@ function onPermissionChange(
     }
   } else {
     // 取消父权限时，自动取消其所有子权限
-    const childNames = getChildPermissionNames(
-      permission.name,
-      allPermissions,
-    );
+    const childNames = getChildPermissionNames(permission.name, allPermissions);
     for (const cName of childNames) {
       permissionStates.value[cName] = false;
     }
@@ -120,7 +120,9 @@ function isGroupAllChecked(group: PermissionGroupDto) {
  */
 function isGroupIndeterminate(group: PermissionGroupDto) {
   const perms = group.permissions || [];
-  const checkedCount = perms.filter((p) => permissionStates.value[p.name]).length;
+  const checkedCount = perms.filter(
+    (p) => permissionStates.value[p.name],
+  ).length;
   return checkedCount > 0 && checkedCount < perms.length;
 }
 
@@ -163,6 +165,8 @@ const [Modal, modalApi] = useVbenModal<PermissionModalData>({
       message.success($t('common.saveSuccess', '保存成功'));
       modalApi.close();
       emit('success');
+    } catch {
+      // 错误已由全局拦截器提示
     } finally {
       modalApi.lock(false);
     }
@@ -210,7 +214,7 @@ defineExpose({ modalApi });
   <Modal :title="getTitle" class="w-[880px]">
     <Spin :spinning="loading">
       <div class="min-h-[380px] p-2">
-        <Tabs v-model:active-key="activeTab" tab-position="left">
+        <Tabs v-model:active-key="activeTab" tab-placement="start">
           <Tabs.TabPane
             v-for="group in permissionGroups"
             :key="group.name"
@@ -224,7 +228,9 @@ defineExpose({ modalApi });
                 <Checkbox
                   :checked="isGroupAllChecked(group)"
                   :indeterminate="isGroupIndeterminate(group)"
-                  @update:checked="(val: any) => onGroupCheckAllChange(group, Boolean(val))"
+                  @update:checked="
+                    (val: any) => onGroupCheckAllChange(group, Boolean(val))
+                  "
                 >
                   {{ $t('page.permission.selectAll', '全选本组') }}
                 </Checkbox>
@@ -244,7 +250,9 @@ defineExpose({ modalApi });
                         v-model:checked="permissionStates[perm.name]"
                         @change="() => onPermissionChange(perm, group)"
                       >
-                        <span :class="{ 'font-medium': isRootPermission(perm) }">
+                        <span
+                          :class="{ 'font-medium': isRootPermission(perm) }"
+                        >
                           {{ perm.displayName || perm.name }}
                         </span>
                         <span class="ml-2 text-xs text-gray-400">

@@ -3,8 +3,8 @@ import { requestClient } from '#/api/request';
 export interface EmailSettingsDto {
   defaultFromAddress?: string;
   defaultFromDisplayName?: string;
-  enableSsl?: boolean;
   smtpDomain?: string;
+  smtpEnableSsl?: boolean;
   smtpHost?: string;
   smtpPassword?: string;
   smtpPort?: number;
@@ -12,7 +12,17 @@ export interface EmailSettingsDto {
   smtpUserName?: string;
 }
 
-export interface UpdateEmailSettingsDto extends EmailSettingsDto {}
+export interface UpdateEmailSettingsDto {
+  defaultFromAddress: string;
+  defaultFromDisplayName: string;
+  smtpDomain?: string;
+  smtpEnableSsl?: boolean;
+  smtpHost?: string;
+  smtpPassword?: string;
+  smtpPort?: number;
+  smtpUseDefaultCredentials?: boolean;
+  smtpUserName?: string;
+}
 
 export interface SendTestEmailInput {
   body?: string;
@@ -70,5 +80,7 @@ export async function setTimezoneApi(timezone: string) {
  * 获取支持的所有时区列表
  */
 export async function getTimezonesApi() {
-  return requestClient.get<NameValueDto[]>('/setting-management/timezone/timezones');
+  return requestClient.get<NameValueDto[]>(
+    '/setting-management/timezone/timezones',
+  );
 }

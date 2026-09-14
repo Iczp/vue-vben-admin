@@ -32,7 +32,8 @@ function renderErrorMessageNode(title: string, detail?: string) {
   return h(
     'div',
     {
-      class: 'inline-flex items-center gap-2 max-w-[500px] text-left select-text',
+      class:
+        'inline-flex items-center gap-2 max-w-[500px] text-left select-text',
       style: { cursor: 'text', userSelect: 'text', WebkitUserSelect: 'text' },
     },
     [
@@ -45,7 +46,8 @@ function renderErrorMessageNode(title: string, detail?: string) {
           h(
             'div',
             {
-              class: 'font-medium text-[13px] text-foreground truncate max-w-[440px]',
+              class:
+                'font-medium text-[13px] text-foreground truncate max-w-[440px]',
               title,
             },
             title,
@@ -94,7 +96,8 @@ function renderErrorMessageNode(title: string, detail?: string) {
 }
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
-const authURL = (import.meta.env.VITE_GLOB_AUTH_URL as string) || '/auth-server';
+const authURL =
+  (import.meta.env.VITE_GLOB_AUTH_URL as string) || '/auth-server';
 
 import {
   getAppId,
@@ -176,8 +179,17 @@ function handleUnifiedError(msg: string, error: any) {
 }
 
 /**
+ * 从 document.cookie 中读取指定 Cookie 键值
+ */
+function getCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const match = document.cookie.match(new RegExp(`(^|;\\s*)(${name})=([^;]*)`));
+  return match ? decodeURIComponent(match[3] || '') : undefined;
+}
+
+/**
  * 为请求客户端统一注入公共 Header
- * 包含：App-Id、App-Device-Id (浏览器指纹)、App-Device-Type、App-Version、Accept-Language、__tenant
+ * 包含：App-Id、App-Device-Id (浏览器指纹)、App-Device-Type、App-Version、Accept-Language、__tenant、RequestVerificationToken
  */
 function applyCommonHeadersInterceptor(client: RequestClient) {
   client.addRequestInterceptor({
@@ -194,6 +206,13 @@ function applyCommonHeadersInterceptor(client: RequestClient) {
       config.headers['App-Device-Type'] = deviceType;
       config.headers['App-Version'] = version;
 
+      // 注入 ABP AntiForgery 防伪验证头
+      const xsrfToken = getCookie('XSRF-TOKEN');
+      if (xsrfToken && !config.headers.RequestVerificationToken) {
+        config.headers.RequestVerificationToken = xsrfToken;
+        config.headers['X-XSRF-TOKEN'] = xsrfToken;
+      }
+
       if (preferences.app?.locale) {
         config.headers['Accept-Language'] = preferences.app.locale;
       }
@@ -202,7 +221,7 @@ function applyCommonHeadersInterceptor(client: RequestClient) {
         localStorage.getItem('__tenant') ||
         sessionStorage.getItem('__tenant') ||
         undefined;
-      if (tenantId) {
+      if (tenantId && tenantId !== 'undefined' && tenantId !== 'null') {
         config.headers.__tenant = tenantId;
       }
 

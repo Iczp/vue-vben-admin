@@ -5,15 +5,9 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Col,
-  Input,
-  message,
-  Row,
-  Switch,
-} from 'antdv-next';
+import { Col, Input, message, Row, Switch } from 'antdv-next';
 
-import { createRoleApi, updateRoleApi } from '#/api/identity';
+import { createRoleApi, getRoleApi, updateRoleApi } from '#/api/identity';
 import { $t } from '#/locales';
 
 const emit = defineEmits(['success']);
@@ -65,18 +59,28 @@ const [Modal, modalApi] = useVbenModal<IdentityRoleDto | null>({
       message.success($t('common.saveSuccess', '保存成功'));
       modalApi.close();
       emit('success');
+    } catch {
+      // 错误已由全局拦截器提示
     } finally {
       modalApi.lock(false);
     }
   },
-  onOpenChange(isOpen) {
+  async onOpenChange(isOpen) {
     if (isOpen) {
       resetState();
-      roleModel.value = modalApi.getData() || null;
-      if (roleModel.value?.id) {
-        name.value = roleModel.value.name || '';
-        isDefault.value = roleModel.value.isDefault ?? false;
-        isPublic.value = roleModel.value.isPublic ?? true;
+      const initialData = modalApi.getData() || null;
+      roleModel.value = initialData;
+      if (initialData?.id) {
+        name.value = initialData.name || '';
+        isDefault.value = initialData.isDefault ?? false;
+        isPublic.value = initialData.isPublic ?? true;
+        try {
+          const fresh = await getRoleApi(initialData.id);
+          roleModel.value = fresh;
+          name.value = fresh.name || '';
+          isDefault.value = fresh.isDefault ?? false;
+          isPublic.value = fresh.isPublic ?? true;
+        } catch {}
       }
     } else {
       roleModel.value = null;

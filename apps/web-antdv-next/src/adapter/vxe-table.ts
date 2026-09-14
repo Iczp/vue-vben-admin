@@ -82,9 +82,9 @@ setupVbenVxeTable({
     vxeUI.formats.add('formatDateTime', {
       cellFormatMethod({ cellValue }, format) {
         if (!cellValue) return '-';
-        return dayjs(cellValue).format(
-          isString(format) ? format : 'YYYY-MM-DD HH:mm:ss',
-        );
+        const d = dayjs(cellValue);
+        if (!d.isValid()) return String(cellValue);
+        return d.format(isString(format) ? format : 'YYYY-MM-DD HH:mm:ss');
       },
     });
 
@@ -92,9 +92,9 @@ setupVbenVxeTable({
     vxeUI.formats.add('formatDate', {
       cellFormatMethod({ cellValue }, format) {
         if (!cellValue) return '-';
-        return dayjs(cellValue).format(
-          isString(format) ? format : 'YYYY-MM-DD',
-        );
+        const d = dayjs(cellValue);
+        if (!d.isValid()) return String(cellValue);
+        return d.format(isString(format) ? format : 'YYYY-MM-DD');
       },
     });
 
@@ -121,10 +121,15 @@ setupVbenVxeTable({
     // 金额/数字千分位格式化: 12345.67 -> ￥12,345.67
     vxeUI.formats.add('formatAmount', {
       cellFormatMethod({ cellValue }, prefix = '￥', digits = 2) {
-        if (cellValue === undefined || cellValue === null || isNaN(Number(cellValue))) return '-';
+        if (
+          cellValue === undefined ||
+          cellValue === null ||
+          Number.isNaN(Number(cellValue))
+        )
+          return '-';
         const num = Number(cellValue).toFixed(digits);
         const parts = num.split('.');
-        parts[0] = (parts[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        parts[0] = (parts[0] || '').replaceAll(/\B(?=(\d{3})+(?!\d))/g, ',');
         return `${prefix}${parts.join('.')}`;
       },
     });
@@ -132,7 +137,12 @@ setupVbenVxeTable({
     // 百分比格式化: 0.856 -> 85.60%
     vxeUI.formats.add('formatPercent', {
       cellFormatMethod({ cellValue }, digits = 2) {
-        if (cellValue === undefined || cellValue === null || isNaN(Number(cellValue))) return '-';
+        if (
+          cellValue === undefined ||
+          cellValue === null ||
+          Number.isNaN(Number(cellValue))
+        )
+          return '-';
         return `${(Number(cellValue) * 100).toFixed(digits)}%`;
       },
     });
@@ -176,8 +186,16 @@ setupVbenVxeTable({
       renderTableDefault({ options, props }, { column, row }) {
         const value = get(row, column.field);
         const tagOptions = options ?? [
-          { color: 'success', label: $t('common.enabled', '启用'), value: true },
-          { color: 'error', label: $t('common.disabled', '禁用'), value: false },
+          {
+            color: 'success',
+            label: $t('common.enabled', '启用'),
+            value: true,
+          },
+          {
+            color: 'error',
+            label: $t('common.disabled', '禁用'),
+            value: false,
+          },
         ];
         const tagItem = tagOptions.find((item: any) => item.value === value);
         return h(
@@ -196,8 +214,16 @@ setupVbenVxeTable({
       renderTableDefault({ options, props }, { column, row }) {
         const value = get(row, column.field);
         const badgeOptions = options ?? [
-          { status: 'success', text: $t('common.enabled', '在线'), value: true },
-          { status: 'default', text: $t('common.disabled', '离线'), value: false },
+          {
+            status: 'success',
+            text: $t('common.enabled', '在线'),
+            value: true,
+          },
+          {
+            status: 'default',
+            text: $t('common.disabled', '离线'),
+            value: false,
+          },
         ];
         const item = badgeOptions.find((b: any) => b.value === value);
         return h(Badge, {
@@ -466,8 +492,8 @@ export const VbenTableAction = defineComponent(
       h(VbenTableActionCore, { hasPermission, ...props, ...attrs }, slots);
   },
   {
-    inheritAttrs: false,
     name: 'VbenTableAction',
+    inheritAttrs: false,
   },
 );
 
