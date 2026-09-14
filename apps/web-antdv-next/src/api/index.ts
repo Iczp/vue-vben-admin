@@ -1,5 +1,6 @@
 export * from './abp';
 export * from './app-version';
+export * from './chat';
 export * from './core';
 export * from './device';
 export * from './feature-management';
