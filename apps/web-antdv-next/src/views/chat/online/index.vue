@@ -10,33 +10,49 @@ import {
   Button,
   Card,
   Input,
+  InputNumber,
   message,
   Modal,
   Select,
-  Space,
   Statistic,
+  Tabs,
   Tag,
 } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   clearAllOnlineConnectionsApi,
+  getLastOnlineApi,
   getOnlineConnectionsApi,
+  getOnlineConnectionsByOwnerApi,
+  getOnlineConnectionsByUserApi,
+  getOnlineCountByOwnerApi,
+  getOnlineCountByUserApi,
+  getOnlineFriendsCountApi,
   getOnlineHostsApi,
   getOnlineTotalCountApi,
 } from '#/api/chat';
 
-import { useColumns } from './data';
+import { useConnectionColumns, useHostColumns, useLastOnlineColumns } from './data';
 import AbortModal from './modules/abort-modal.vue';
+import DetailModal from './modules/detail-modal.vue';
 
-const filterText = ref('');
-const platformFilter = ref<string | undefined>(undefined);
+// 当前活动的 Tab: 'hosts' | 'users' | 'owners' | 'all'
+const activeTab = ref<'hosts' | 'users' | 'owners' | 'all'>('hosts');
+
+// 全局统计数据
 const totalOnlineCount = ref(0);
-const hostsList = ref<OnlineHostDto[]>([]);
+const totalHostsCount = ref(0);
 const statsLoading = ref(false);
 
+// 弹窗管理
 const [AbortConnectionModal, abortModalApi] = useVbenModal({
   connectedComponent: AbortModal,
+  destroyOnClose: true,
+});
+
+const [ConnectionDetailModal, detailModalApi] = useVbenModal({
+  connectedComponent: DetailModal,
   destroyOnClose: true,
 });
 
@@ -45,16 +61,20 @@ async function fetchStats() {
     statsLoading.value = true;
     const [count, hostsRes] = await Promise.all([
       getOnlineTotalCountApi().catch(() => 0),
-      getOnlineHostsApi({ maxResultCount: 20 }).catch(() => ({
+      getOnlineHostsApi({ maxResultCount: 1 }).catch(() => ({
         items: [],
         totalCount: 0,
       })),
     ]);
     totalOnlineCount.value = count;
-    hostsList.value = hostsRes.items || [];
+    totalHostsCount.value = hostsRes.totalCount || 0;
   } finally {
     statsLoading.value = false;
   }
+}
+
+function onShowDetail(row: ConnectionPoolDto) {
+  detailModalApi.setData(row).open();
 }
 
 function onAbortSingle(row: ConnectionPoolDto) {
@@ -66,15 +86,352 @@ function onAbortSingle(row: ConnectionPoolDto) {
     .open();
 }
 
-function onAbortBatch() {
-  const selectRecords = gridApi.grid?.getCheckboxRecords() || [];
-  if (selectRecords.length === 0) {
-    message.warning('请先勾选需要断开的连接');
+function safeQuery(gridApi: any) {
+  if (gridApi?.grid?.commitProxy) {
+    gridApi.query();
+  }
+}
+
+function refreshActiveGrid() {
+  fetchStats();
+  if (activeTab.value === 'hosts') {
+    safeQuery(hostGridApi);
+  } else if (activeTab.value === 'users') {
+    safeQuery(userGridApi);
+  } else if (activeTab.value === 'owners') {
+    safeQuery(ownerGridApi);
+    safeQuery(lastOnlineGridApi);
+  } else if (activeTab.value === 'all') {
+    safeQuery(allGridApi);
+  }
+}
+
+function onTabChange(key: any) {
+  (document.activeElement as HTMLElement)?.blur();
+  setTimeout(() => {
+    if (key === 'hosts') {
+      safeQuery(hostGridApi);
+    } else if (key === 'users' && searchUserId.value.trim()) {
+      safeQuery(userGridApi);
+    } else if (key === 'owners' && searchOwnerId.value) {
+      safeQuery(ownerGridApi);
+      safeQuery(lastOnlineGridApi);
+    } else if (key === 'all') {
+      safeQuery(allGridApi);
+    }
+  }, 60);
+}
+
+function onClearAllConnections(hosts?: string[]) {
+  const isSingleHost = hosts && hosts.length === 1;
+  const title = isSingleHost
+    ? `确认清空主机【${hosts[0]}】的全部连接？`
+    : '高危警告：确认清空所有主机的全部长连接？';
+  const content = isSingleHost
+    ? `该操作将强行中断所有连接到主机【${hosts[0]}】的客户端长连接！`
+    : '此操作将强行断开当前系统所有集群节点上的长连接！请谨慎操作。';
+
+  Modal.confirm({
+    cancelText: '取消',
+    content,
+    okText: '确认执行',
+    okType: 'danger',
+    title,
+    async onOk() {
+      await clearAllOnlineConnectionsApi(hosts, '管理员指令清空连接');
+      message.success('已清空指定连接');
+      refreshActiveGrid();
+    },
+  });
+}
+
+// ==========================================
+// 1. 主机视角 (Hosts View)
+// ==========================================
+const hostFilter = ref('');
+
+function onHostActionClick({
+  code,
+  row,
+}: {
+  code: string;
+  row: OnlineHostDto;
+}) {
+  if (code === 'view-connections') {
+    (document.activeElement as HTMLElement)?.blur();
+    allHostFilter.value = row.host;
+    activeTab.value = 'all';
+    setTimeout(() => {
+      safeQuery(allGridApi);
+    }, 100);
+  } else if (code === 'clear-host') {
+    onClearAllConnections([row.host]);
+  }
+}
+
+const [HostGrid, hostGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useHostColumns(onHostActionClick),
+    height: 'auto',
+    keepSource: true,
+    pagerConfig: {
+      autoHidden: false,
+      enabled: true,
+      pageSize: 15,
+      pageSizes: [15, 30, 50],
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page, sorts }) => {
+          const skipCount = (page.currentPage - 1) * page.pageSize;
+          const maxResultCount = page.pageSize;
+          let sorting: string | undefined;
+          if (sorts && sorts.length > 0 && sorts[0]) {
+            sorting = `${sorts[0].field} ${sorts[0].order}`;
+          }
+
+          const res = await getOnlineHostsApi({
+            host: hostFilter.value.trim() || undefined,
+            maxResultCount,
+            skipCount,
+            sorting,
+          });
+          fetchStats();
+          return res;
+        },
+      },
+    },
+    toolbarConfig: {
+      custom: true,
+      export: false,
+      refresh: true,
+      zoom: true,
+    },
+  } as VxeTableGridOptions,
+});
+
+// ==========================================
+// 2. 用户视角 (User View)
+// ==========================================
+const searchUserId = ref('');
+const userOnlineCount = ref<number | null>(null);
+
+function onUserConnActionClick({
+  code,
+  row,
+}: {
+  code: string;
+  row: ConnectionPoolDto;
+}) {
+  if (code === 'detail') {
+    onShowDetail(row);
+  } else if (code === 'abort') {
+    onAbortSingle(row);
+  }
+}
+
+const [UserGrid, userGridApi] = useVbenVxeGrid({
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onShowDetail(params.row as ConnectionPoolDto);
+    },
+  },
+  gridOptions: {
+    columns: useConnectionColumns(onUserConnActionClick),
+    height: 'auto',
+    keepSource: true,
+    pagerConfig: {
+      autoHidden: false,
+      enabled: true,
+      pageSize: 15,
+      pageSizes: [15, 30, 50],
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          if (!searchUserId.value.trim()) {
+            return { items: [], totalCount: 0 };
+          }
+          const skipCount = (page.currentPage - 1) * page.pageSize;
+          const maxResultCount = page.pageSize;
+
+          getOnlineCountByUserApi(searchUserId.value.trim())
+            .then((count) => {
+              userOnlineCount.value = count;
+            })
+            .catch(() => {
+              userOnlineCount.value = 0;
+            });
+
+          return await getOnlineConnectionsByUserApi(searchUserId.value.trim(), {
+            maxResultCount,
+            skipCount,
+          });
+        },
+      },
+    },
+    toolbarConfig: {
+      custom: true,
+      export: false,
+      refresh: true,
+      zoom: true,
+    },
+  } as VxeTableGridOptions,
+});
+
+function onSearchUser() {
+  if (!searchUserId.value.trim()) {
+    message.warning('请输入要查询的用户 GUID');
     return;
   }
-  const connectionIds = selectRecords.map(
-    (item: ConnectionPoolDto) => item.connectionId,
-  );
+  userGridApi.query();
+}
+
+// ==========================================
+// 3. 聊天对象视角 (ChatObject / Owner View)
+// ==========================================
+const searchOwnerId = ref<number | undefined>(undefined);
+const ownerOnlineCount = ref<number | null>(null);
+const ownerFriendsCount = ref<number | null>(null);
+
+function onOwnerConnActionClick({
+  code,
+  row,
+}: {
+  code: string;
+  row: ConnectionPoolDto;
+}) {
+  if (code === 'detail') {
+    onShowDetail(row);
+  } else if (code === 'abort') {
+    onAbortSingle(row);
+  }
+}
+
+const [OwnerGrid, ownerGridApi] = useVbenVxeGrid({
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onShowDetail(params.row as ConnectionPoolDto);
+    },
+  },
+  gridOptions: {
+    columns: useConnectionColumns(onOwnerConnActionClick),
+    height: 'auto',
+    keepSource: true,
+    pagerConfig: {
+      autoHidden: false,
+      enabled: true,
+      pageSize: 15,
+      pageSizes: [15, 30, 50],
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          if (!searchOwnerId.value) {
+            return { items: [], totalCount: 0 };
+          }
+          const skipCount = (page.currentPage - 1) * page.pageSize;
+          const maxResultCount = page.pageSize;
+
+          getOnlineCountByOwnerApi(searchOwnerId.value)
+            .then((count) => {
+              ownerOnlineCount.value = count;
+            })
+            .catch(() => {
+              ownerOnlineCount.value = 0;
+            });
+
+          getOnlineFriendsCountApi(searchOwnerId.value)
+            .then((count) => {
+              ownerFriendsCount.value = count;
+            })
+            .catch(() => {
+              ownerFriendsCount.value = 0;
+            });
+
+          // 联动拉取最近在线记录
+          lastOnlineGridApi.query();
+
+          return await getOnlineConnectionsByOwnerApi(searchOwnerId.value, {
+            maxResultCount,
+            skipCount,
+          });
+        },
+      },
+    },
+    toolbarConfig: {
+      custom: true,
+      export: false,
+      refresh: true,
+      zoom: true,
+    },
+  } as VxeTableGridOptions,
+});
+
+const [LastOnlineGrid, lastOnlineGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useLastOnlineColumns(),
+    height: 'auto',
+    keepSource: true,
+    pagerConfig: {
+      autoHidden: false,
+      enabled: true,
+      pageSize: 10,
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          if (!searchOwnerId.value) {
+            return { items: [], totalCount: 0 };
+          }
+          const skipCount = (page.currentPage - 1) * page.pageSize;
+          const maxResultCount = page.pageSize;
+          return await getLastOnlineApi(searchOwnerId.value, {
+            maxResultCount,
+            skipCount,
+          });
+        },
+      },
+    },
+  } as VxeTableGridOptions,
+});
+
+function onSearchOwner() {
+  if (!searchOwnerId.value) {
+    message.warning('请输入聊天对象 ID (OwnerId)');
+    return;
+  }
+  ownerGridApi.query();
+}
+
+// ==========================================
+// 4. 全局连接池明细 (All Connections)
+// ==========================================
+const allFilterText = ref('');
+const allPlatformFilter = ref<string | undefined>(undefined);
+const allHostFilter = ref<string | undefined>(undefined);
+
+function onAllActionClick({
+  code,
+  row,
+}: {
+  code: string;
+  row: ConnectionPoolDto;
+}) {
+  if (code === 'detail') {
+    onShowDetail(row);
+  } else if (code === 'abort') {
+    onAbortSingle(row);
+  }
+}
+
+function onAbortBatchAll() {
+  const records = allGridApi.grid?.getCheckboxRecords() || [];
+  if (records.length === 0) {
+    message.warning('请勾选要强制断开的连接');
+    return;
+  }
+  const connectionIds = records.map((r: ConnectionPoolDto) => r.connectionId);
   abortModalApi
     .setData({
       connectionIds,
@@ -83,38 +440,14 @@ function onAbortBatch() {
     .open();
 }
 
-function onClearAll() {
-  let clearReason = '系统维护，清空所有在线连接';
-  Modal.confirm({
-    cancelText: '取消',
-    content: '此操作将强行断开当前所有用户的 SignalR 长连接！确定要清空吗？',
-    okText: '确认清空所有',
-    okType: 'danger',
-    title: '高危警告：清空所有在线连接',
-    async onOk() {
-      await clearAllOnlineConnectionsApi(clearReason);
-      message.success('已触发清空所有在线连接指令');
-      refreshGrid();
-      fetchStats();
+const [AllGrid, allGridApi] = useVbenVxeGrid({
+  gridEvents: {
+    cellDblclick: (params: { row: any }) => {
+      onShowDetail(params.row as ConnectionPoolDto);
     },
-  });
-}
-
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: ConnectionPoolDto;
-}) {
-  if (code === 'abort') {
-    onAbortSingle(row);
-  }
-}
-
-const [Grid, gridApi] = useVbenVxeGrid({
+  },
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useConnectionColumns(onAllActionClick),
     height: 'auto',
     keepSource: true,
     pagerConfig: {
@@ -134,9 +467,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
           }
 
           const res = await getOnlineConnectionsApi({
-            keyword: filterText.value || undefined,
+            host: allHostFilter.value?.trim() || undefined,
+            keyword: allFilterText.value.trim() || undefined,
             maxResultCount,
-            platform: platformFilter.value,
+            platform: allPlatformFilter.value,
             skipCount,
             sorting: sorting || 'activeTime desc',
           });
@@ -154,10 +488,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions,
 });
 
-function refreshGrid() {
-  gridApi.query();
-}
-
 onMounted(() => {
   fetchStats();
 });
@@ -165,11 +495,12 @@ onMounted(() => {
 
 <template>
   <Page auto-content-height>
-    <AbortConnectionModal @success="refreshGrid" />
+    <AbortConnectionModal @success="refreshActiveGrid" />
+    <ConnectionDetailModal />
 
-    <!-- 顶部状态统计卡片 -->
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-3 mb-3">
-      <Card size="small">
+    <!-- 顶部状态卡片 -->
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-3 mb-3">
+      <Card size="small" class="shadow-sm">
         <Statistic
           title="当前在线总连接数 (Total Connections)"
           :value="totalOnlineCount"
@@ -181,73 +512,179 @@ onMounted(() => {
         </Statistic>
       </Card>
 
-      <Card size="small" class="md:col-span-2">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-medium text-muted-foreground">活跃集群宿主 (Online Hosts)</span>
-          <Button type="link" size="small" :loading="statsLoading" @click="fetchStats">刷新节点</Button>
-        </div>
-        <div class="flex flex-wrap gap-2 items-center min-h-[32px]">
-          <template v-if="hostsList.length > 0">
-            <Tag
-              v-for="h in hostsList"
-              :key="h.host"
-              color="blue"
-              class="px-2.5 py-1 text-xs"
-            >
-              <strong>{{ h.host }}</strong>: {{ h.connectionCount }} 连接 ({{ h.ipAddress || '内网' }})
-            </Tag>
+      <Card size="small" class="shadow-sm">
+        <Statistic
+          title="活跃集群主机节点数 (Cluster Hosts)"
+          :value="totalHostsCount"
+          :value-style="{ color: '#3b82f6', fontWeight: 600 }"
+        >
+          <template #suffix>
+            <span class="text-xs text-muted-foreground font-normal">台服务器</span>
           </template>
-          <span v-else class="text-xs text-muted-foreground">暂无独立节点数据</span>
+        </Statistic>
+      </Card>
+
+      <Card size="small" class="shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-xs text-muted-foreground mb-1">全局运维操作</div>
+          <div class="text-xs text-red-500 font-medium">清空所有节点长连接</div>
         </div>
+        <Button danger type="primary" size="small" @click="() => onClearAllConnections()">
+          清空所有连接
+        </Button>
       </Card>
     </div>
 
-    <!-- 连接列表表格 -->
-    <Grid>
-      <template #table-title>
-        <div class="flex items-center gap-1.5 text-sm font-medium">
-          <span class="text-muted-foreground">即时通讯管理</span>
-          <span class="text-muted-foreground/60">/</span>
-          <span class="font-bold text-base text-foreground">在线连接池 (Online Cache)</span>
-        </div>
-      </template>
-
-      <template #top>
-        <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
-          <div class="flex items-center gap-2 flex-wrap">
-            <Input.Search
-              v-model:value="filterText"
-              placeholder="搜索连接ID / 用户名 / IP..."
-              allow-clear
-              class="w-64"
-              @search="refreshGrid"
-            />
-            <Select
-              v-model:value="platformFilter"
-              placeholder="平台筛选"
-              allow-clear
-              class="w-32"
-              :options="[
-                { label: 'Android', value: 'android' },
-                { label: 'iOS', value: 'ios' },
-                { label: 'Windows', value: 'windows' },
-                { label: 'macOS', value: 'macos' },
-                { label: 'Web', value: 'web' },
-              ]"
-              @change="refreshGrid"
-            />
+    <!-- 视角分类切换 Tabs -->
+    <Card
+      size="small"
+      class="flex-1 flex flex-col h-full shadow-sm overflow-hidden"
+      :styles="{ body: { padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } }"
+    >
+      <Tabs
+        v-model:activeKey="activeTab"
+        type="card"
+        class="h-full flex flex-col"
+        @change="onTabChange"
+      >
+        <!-- 1. 主机视角 -->
+        <Tabs.TabPane key="hosts" tab="🖥️ 主机维度 (Hosts)">
+          <div class="flex flex-col h-full overflow-hidden">
+            <HostGrid>
+              <template #toolbar-tools>
+                <div class="flex items-center gap-2 mr-2">
+                  <Input.Search
+                    v-model:value="hostFilter"
+                    placeholder="搜索主机名称..."
+                    allow-clear
+                    class="w-56"
+                    size="small"
+                    @search="() => hostGridApi.query()"
+                  />
+                  <Button size="small" @click="hostGridApi.query">刷新主机</Button>
+                </div>
+              </template>
+            </HostGrid>
           </div>
+        </Tabs.TabPane>
 
-          <Space>
-            <Button danger @click="onAbortBatch">
-              批量强制断开
-            </Button>
-            <Button type="primary" danger @click="onClearAll">
-              清空所有连接
-            </Button>
-          </Space>
-        </div>
-      </template>
-    </Grid>
+        <!-- 2. 用户视角 -->
+        <Tabs.TabPane key="users" tab="👤 用户维度 (Users)">
+          <div class="flex flex-col h-full overflow-hidden">
+            <UserGrid>
+              <template #toolbar-tools>
+                <div class="flex items-center gap-2 mr-2 flex-wrap">
+                  <Input.Search
+                    v-model:value="searchUserId"
+                    placeholder="输入用户 GUID (UserId)..."
+                    allow-clear
+                    class="w-80"
+                    size="small"
+                    @search="onSearchUser"
+                  />
+                  <Button type="primary" size="small" @click="onSearchUser">
+                    查询用户连接
+                  </Button>
+                  <Tag v-if="userOnlineCount !== null" color="blue" class="ml-2">
+                    该用户当前在线连接: <strong>{{ userOnlineCount }}</strong>
+                  </Tag>
+                </div>
+              </template>
+            </UserGrid>
+          </div>
+        </Tabs.TabPane>
+
+        <!-- 3. 聊天对象视角 -->
+        <Tabs.TabPane key="owners" tab="💬 聊天对象维度 (ChatObjects)">
+          <div class="flex flex-col h-full overflow-hidden">
+            <div class="flex gap-2 mb-2 items-center shrink-0">
+              <InputNumber
+                v-model:value="searchOwnerId"
+                placeholder="输入聊天对象 ID (OwnerId)..."
+                class="w-64"
+                size="small"
+                @press-enter="onSearchOwner"
+              />
+              <Button type="primary" size="small" @click="onSearchOwner">
+                查询聊天对象
+              </Button>
+
+              <Tag v-if="ownerOnlineCount !== null" color="purple" class="ml-2">
+                在线连接数: <strong>{{ ownerOnlineCount }}</strong>
+              </Tag>
+              <Tag v-if="ownerFriendsCount !== null" color="cyan">
+                在线好友数: <strong>{{ ownerFriendsCount }}</strong>
+              </Tag>
+            </div>
+
+            <!-- 拆分为当前连接列表与最近在线记录 -->
+            <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-2 overflow-hidden">
+              <div class="lg:col-span-2 flex flex-col h-full overflow-hidden">
+                <div class="text-xs font-semibold mb-1 text-muted-foreground">当前在线连接列表</div>
+                <div class="flex-1 overflow-hidden">
+                  <OwnerGrid />
+                </div>
+              </div>
+
+              <div class="flex flex-col h-full overflow-hidden border-l pl-2">
+                <div class="text-xs font-semibold mb-1 text-muted-foreground">最近在线记录 (Last Online)</div>
+                <div class="flex-1 overflow-hidden">
+                  <LastOnlineGrid />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Tabs.TabPane>
+
+        <!-- 4. 全局连接池 -->
+        <Tabs.TabPane key="all" tab="🌐 全局连接池 (All Connections)">
+          <div class="flex flex-col h-full overflow-hidden">
+            <AllGrid>
+              <template #toolbar-tools>
+                <div class="flex items-center gap-2 mr-2 flex-wrap">
+                  <Input.Search
+                    v-model:value="allFilterText"
+                    placeholder="搜索连接ID / 用户名 / IP..."
+                    allow-clear
+                    class="w-60"
+                    size="small"
+                    @search="() => allGridApi.query()"
+                  />
+
+                  <Input
+                    v-model:value="allHostFilter"
+                    placeholder="主机过滤"
+                    allow-clear
+                    class="w-36"
+                    size="small"
+                    @press-enter="() => allGridApi.query()"
+                  />
+
+                  <Select
+                    v-model:value="allPlatformFilter"
+                    placeholder="平台"
+                    allow-clear
+                    class="w-28"
+                    size="small"
+                    :options="[
+                      { label: 'Android', value: 'android' },
+                      { label: 'iOS', value: 'ios' },
+                      { label: 'Windows', value: 'windows' },
+                      { label: 'macOS', value: 'macos' },
+                      { label: 'Web', value: 'web' },
+                    ]"
+                    @change="allGridApi.query"
+                  />
+
+                  <Button danger size="small" @click="onAbortBatchAll">
+                    批量强制断开
+                  </Button>
+                </div>
+              </template>
+            </AllGrid>
+          </div>
+        </Tabs.TabPane>
+      </Tabs>
+    </Card>
   </Page>
 </template>

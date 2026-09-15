@@ -1,42 +1,58 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { MessageReportOptions } from '#/api/chat/message-report';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 
 import {
   Button,
   Card,
   Input,
-  message,
-  Modal,
+  RadioGroup,
   Select,
   Statistic,
   Tabs,
+  Tag,
 } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  flushMessageReportApi,
   getMessageReportListApi,
   getMessageReportOptionsApi,
   getMessageReportSummaryApi,
-  type MessageReportOptions,
+  MessageReportTypes,
 } from '#/api/chat/message-report';
 
-import { useReportColumns, useSummaryColumns } from './data';
+import {
+  messageTypeOptions,
+  reportTypeOptions,
+  useReportColumns,
+  useSummaryColumns,
+} from './data';
+import FlushModal from './modules/flush-modal.vue';
 
 const activeTab = ref<'detail' | 'summary'>('detail');
 
+// 核心维度：消息报表类型 (20: Month, 30: Day, 40: Hour)
+const currentReportType = ref<MessageReportTypes>(MessageReportTypes.Day);
+
 // 过滤参数
 const sessionIdFilter = ref('');
-const messageTypeFilter = ref<number | undefined>(undefined);
+const messageTypesFilter = ref<number[]>([]);
 const dateBucketFilter = ref('');
+const startDateBucketFilter = ref('');
+const endDateBucketFilter = ref('');
 
 // 报表选项与缓存
 const reportOptions = ref<MessageReportOptions | null>(null);
-const flushing = ref(false);
+
+// 落库弹窗
+const [FlushModalComp, flushModalApi] = useVbenModal({
+  connectedComponent: FlushModal,
+  destroyOnClose: true,
+});
 
 async function loadOptions() {
   try {
@@ -46,23 +62,15 @@ async function loadOptions() {
   }
 }
 
-async function onFlushCache() {
-  Modal.confirm({
-    cancelText: '取消',
-    content: '确定要立即将内存/Redis中的即时统计数据刷写固化至数据库吗？',
-    okText: '确认刷写',
-    title: '刷写统计缓存',
-    async onOk() {
-      try {
-        flushing.value = true;
-        await flushMessageReportApi();
-        message.success('已成功刷写统计缓存');
-        refreshAll();
-      } finally {
-        flushing.value = false;
-      }
-    },
-  });
+function onOpenFlushModal() {
+  flushModalApi.setData({ defaultType: currentReportType.value }).open();
+}
+
+function onReportTypeChange() {
+  dateBucketFilter.value = '';
+  startDateBucketFilter.value = '';
+  endDateBucketFilter.value = '';
+  refreshAll();
 }
 
 // 1. 明细报表 Grid
@@ -88,15 +96,15 @@ const [DetailGrid, detailGridApi] = useVbenVxeGrid({
           }
 
           return await getMessageReportListApi({
-            dateBucket: dateBucketFilter.value || undefined,
+            dateBucket: dateBucketFilter.value.trim() ? Number(dateBucketFilter.value.trim()) : undefined,
+            endDateBucket: endDateBucketFilter.value.trim() ? Number(endDateBucketFilter.value.trim()) : undefined,
             maxResultCount,
-            messageTypes:
-              messageTypeFilter.value !== undefined
-                ? [messageTypeFilter.value]
-                : undefined,
-            sessionId: sessionIdFilter.value || undefined,
+            messageTypes: messageTypesFilter.value.length > 0 ? messageTypesFilter.value : undefined,
+            reportType: currentReportType.value,
+            sessionId: sessionIdFilter.value.trim() || undefined,
             skipCount,
             sorting,
+            startDateBucket: startDateBucketFilter.value.trim() ? Number(startDateBucketFilter.value.trim()) : undefined,
           });
         },
       },
@@ -133,11 +141,15 @@ const [SummaryGrid, summaryGridApi] = useVbenVxeGrid({
           }
 
           return await getMessageReportSummaryApi({
-            dateBucket: dateBucketFilter.value || undefined,
+            dateBucket: dateBucketFilter.value.trim() ? Number(dateBucketFilter.value.trim()) : undefined,
+            endDateBucket: endDateBucketFilter.value.trim() ? Number(endDateBucketFilter.value.trim()) : undefined,
             maxResultCount,
-            sessionId: sessionIdFilter.value || undefined,
+            messageTypes: messageTypesFilter.value.length > 0 ? messageTypesFilter.value : undefined,
+            reportType: currentReportType.value,
+            sessionId: sessionIdFilter.value.trim() || undefined,
             skipCount,
             sorting,
+            startDateBucket: startDateBucketFilter.value.trim() ? Number(startDateBucketFilter.value.trim()) : undefined,
           });
         },
       },
@@ -159,6 +171,20 @@ function refreshAll() {
   }
 }
 
+const currentGranularityTitle = computed(() => {
+  switch (currentReportType.value) {
+    case MessageReportTypes.Hour: {
+      return '时报 (Hour) 格式如: 2026091417';
+    }
+    case MessageReportTypes.Month: {
+      return '月报 (Month) 格式如: 202609';
+    }
+    default: {
+      return '日报 (Day) 格式如: 20260914';
+    }
+  }
+});
+
 onMounted(() => {
   loadOptions();
 });
@@ -166,115 +192,172 @@ onMounted(() => {
 
 <template>
   <Page auto-content-height>
+    <FlushModalComp @success="refreshAll" />
+
     <div class="h-full flex flex-col gap-3">
-      <!-- 顶部统计概览卡片 -->
-      <div class="grid grid-cols-3 gap-3">
-        <Card size="small">
+      <!-- 顶部控制大栏与指标卡片 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+        <!-- 核心粒度维度切换控制器 (重点突出) -->
+        <Card
+          size="small"
+          class="lg:col-span-5 shadow-sm border-2 border-primary/40 bg-gradient-to-r from-primary/5 via-transparent to-transparent dark:from-primary/10"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-foreground">📊 报表统计粒度 (ReportType)</span>
+              <Tag color="processing" class="text-xs font-medium">当前核心分析维度</Tag>
+            </div>
+            <span class="text-xs text-muted-foreground">{{ currentGranularityTitle }}</span>
+          </div>
+          <RadioGroup
+            v-model:value="currentReportType"
+            :options="reportTypeOptions"
+            option-type="button"
+            button-style="solid"
+            size="middle"
+            class="report-type-radio-group"
+            @change="onReportTypeChange"
+          />
+        </Card>
+
+        <!-- 状态指标 1: 引擎收集状态 -->
+        <Card size="small" class="lg:col-span-2 shadow-sm flex flex-col justify-center">
           <Statistic
-            title="消息统计收集状态"
+            title="统计引擎收集状态"
             :value="reportOptions?.enable ? '已启用' : '未启用'"
-            :value-style="{ color: reportOptions?.enable ? '#52c41a' : '#ff4d4f' }"
+            :value-style="{ color: reportOptions?.enable ? '#10b981' : '#ef4444', fontWeight: 700, fontSize: '18px' }"
           />
         </Card>
-        <Card size="small">
+
+        <!-- 状态指标 2: 自动落库周期 -->
+        <Card size="small" class="lg:col-span-2 shadow-sm flex flex-col justify-center">
           <Statistic
-            title="定时刷写周期 (秒)"
+            title="自动落库周期 (Seconds)"
             :value="reportOptions?.flushToDbTimerPeriodSeconds ?? '-'"
-            suffix="s"
+            suffix="秒"
+            :value-style="{ fontWeight: 600, fontSize: '18px' }"
           />
         </Card>
-        <Card size="small">
-          <Statistic
-            title="分布式锁状态"
-            :value="reportOptions?.useDistributedLock ? '已启用' : '未启用'"
-          />
+
+        <!-- 统计落库操作入口 -->
+        <Card size="small" class="lg:col-span-3 shadow-sm flex items-center justify-between bg-muted/20">
+          <div>
+            <div class="text-xs font-semibold text-foreground mb-1">持久化固化落库</div>
+            <div class="text-xs text-primary font-medium">即时落盘 Redis 统计指标</div>
+          </div>
+          <Button type="primary" @click="onOpenFlushModal">
+            统计落库 (Flush)
+          </Button>
         </Card>
       </div>
 
-      <!-- 选项卡与数据表格 -->
-      <div class="flex-1 bg-background rounded-lg p-3 flex flex-col overflow-hidden">
-        <Tabs v-model:active-key="activeTab" class="flex-1 flex flex-col overflow-hidden" @change="refreshAll">
-          <!-- 明细报表 -->
-          <Tabs.TabPane key="detail" tab="消息明细分析" class="h-full flex flex-col">
-            <DetailGrid>
-              <template #top>
-                <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <Input
-                      v-model:value="sessionIdFilter"
-                      placeholder="按会话 ID 筛选..."
-                      allow-clear
-                      class="w-56"
-                    />
+      <!-- 选项卡与数据表格大盘 -->
+      <Card
+        size="small"
+        class="flex-1 flex flex-col h-full shadow-sm overflow-hidden"
+        :styles="{ body: { padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } }"
+      >
+        <Tabs
+          v-model:active-key="activeTab"
+          type="card"
+          class="h-full flex flex-col"
+          @change="refreshAll"
+        >
+          <!-- 1. 消息明细分析 -->
+          <Tabs.TabPane key="detail" tab="📊 消息类型明细分析 (Detail)">
+            <div class="flex flex-col h-full overflow-hidden">
+              <DetailGrid>
+                <template #toolbar-tools>
+                  <div class="flex items-center gap-2 mr-2 flex-wrap">
                     <Input
                       v-model:value="dateBucketFilter"
-                      placeholder="时间桶 (如 2026-09-14)..."
+                      :placeholder="currentGranularityTitle"
+                      allow-clear
+                      class="w-52"
+                      size="small"
+                      @press-enter="detailGridApi.query"
+                    />
+
+                    <Select
+                      v-model:value="messageTypesFilter"
+                      mode="multiple"
+                      placeholder="按消息类型筛选 (多选)"
+                      allow-clear
+                      class="w-64"
+                      size="small"
+                      :max-tag-count="2"
+                      :options="messageTypeOptions"
+                      @change="detailGridApi.query"
+                    />
+
+                    <Input
+                      v-model:value="sessionIdFilter"
+                      placeholder="会话 ID (SessionId)..."
                       allow-clear
                       class="w-48"
+                      size="small"
+                      @press-enter="detailGridApi.query"
                     />
-                    <Select
-                      v-model:value="messageTypeFilter"
-                      placeholder="消息类型"
-                      allow-clear
-                      class="w-32"
-                      :options="[
-                        { label: '全部类型', value: undefined },
-                        { label: '文本', value: 0 },
-                        { label: '图片', value: 1 },
-                        { label: '语音', value: 2 },
-                        { label: '视频', value: 3 },
-                        { label: '文件', value: 4 },
-                        { label: '位置', value: 5 },
-                        { label: '红包', value: 6 },
-                      ]"
-                    />
-                    <Button type="primary" @click="detailGridApi.query()">
-                      查询
+
+                    <Button type="primary" size="small" @click="detailGridApi.query">
+                      查询明细
                     </Button>
                   </div>
-                  <div>
-                    <Button :loading="flushing" @click="onFlushCache">
-                      立即刷写统计缓存
-                    </Button>
-                  </div>
-                </div>
-              </template>
-            </DetailGrid>
+                </template>
+              </DetailGrid>
+            </div>
           </Tabs.TabPane>
 
-          <!-- 汇总报表 -->
-          <Tabs.TabPane key="summary" tab="会话统计汇总" class="h-full flex flex-col">
-            <SummaryGrid>
-              <template #top>
-                <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <Input
-                      v-model:value="sessionIdFilter"
-                      placeholder="按会话 ID 筛选..."
-                      allow-clear
-                      class="w-56"
-                    />
+          <!-- 2. 会话统计汇总 -->
+          <Tabs.TabPane key="summary" tab="📈 周期会话统计汇总 (Summary)">
+            <div class="flex flex-col h-full overflow-hidden">
+              <SummaryGrid>
+                <template #toolbar-tools>
+                  <div class="flex items-center gap-2 mr-2 flex-wrap">
                     <Input
                       v-model:value="dateBucketFilter"
-                      placeholder="时间桶 (如 2026-09-14)..."
+                      :placeholder="currentGranularityTitle"
                       allow-clear
-                      class="w-48"
+                      class="w-52"
+                      size="small"
+                      @press-enter="summaryGridApi.query"
                     />
-                    <Button type="primary" @click="summaryGridApi.query()">
-                      查询
+
+                    <Input
+                      v-model:value="sessionIdFilter"
+                      placeholder="会话 ID (SessionId)..."
+                      allow-clear
+                      class="w-52"
+                      size="small"
+                      @press-enter="summaryGridApi.query"
+                    />
+
+                    <Button type="primary" size="small" @click="summaryGridApi.query">
+                      查询汇总
                     </Button>
                   </div>
-                  <div>
-                    <Button :loading="flushing" @click="onFlushCache">
-                      立即刷写统计缓存
-                    </Button>
-                  </div>
-                </div>
-              </template>
-            </SummaryGrid>
+                </template>
+              </SummaryGrid>
+            </div>
           </Tabs.TabPane>
         </Tabs>
-      </div>
+      </Card>
     </div>
   </Page>
 </template>
+
+<style scoped>
+.report-type-radio-group {
+  display: flex;
+  width: 100%;
+}
+
+.report-type-radio-group :deep(.ant-radio-button-wrapper) {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  height: 36px;
+  line-height: 34px;
+}
+</style>

@@ -1,10 +1,10 @@
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
-import type { ConnectionPoolDto } from '#/api/chat';
+import type { ConnectionPoolDto, LastOnlineDto, OnlineHostDto } from '#/api/chat';
 
 /**
- * 在线连接池表格列定义
+ * 1. 在线连接池表格列定义 (ConnectionPoolDto)
  */
-export function useColumns(
+export function useConnectionColumns(
   onActionClick: OnActionClickFn<ConnectionPoolDto>,
 ): VxeTableGridColumns<ConnectionPoolDto> {
   return [
@@ -49,14 +49,14 @@ export function useColumns(
     {
       field: 'deviceType',
       formatter: 'formatEmpty',
-      minWidth: 110,
+      minWidth: 100,
       title: '设备类型',
     },
     {
       field: 'browser',
       formatter: 'formatEmpty',
       minWidth: 120,
-      title: '客户端 / 浏览器',
+      title: '浏览器 / Client',
     },
     {
       field: 'ipAddress',
@@ -67,8 +67,8 @@ export function useColumns(
     {
       field: 'host',
       formatter: 'formatEmpty',
-      minWidth: 140,
-      title: '连接宿主 (Host)',
+      minWidth: 130,
+      title: '宿主节点 (Host)',
     },
     {
       field: 'activeTime',
@@ -91,6 +91,7 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
+          { code: 'detail', text: '详情' },
           {
             code: 'abort',
             props: {
@@ -103,7 +104,94 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 110,
+      width: 140,
+    },
+  ];
+}
+
+/**
+ * 2. 主机节点表格列定义 (OnlineHostDto)
+ */
+export function useHostColumns(
+  onActionClick: OnActionClickFn<OnlineHostDto>,
+): VxeTableGridColumns<OnlineHostDto> {
+  return [
+    {
+      title: '#',
+      type: 'seq',
+      width: 60,
+    },
+    {
+      cellRender: {
+        name: 'CellCopyable',
+      },
+      field: 'host',
+      minWidth: 200,
+      title: '主机节点名称 (Host)',
+    },
+    {
+      field: 'count',
+      minWidth: 140,
+      title: '当前在线连接数',
+    },
+    {
+      field: 'startTime',
+      formatter: 'formatDateTime',
+      minWidth: 180,
+      title: '节点启动时间',
+    },
+    {
+      cellRender: {
+        attrs: {
+          nameField: 'host',
+          onClick: onActionClick,
+          usePopconfirm: false,
+        },
+        name: 'CellOperation',
+        options: [
+          { code: 'view-connections', text: '查看连接' },
+          {
+            code: 'clear-host',
+            props: {
+              danger: true,
+            },
+            text: '清空连接',
+          },
+        ],
+      },
+      field: 'operation',
+      fixed: 'right',
+      title: '操作',
+      width: 170,
+    },
+  ];
+}
+
+/**
+ * 3. 最近在线记录表格列定义 (LastOnlineDto)
+ */
+export function useLastOnlineColumns(): VxeTableGridColumns<LastOnlineDto> {
+  return [
+    {
+      title: '#',
+      type: 'seq',
+      width: 60,
+    },
+    {
+      field: 'deviceId',
+      minWidth: 180,
+      title: '设备 ID',
+    },
+    {
+      field: 'deviceType',
+      minWidth: 120,
+      title: '设备类型',
+    },
+    {
+      field: 'activeTime',
+      formatter: 'formatDateTime',
+      minWidth: 180,
+      title: '最后在线时间',
     },
   ];
 }

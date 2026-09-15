@@ -12,17 +12,23 @@ export interface ConnectionPoolDto {
   activeTime?: string;
   appId?: string;
   appName?: string;
+  brand?: string;
   browser?: string;
-  chatObjectIdList?: string[];
+  browserInfo?: string;
+  chatObjectIdList?: number[];
   clientId?: string;
+  clientName?: string;
   connectionId: string;
   creationTime?: string;
   deviceId?: string;
+  deviceInfo?: string;
   deviceType?: string;
   host?: string;
   ipAddress?: string;
+  model?: string;
   platform?: string;
-  remoteIpAddress?: string;
+  pushClientId?: string;
+  queryId?: string;
   userId?: string;
   userName?: string;
 }
@@ -31,13 +37,19 @@ export interface ConnectionPoolDto {
  * 在线 Host 节点 DTO (OnlineHostDto)
  */
 export interface OnlineHostDto {
-  activeTime?: string;
-  connectionCount: number;
-  creationTime?: string;
-  description?: string;
+  count: number;
   host: string;
-  ipAddress?: string;
-  isEnabled?: boolean;
+  startTime?: string;
+}
+
+/**
+ * 最近在线记录 (LastOnline)
+ */
+export interface LastOnlineDto {
+  activeTime?: string;
+  deviceId?: string;
+  deviceType?: string;
+  ownerId?: number;
 }
 
 /**
@@ -50,19 +62,25 @@ export interface AbortInput {
 
 export interface GetOnlineConnectionsInput
   extends PagedAndSortedResultRequestDto {
-  appId?: string;
+  chatObjectId?: number;
   clientId?: string;
-  deviceId?: string;
-  deviceType?: string;
+  connectionId?: string;
+  endActiveTime?: string;
+  endCreationTime?: string;
   host?: string;
-  ipAddress?: string;
   keyword?: string;
   platform?: string;
+  startActiveTime?: string;
+  startCreationTime?: string;
   userId?: string;
 }
 
+export interface GetOnlineHostsInput extends PagedAndSortedResultRequestDto {
+  host?: string;
+}
+
 /**
- * 分页获取所有在线连接
+ * 分页获取所有在线连接 (GET /api/chat/online)
  */
 export async function getOnlineConnectionsApi(
   params?: GetOnlineConnectionsInput,
@@ -73,56 +91,127 @@ export async function getOnlineConnectionsApi(
 }
 
 /**
- * 获取在线连接详情
+ * 获取在线连接详情 (GET /api/chat/online/{id})
  */
 export async function getOnlineConnectionApi(id: string) {
   return requestClient.get<ConnectionPoolDto>(`/chat/online/${id}`);
 }
 
 /**
- * 获取当前总在线连接数
+ * 获取当前总在线连接数 (GET /api/chat/online/total-count)
  */
-export async function getOnlineTotalCountApi() {
-  return requestClient.get<number>('/chat/online/total-count');
+export async function getOnlineTotalCountApi(host?: string) {
+  return requestClient.get<number>('/chat/online/total-count', {
+    params: { host },
+  });
 }
 
 /**
- * 分页获取所有主机节点及连接分布
+ * 分页获取所有主机节点及连接分布 (GET /api/chat/online/hosts)
  */
-export async function getOnlineHostsApi(
-  params?: PagedAndSortedResultRequestDto,
-) {
+export async function getOnlineHostsApi(params?: GetOnlineHostsInput) {
   return requestClient.get<PagedResultDto<OnlineHostDto>>('/chat/online/hosts', {
     params,
   });
 }
 
 /**
- * 强制断开指定连接
+ * 获取指定用户的所有在线连接 (GET /api/chat/online/by-user/{userId})
  */
-export async function abortOnlineConnectionsApi(data: AbortInput) {
-  return requestClient.post('/chat/online/abort', data);
+export async function getOnlineConnectionsByUserApi(
+  userId: string,
+  params?: PagedAndSortedResultRequestDto,
+) {
+  return requestClient.get<PagedResultDto<ConnectionPoolDto>>(
+    `/chat/online/by-user/${userId}`,
+    { params },
+  );
 }
 
 /**
- * 清空所有连接 (高危操作)
+ * 获取指定聊天对象的所有在线连接 (GET /api/chat/online/by-owner/{ownerId})
  */
-export async function clearAllOnlineConnectionsApi(reason: string) {
-  return requestClient.post('/chat/online/clear-all', null, {
-    params: { reason },
-  });
+export async function getOnlineConnectionsByOwnerApi(
+  ownerId: number | string,
+  params?: PagedAndSortedResultRequestDto,
+) {
+  return requestClient.get<PagedResultDto<ConnectionPoolDto>>(
+    `/chat/online/by-owner/${ownerId}`,
+    { params },
+  );
 }
 
 /**
- * 获取指定聊天对象的连接数
+ * 获取指定用户的连接数量 (GET /api/chat/online/count-by-user/{userId})
+ */
+export async function getOnlineCountByUserApi(userId: string) {
+  return requestClient.get<number>(`/chat/online/count-by-user/${userId}`);
+}
+
+/**
+ * 获取指定聊天对象的连接数量 (GET /api/chat/online/count-by-owner/{ownerId})
  */
 export async function getOnlineCountByOwnerApi(ownerId: number | string) {
   return requestClient.get<number>(`/chat/online/count-by-owner/${ownerId}`);
 }
 
 /**
- * 获取指定用户的连接数
+ * 获取指定会话的在线连接数量 (GET /api/chat/online/count-by-session/{sessionId})
  */
-export async function getOnlineCountByUserApi(userId: string) {
-  return requestClient.get<number>(`/chat/online/count-by-user/${userId}`);
+export async function getOnlineCountBySessionApi(sessionId: string) {
+  return requestClient.get<number>(`/chat/online/count-by-session/${sessionId}`);
+}
+
+/**
+ * 获取聊天对象的最近在线记录 (GET /api/chat/online/last-online/{ownerId})
+ */
+export async function getLastOnlineApi(
+  ownerId: number | string,
+  params?: PagedAndSortedResultRequestDto,
+) {
+  return requestClient.get<PagedResultDto<LastOnlineDto>>(
+    `/chat/online/last-online/${ownerId}`,
+    { params },
+  );
+}
+
+/**
+ * 获取聊天对象的在线好友数量 (GET /api/chat/online/online-friends-count/{ownerId})
+ */
+export async function getOnlineFriendsCountApi(ownerId: number | string) {
+  return requestClient.get<number>(
+    `/chat/online/online-friends-count/${ownerId}`,
+  );
+}
+
+/**
+ * 强制断开连接 (POST /api/chat/online/abort)
+ */
+export async function abortOnlineConnectionsApi(data: AbortInput) {
+  return requestClient.post('/chat/online/abort', data);
+}
+
+/**
+ * 移除单个连接 (DELETE /api/chat/online)
+ */
+export async function deleteOnlineConnectionApi(connectionId: string) {
+  return requestClient.delete('/chat/online', {
+    params: { connectionId },
+  });
+}
+
+/**
+ * 清空所有/指定主机连接 (POST /api/chat/online/clear-all)
+ */
+export async function clearAllOnlineConnectionsApi(
+  hosts?: string[],
+  reason = '管理员清空连接',
+) {
+  return requestClient.post<Record<string, number>>(
+    '/chat/online/clear-all',
+    hosts && hosts.length > 0 ? hosts : null,
+    {
+      params: { reason },
+    },
+  );
 }
