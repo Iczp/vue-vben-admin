@@ -12,6 +12,7 @@ import {
   Input,
   InputNumber,
   message,
+  Avatar,
   Modal,
   Select,
   Statistic,
@@ -22,6 +23,8 @@ import {
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   clearAllOnlineConnectionsApi,
+  getChatObjectApi,
+  getChatObjectAvatarUrl,
   getLastOnlineApi,
   getOnlineConnectionsApi,
   getOnlineConnectionsByOwnerApi,
@@ -32,6 +35,11 @@ import {
   getOnlineHostsApi,
   getOnlineTotalCountApi,
 } from '#/api/chat';
+import type { ChatObjectDto } from '#/api/chat';
+import {
+  getObjectTypeName,
+  getObjectTypeColor,
+} from '#/views/chat/chat-object/data';
 
 import { useConnectionColumns, useHostColumns, useLastOnlineColumns } from './data';
 import AbortModal from './modules/abort-modal.vue';
@@ -289,10 +297,19 @@ function onSearchUser() {
 
 // ==========================================
 // 3. 聊天对象视角 (ChatObject / Owner View)
-// ==========================================
 const searchOwnerId = ref<number | undefined>(undefined);
 const ownerOnlineCount = ref<number | null>(null);
 const ownerFriendsCount = ref<number | null>(null);
+const ownerChatObject = ref<ChatObjectDto | null>(null);
+
+async function fetchOwnerChatObject(id: number) {
+  try {
+    ownerChatObject.value = await getChatObjectApi(id);
+  } catch (err) {
+    console.warn(`Failed to fetch owner chat object id=${id}`, err);
+    ownerChatObject.value = null;
+  }
+}
 
 function onOwnerConnActionClick({
   code,
@@ -401,6 +418,7 @@ function onSearchOwner() {
     message.warning('请输入聊天对象 ID (OwnerId)');
     return;
   }
+  fetchOwnerChatObject(searchOwnerId.value);
   ownerGridApi.query();
 }
 
@@ -597,11 +615,11 @@ onMounted(() => {
         <!-- 3. 聊天对象视角 -->
         <Tabs.TabPane key="owners" tab="💬 聊天对象维度 (ChatObjects)">
           <div class="flex flex-col h-full overflow-hidden">
-            <div class="flex gap-2 mb-2 items-center shrink-0">
+            <div class="flex gap-2 mb-2 items-center shrink-0 flex-wrap">
               <InputNumber
                 v-model:value="searchOwnerId"
                 placeholder="输入聊天对象 ID (OwnerId)..."
-                class="w-64"
+                class="w-60"
                 size="small"
                 @press-enter="onSearchOwner"
               />
@@ -609,7 +627,29 @@ onMounted(() => {
                 查询聊天对象
               </Button>
 
-              <Tag v-if="ownerOnlineCount !== null" color="purple" class="ml-2">
+              <!-- 查询到的聊天对象头像与基础信息 -->
+              <div
+                v-if="ownerChatObject"
+                class="flex items-center gap-2 p-1 px-2.5 rounded-md bg-muted/40 border border-border shrink-0 ml-1"
+              >
+                <Avatar
+                  :src="getChatObjectAvatarUrl(ownerChatObject.id, ownerChatObject.portrait, ownerChatObject.thumbnail)"
+                  shape="square"
+                  :size="26"
+                  class="rounded"
+                  :style="{ backgroundColor: '#3b82f6' }"
+                >
+                  {{ (ownerChatObject.displayName || ownerChatObject.name || '客').slice(0, 1) }}
+                </Avatar>
+                <span class="text-xs font-semibold text-foreground max-w-[140px] truncate">
+                  {{ ownerChatObject.displayName || ownerChatObject.name }}
+                </span>
+                <Tag :color="getObjectTypeColor(ownerChatObject.objectType)" class="text-[10px] px-1 py-0 mr-0">
+                  {{ getObjectTypeName(ownerChatObject.objectType) }}
+                </Tag>
+              </div>
+
+              <Tag v-if="ownerOnlineCount !== null" color="purple" class="ml-1">
                 在线连接数: <strong>{{ ownerOnlineCount }}</strong>
               </Tag>
               <Tag v-if="ownerFriendsCount !== null" color="cyan">

@@ -32,6 +32,17 @@ export function useConnectionColumns(
       title: '用户名 / 账号',
     },
     {
+      field: 'chatObjectIdList',
+      formatter: ({ cellValue }) => {
+        if (!cellValue || !Array.isArray(cellValue) || cellValue.length === 0) {
+          return '-';
+        }
+        return `已绑定 ${cellValue.length} 个`;
+      },
+      minWidth: 110,
+      title: '绑定聊天对象',
+    },
+    {
       cellRender: {
         name: 'CellTag',
         options: [

@@ -4,6 +4,32 @@ import type { ChatObjectDto } from '#/api/chat';
 import { ChatObjectTypeEnums, VerificationMethodEnums } from '#/api/chat';
 
 /**
+ * 聊天对象类型标签与颜色工具方法
+ */
+export const objectTypeOptions = [
+  { color: 'default', label: '匿名', value: ChatObjectTypeEnums.Anonymous },
+  { color: 'blue', label: '个人号', value: ChatObjectTypeEnums.Personal },
+  { color: 'cyan', label: '群组/房间', value: ChatObjectTypeEnums.Room },
+  { color: 'purple', label: '官方服务号', value: ChatObjectTypeEnums.Official },
+  { color: 'orange', label: '订阅号', value: ChatObjectTypeEnums.Subscription },
+  { color: 'magenta', label: '广场', value: ChatObjectTypeEnums.Square },
+  { color: 'geekblue', label: '机器人', value: ChatObjectTypeEnums.Robot },
+  { color: 'gold', label: '店长', value: ChatObjectTypeEnums.ShopKeeper },
+  { color: 'lime', label: '店员', value: ChatObjectTypeEnums.ShopWaiter },
+  { color: 'green', label: '客户', value: ChatObjectTypeEnums.Customer },
+];
+
+export function getObjectTypeName(type?: ChatObjectTypeEnums): string {
+  const item = objectTypeOptions.find((o) => o.value === type);
+  return item?.label || '未知类型';
+}
+
+export function getObjectTypeColor(type?: ChatObjectTypeEnums): string {
+  const item = objectTypeOptions.find((o) => o.value === type);
+  return item?.color || 'default';
+}
+
+/**
  * 聊天对象综合列表列定义
  */
 export function useColumns(
@@ -13,15 +39,27 @@ export function useColumns(
     {
       title: '#',
       type: 'seq',
-      width: 60,
+      width: 50,
     },
     {
       cellRender: {
         name: 'CellCopyable',
       },
       field: 'id',
-      minWidth: 100,
+      minWidth: 90,
       title: '对象 ID',
+    },
+    {
+      cellRender: {
+        name: 'CellAvatar',
+        props: {
+          shape: 'square',
+          size: 38,
+        },
+      },
+      field: 'portrait',
+      title: '头像',
+      width: 72,
     },
     {
       field: 'name',

@@ -18,6 +18,7 @@ import { get, isFunction, isString } from '@vben/utils';
 
 import { objectOmit } from '@vueuse/core';
 import {
+  Avatar,
   Badge,
   Button,
   Image,
@@ -166,6 +167,51 @@ setupVbenVxeTable({
         const { props } = renderOpts;
         const { column, row } = params;
         return h(Image, { src: row[column.field], ...props });
+      },
+    });
+
+    // 头像渲染 (聊天对象 / 用户头像)
+    vxeUI.renderer.add('CellAvatar', {
+      renderTableDefault(renderOpts, { column, row }) {
+        const { props } = renderOpts;
+        const rawSrc = row[column.field] || row.portrait || row.thumbnail;
+        const id = row.id ?? row.ownerId ?? row.chatObjectId;
+        const avatarUrl =
+          rawSrc ||
+          (id !== undefined && id !== null && id !== ''
+            ? `/api/chat/avatar/get?chatObjectId=${id}`
+            : '');
+        const name = row.displayName || row.name || row.userName || '';
+        const shape = props?.shape || 'square';
+        const size = props?.size || 38;
+
+        return h(
+          'div',
+          { class: 'flex items-center justify-center py-0.5' },
+          [
+            h(
+              Avatar,
+              {
+                shape,
+                size,
+                src: avatarUrl,
+                style: {
+                  backgroundColor: '#3b82f6',
+                  borderRadius: shape === 'square' ? '6px' : '9999px',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  ...props?.style,
+                },
+                ...props,
+              },
+              {
+                default: () =>
+                  name ? name.slice(0, 1).toUpperCase() : '💬',
+              },
+            ),
+          ],
+        );
       },
     });
 

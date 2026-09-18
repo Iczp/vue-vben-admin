@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import type { ConnectionPoolDto } from '#/api/chat';
+import type { ChatObjectDto, ConnectionPoolDto } from '#/api/chat';
 
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
 import {
+  Avatar,
   Descriptions,
   DescriptionsItem,
   Empty,
@@ -13,31 +14,91 @@ import {
   Tag,
 } from 'antdv-next';
 
-import { getOnlineConnectionApi } from '#/api/chat';
+import {
+  ChatObjectTypeEnums,
+  getChatObjectApi,
+  getChatObjectAvatarUrl,
+  getOnlineConnectionApi,
+} from '#/api/chat';
+import {
+  getObjectTypeName,
+  getObjectTypeColor,
+} from '#/views/chat/chat-object/data';
 
 const loading = ref(false);
 const detailData = ref<ConnectionPoolDto | null>(null);
+const boundChatObjects = ref<ChatObjectDto[]>([]);
+const chatObjectsLoading = ref(false);
+
+// 内存缓存，避免同个连接重复打开时重复请求
+const chatObjectCache = new Map<number | string, ChatObjectDto>();
+
+async function fetchBoundChatObjects(idList: number[]) {
+  if (!idList || idList.length === 0) {
+    boundChatObjects.value = [];
+    return;
+  }
+  chatObjectsLoading.value = true;
+  boundChatObjects.value = [];
+  try {
+    const fetchPromises = idList.map(async (id) => {
+      if (chatObjectCache.has(id)) {
+        return chatObjectCache.get(id)!;
+      }
+      try {
+        const obj = await getChatObjectApi(id);
+        if (obj) {
+          chatObjectCache.set(id, obj);
+          return obj;
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch chat object id=${id}`, err);
+      }
+      return {
+        displayName: `Owner #${id}`,
+        id,
+        isEnabled: true,
+        name: `ID: ${id}`,
+        objectType: ChatObjectTypeEnums.Personal,
+      } as ChatObjectDto;
+    });
+
+    const list = await Promise.all(fetchPromises);
+    boundChatObjects.value = list.filter(Boolean);
+  } finally {
+    chatObjectsLoading.value = false;
+  }
+}
 
 const [Modal, modalApi] = useVbenModal<ConnectionPoolDto | string>({
   fullscreenButton: false,
   async onOpenChange(isOpen) {
     if (isOpen) {
       detailData.value = null;
+      boundChatObjects.value = [];
       const data = modalApi.getData();
       if (!data) return;
 
       if (typeof data === 'string') {
         try {
           loading.value = true;
-          detailData.value = await getOnlineConnectionApi(data);
+          const res = await getOnlineConnectionApi(data);
+          detailData.value = res;
+          if (res?.chatObjectIdList && res.chatObjectIdList.length > 0) {
+            fetchBoundChatObjects(res.chatObjectIdList);
+          }
         } finally {
           loading.value = false;
         }
       } else {
         detailData.value = data;
+        if (data?.chatObjectIdList && data.chatObjectIdList.length > 0) {
+          fetchBoundChatObjects(data.chatObjectIdList);
+        }
       }
     } else {
       detailData.value = null;
+      boundChatObjects.value = [];
     }
   },
 });
@@ -93,11 +154,63 @@ defineExpose({ modalApi });
             <span class="font-mono text-xs">{{ detailData.pushClientId || '-' }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="绑定聊天对象 (ChatObjects)" :span="2">
-            <div class="flex flex-wrap gap-1.5" v-if="detailData.chatObjectIdList && detailData.chatObjectIdList.length > 0">
-              <Tag v-for="objId in detailData.chatObjectIdList" :key="objId" color="purple">
-                OwnerId: {{ objId }}
-              </Tag>
+            <!-- 加载状态 -->
+            <div v-if="chatObjectsLoading" class="flex items-center gap-2 py-2">
+              <Spin size="small" />
+              <span class="text-xs text-muted-foreground">正在获取聊天对象数据...</span>
             </div>
+            <!-- 聊天对象列表展示 (带头像与类型) -->
+            <div
+              v-else-if="boundChatObjects && boundChatObjects.length > 0"
+              class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full mt-1"
+            >
+              <div
+                v-for="item in boundChatObjects"
+                :key="item.id"
+                class="flex items-center gap-3 p-2 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition-colors"
+              >
+                <!-- 显示头像 -->
+                <Avatar
+                  :src="getChatObjectAvatarUrl(item.id, item.portrait, item.thumbnail)"
+                  shape="square"
+                  :size="42"
+                  class="shrink-0 rounded-md border border-border/60 font-bold"
+                  :style="{ backgroundColor: '#3b82f6' }"
+                >
+                  {{ (item.displayName || item.name || '客').slice(0, 1).toUpperCase() }}
+                </Avatar>
+
+                <!-- 对象详情 -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-1 mb-0.5">
+                    <span
+                      class="font-medium text-xs text-foreground truncate"
+                      :title="item.displayName || item.name"
+                    >
+                      {{ item.displayName || item.name }}
+                    </span>
+                    <Tag
+                      :color="getObjectTypeColor(item.objectType)"
+                      class="mr-0 text-[10px] px-1 py-0 leading-tight"
+                    >
+                      {{ getObjectTypeName(item.objectType) }}
+                    </Tag>
+                  </div>
+                  <div class="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span class="font-mono">
+                      OwnerId: <strong class="text-foreground">{{ item.id }}</strong>
+                    </span>
+                    <Tag
+                      :color="item.isEnabled ? 'success' : 'error'"
+                      class="mr-0 text-[10px] px-1 py-0 leading-tight scale-90"
+                    >
+                      {{ item.isEnabled ? '启用' : '禁用' }}
+                    </Tag>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 仅在没有任何 ID 时提示 -->
             <span v-else class="text-xs text-muted-foreground">暂无绑定</span>
           </DescriptionsItem>
         </Descriptions>

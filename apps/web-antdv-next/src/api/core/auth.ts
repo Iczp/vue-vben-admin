@@ -1,7 +1,6 @@
 import {
   authBaseRequestClient,
   authRequestClient,
-  baseRequestClient,
   requestClient,
 } from '#/api/request';
 
@@ -96,10 +95,10 @@ export async function refreshTokenApi() {
 }
 
 /**
- * 退出登录
+ * 退出登录 (调用 ABP AuthServer 登出接口)
  */
 export async function logoutApi() {
-  return baseRequestClient.post('/auth/logout', {
+  return authBaseRequestClient.get('/api/account/logout', {
     withCredentials: true,
   });
 }

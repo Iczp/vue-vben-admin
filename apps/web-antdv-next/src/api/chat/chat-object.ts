@@ -115,12 +115,35 @@ export async function getChatObjectsApi(params?: GetChatObjectInput) {
 }
 
 /**
- * 获取聊天对象详情
+ * 获取聊天对象单条数据 (GET /api/chat/chat-object/{id})
+ */
+export async function getChatObjectApi(id: number | string) {
+  return requestClient.get<ChatObjectDto>(`/chat/chat-object/${id}`);
+}
+
+/**
+ * 获取聊天对象详情 (GET /api/chat/chat-object/{id}/detail)
  */
 export async function getChatObjectDetailApi(id: number | string) {
   return requestClient.get<ChatObjectDetailDto>(
     `/chat/chat-object/${id}/detail`,
   );
+}
+
+/**
+ * 获取聊天对象头像完整 URL
+ */
+export function getChatObjectAvatarUrl(
+  id?: number | string,
+  portrait?: string,
+  thumbnail?: string,
+): string {
+  if (portrait) return portrait;
+  if (thumbnail) return thumbnail;
+  if (id !== undefined && id !== null && id !== '') {
+    return `/api/chat/avatar/get?chatObjectId=${id}`;
+  }
+  return '';
 }
 
 /**

@@ -82,6 +82,15 @@ const routes: RouteRecordRaw[] = [
         name: 'ChatScanCode',
         path: 'scan-code',
       },
+      {
+        component: () => import('#/views/chat/ai-run/index.vue'),
+        meta: {
+          icon: 'lucide:bot',
+          title: 'AI任务执行记录',
+        },
+        name: 'ChatAiRun',
+        path: 'ai-run',
+      },
     ],
   },
 ];

@@ -6,7 +6,17 @@ import { onMounted, ref } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 
-import { Button, Input, message, Modal, Select, Space, TreeSelect } from 'antdv-next';
+import {
+  Button,
+  Card,
+  Input,
+  message,
+  Modal,
+  Select,
+  Space,
+  Tabs,
+  TreeSelect,
+} from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -20,6 +30,21 @@ import {
 import { useColumns } from './data';
 import FormModal from './modules/form-modal.vue';
 import VerifyMethodModal from './modules/verify-method-modal.vue';
+
+const activeTypeTab = ref('all');
+const objectTypeTabs = [
+  { key: 'all', label: '全部对象', value: undefined },
+  { key: 'personal', label: '👤 个人号', value: ChatObjectTypeEnums.Personal },
+  { key: 'room', label: '👥 群聊/房间', value: ChatObjectTypeEnums.Room },
+  { key: 'official', label: '📢 官方服务号', value: ChatObjectTypeEnums.Official },
+  { key: 'subscription', label: '📰 订阅号', value: ChatObjectTypeEnums.Subscription },
+  { key: 'square', label: '🌐 广场', value: ChatObjectTypeEnums.Square },
+  { key: 'robot', label: '🤖 机器人', value: ChatObjectTypeEnums.Robot },
+  { key: 'shopKeeper', label: '🏪 掌柜', value: ChatObjectTypeEnums.ShopKeeper },
+  { key: 'shopWaiter', label: '🧑‍💼 店小二', value: ChatObjectTypeEnums.ShopWaiter },
+  { key: 'customer', label: '🙋 客户', value: ChatObjectTypeEnums.Customer },
+  { key: 'anonymous', label: '🕶️ 匿名', value: ChatObjectTypeEnums.Anonymous },
+];
 
 const filterText = ref('');
 const objectTypeFilter = ref<ChatObjectTypeEnums | undefined>(undefined);
@@ -156,6 +181,13 @@ function refreshGrid() {
   gridApi.query();
 }
 
+function onTypeTabChange(key: any) {
+  activeTypeTab.value = key;
+  const target = objectTypeTabs.find((t) => t.key === key);
+  objectTypeFilter.value = target?.value;
+  refreshGrid();
+}
+
 onMounted(() => {
   loadFilterOptions();
 });
@@ -166,69 +198,75 @@ onMounted(() => {
     <FormModalComp @success="refreshGrid" />
     <VerifyModalComp @success="refreshGrid" />
 
-    <Grid>
-      <template #table-title>
-        <div class="flex items-center gap-1.5 text-sm font-medium">
-          <span class="text-muted-foreground">即时通讯管理</span>
-          <span class="text-muted-foreground/60">/</span>
-          <span class="font-bold text-base text-foreground">聊天对象管理 (ChatObjects)</span>
-        </div>
-      </template>
+    <Card
+      size="small"
+      class="flex-1 flex flex-col h-full shadow-sm overflow-hidden"
+      :styles="{ body: { padding: '10px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } }"
+    >
+      <!-- 对象类型 Tab 切换 (Tab 分类) -->
+      <Tabs
+        v-model:activeKey="activeTypeTab"
+        type="card"
+        size="small"
+        class="shrink-0 mb-1.5"
+        @change="onTypeTabChange"
+      >
+        <Tabs.TabPane
+          v-for="item in objectTypeTabs"
+          :key="item.key"
+          :tab="item.label"
+        />
+      </Tabs>
 
-      <template #top>
-        <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
-          <div class="flex items-center gap-2 flex-wrap">
-            <Input.Search
-              v-model:value="filterText"
-              placeholder="搜索账号 / 昵称 / 描述..."
-              allow-clear
-              class="w-56"
-              @search="refreshGrid"
-            />
-            <Select
-              v-model:value="objectTypeFilter"
-              placeholder="对象类型"
-              allow-clear
-              class="w-36"
-              :options="[
-                { label: '个人号', value: ChatObjectTypeEnums.Personal },
-                { label: '群聊/房间', value: ChatObjectTypeEnums.Room },
-                { label: '官方服务号', value: ChatObjectTypeEnums.Official },
-                { label: '订阅号', value: ChatObjectTypeEnums.Subscription },
-                { label: '智能机器人', value: ChatObjectTypeEnums.Robot },
-                { label: '商户店长', value: ChatObjectTypeEnums.ShopKeeper },
-                { label: '商户店员', value: ChatObjectTypeEnums.ShopWaiter },
-                { label: '客户', value: ChatObjectTypeEnums.Customer },
-              ]"
-              @change="refreshGrid"
-            />
-            <Select
-              v-model:value="typeIdFilter"
-              placeholder="类型定义"
-              allow-clear
-              class="w-40"
-              :options="typeOptions"
-              @change="refreshGrid"
-            />
-            <TreeSelect
-              v-model:value="categoryIdFilter"
-              placeholder="所属分类"
-              allow-clear
-              class="w-44"
-              :tree-data="categoryTree"
-              :field-names="{ children: 'children', label: 'name', value: 'id' }"
-              tree-default-expand-all
-              @change="refreshGrid"
-            />
-          </div>
+      <div class="flex-1 overflow-hidden">
+        <Grid>
+          <template #table-title>
+            <div class="flex items-center gap-1.5 text-sm font-medium">
+              <span class="text-muted-foreground">即时通讯管理</span>
+              <span class="text-muted-foreground/60">/</span>
+              <span class="font-bold text-base text-foreground">聊天对象管理 (ChatObjects)</span>
+            </div>
+          </template>
 
-          <Space>
-            <Button type="primary" @click="onAdd">
-              + 新建聊天对象
-            </Button>
-          </Space>
-        </div>
-      </template>
-    </Grid>
+          <template #top>
+            <div class="flex items-center justify-between py-1 px-1 flex-wrap gap-2 mb-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <Input.Search
+                  v-model:value="filterText"
+                  placeholder="搜索账号 / 昵称 / 描述..."
+                  allow-clear
+                  class="w-60"
+                  @search="refreshGrid"
+                />
+                <Select
+                  v-model:value="typeIdFilter"
+                  placeholder="类型定义"
+                  allow-clear
+                  class="w-40"
+                  :options="typeOptions"
+                  @change="refreshGrid"
+                />
+                <TreeSelect
+                  v-model:value="categoryIdFilter"
+                  placeholder="所属分类"
+                  allow-clear
+                  class="w-44"
+                  :tree-data="categoryTree"
+                  :field-names="{ children: 'children', label: 'name', value: 'id' }"
+                  tree-default-expand-all
+                  @change="refreshGrid"
+                />
+              </div>
+
+              <Space>
+                <Button type="primary" @click="onAdd">
+                  + 新建聊天对象
+                </Button>
+              </Space>
+            </div>
+          </template>
+        </Grid>
+      </div>
+    </Card>
   </Page>
 </template>
