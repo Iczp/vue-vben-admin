@@ -75,8 +75,13 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   client.addResponseInterceptor(
     defaultResponseInterceptor({
       codeField: 'code',
-      dataField: 'data',
-      successCode: 0,
+      dataField: (res: any) => {
+        if (res && typeof res === 'object' && 'code' in res && 'data' in res) {
+          return res.data;
+        }
+        return res;
+      },
+      successCode: (code: any) => code === 0 || code === 200 || code === undefined,
     }),
   );
 
@@ -97,7 +102,12 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       // 这里可以根据业务进行定制,你可以拿到 error 内的信息进行定制化处理，根据不同的 code 做不同的提示，而不是直接使用 message.error 提示 msg
       // 当前mock接口返回的错误字段是 error 或者 message
       const responseData = error?.response?.data ?? {};
-      const errorMessage = responseData?.error ?? responseData?.message ?? '';
+      const errorMessage =
+        responseData?.error?.message ??
+        responseData?.error?.details ??
+        (typeof responseData?.error === 'string' ? responseData?.error : null) ??
+        responseData?.message ??
+        '';
       // 如果没有错误信息，则会根据状态码进行提示
       message.error(errorMessage || msg);
     }),

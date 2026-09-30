@@ -6,6 +6,12 @@ export default defineConfig(async () => {
     vite: {
       server: {
         proxy: {
+          '/api/app-statistic': {
+            changeOrigin: true,
+            target: 'https://localhost:44397',
+            secure: false,
+            ws: true,
+          },
           '/api': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api/, ''),
