@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+﻿<script lang="ts" setup>
 import type { ContentDailyStatDto } from '#/api/cms';
 
 import { computed, reactive, ref } from 'vue';
@@ -104,7 +104,7 @@ function onFilterChange() {
       <!-- 汇总 KPI 指标卡片 -->
       <Row :gutter="12" class="shrink-0">
         <Col :span="6">
-          <Card :bordered="false" class="shadow-sm" :body-style="{ padding: '16px' }">
+          <Card variant="borderless" class="shadow-sm" :body-style="{ padding: '16px' }">
             <Statistic
               title="当前区间总浏览量 (PV)"
               :value="totalPv"
@@ -113,7 +113,7 @@ function onFilterChange() {
           </Card>
         </Col>
         <Col :span="6">
-          <Card :bordered="false" class="shadow-sm" :body-style="{ padding: '16px' }">
+          <Card variant="borderless" class="shadow-sm" :body-style="{ padding: '16px' }">
             <Statistic
               title="当前区间独立访客 (UV)"
               :value="totalUv"
@@ -122,7 +122,7 @@ function onFilterChange() {
           </Card>
         </Col>
         <Col :span="6">
-          <Card :bordered="false" class="shadow-sm" :body-style="{ padding: '16px' }">
+          <Card variant="borderless" class="shadow-sm" :body-style="{ padding: '16px' }">
             <Statistic
               title="当前区间点赞互动"
               :value="totalLikes"
@@ -131,7 +131,7 @@ function onFilterChange() {
           </Card>
         </Col>
         <Col :span="6">
-          <Card :bordered="false" class="shadow-sm" :body-style="{ padding: '16px' }">
+          <Card variant="borderless" class="shadow-sm" :body-style="{ padding: '16px' }">
             <Statistic
               title="当前区间评论互动"
               :value="totalComments"
@@ -142,7 +142,7 @@ function onFilterChange() {
       </Row>
 
       <!-- 搜索过滤栏 -->
-      <Card :bordered="false" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
+      <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <DatePicker.RangePicker

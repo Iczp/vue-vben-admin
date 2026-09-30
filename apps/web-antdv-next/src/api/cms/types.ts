@@ -248,6 +248,8 @@ export interface AdminArticleUpdateInput {
   summary?: string;
   slug?: string;
   coverUrl?: string;
+  content?: string;
+  markdownContent?: string;
   sourceType?: SourceType;
   sourceUrl?: string;
   sourceAuthor?: string;

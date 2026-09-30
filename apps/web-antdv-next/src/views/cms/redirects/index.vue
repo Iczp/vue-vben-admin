@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+﻿<script lang="ts" setup>
 import type { ContentRedirectDto } from '#/api/cms';
 
 import { reactive } from 'vue';
@@ -126,7 +126,7 @@ function onFilterChange() {
   <Page auto-content-height>
     <div class="h-full flex flex-col gap-3">
       <!-- 搜索过滤栏 -->
-      <Card :bordered="false" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
+      <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <Input.Search

@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+﻿<script lang="ts" setup>
 import type { AdminArticleListItemDto } from '#/api/cms';
 
 import { onMounted, ref } from 'vue';
@@ -131,7 +131,7 @@ onMounted(() => {
       <!-- 顶部数据概览卡片 -->
       <Row :gutter="16">
         <Col :xs="24" :sm="12" :md="6">
-          <Card :bordered="false" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/articles')">
+          <Card variant="borderless" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/articles')">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xs text-muted-foreground font-medium">待审核内容</div>
@@ -146,7 +146,7 @@ onMounted(() => {
         </Col>
 
         <Col :xs="24" :sm="12" :md="6">
-          <Card :bordered="false" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/articles')">
+          <Card variant="borderless" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/articles')">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xs text-muted-foreground font-medium">草稿箱文章</div>
@@ -161,7 +161,7 @@ onMounted(() => {
         </Col>
 
         <Col :xs="24" :sm="12" :md="6">
-          <Card :bordered="false" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/articles')">
+          <Card variant="borderless" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/articles')">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xs text-muted-foreground font-medium">已发布文章总数</div>
@@ -176,7 +176,7 @@ onMounted(() => {
         </Col>
 
         <Col :xs="24" :sm="12" :md="6">
-          <Card :bordered="false" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/statistics')">
+          <Card variant="borderless" class="shadow-sm hover:shadow transition-shadow cursor-pointer" @click="router.push('/cms/statistics')">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xs text-muted-foreground font-medium">今日阅读访问量</div>
@@ -192,7 +192,7 @@ onMounted(() => {
       </Row>
 
       <!-- 快捷入口操作栏 -->
-      <Card :bordered="false" class="shadow-sm">
+      <Card variant="borderless" class="shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="font-medium text-sm flex items-center gap-2">
             <span>常用快捷操作</span>
@@ -224,7 +224,7 @@ onMounted(() => {
         <Col :xs="24" :lg="16">
           <div class="space-y-4">
             <!-- 待审核列表 -->
-            <Card :bordered="false" class="shadow-sm" title="待审核工作流 (待办任务)">
+            <Card variant="borderless" class="shadow-sm" title="待审核工作流 (待办任务)">
               <template #extra>
                 <Button type="link" size="small" @click="router.push('/cms/articles')">
                   查看全部 <ArrowRightIcon class="size-3.5 inline ml-1" />
@@ -262,7 +262,7 @@ onMounted(() => {
             </Card>
 
             <!-- 最近发布内容 -->
-            <Card :bordered="false" class="shadow-sm" title="最新发布动态">
+            <Card variant="borderless" class="shadow-sm" title="最新发布动态">
               <template #extra>
                 <Button type="link" size="small" @click="router.push('/cms/articles')">
                   所有内容 <ArrowRightIcon class="size-3.5 inline ml-1" />
@@ -301,7 +301,7 @@ onMounted(() => {
         <Col :xs="24" :lg="8">
           <div class="space-y-4">
             <!-- 系统内容形态形态卡片 -->
-            <Card :bordered="false" class="shadow-sm" title="系统内容模型与类型">
+            <Card variant="borderless" class="shadow-sm" title="系统内容模型与类型">
               <template #extra>
                 <Button type="link" size="small" @click="router.push('/cms/content-types')">
                   类型字典 <ArrowRightIcon class="size-3.5 inline ml-1" />
@@ -360,7 +360,7 @@ onMounted(() => {
             </Card>
 
             <!-- 审核与发布准则卡片 -->
-            <Card :bordered="false" class="shadow-sm" title="CMS 采编与风控规范">
+            <Card variant="borderless" class="shadow-sm" title="CMS 采编与风控规范">
               <div class="text-xs leading-relaxed text-muted-foreground space-y-2">
                 <p>1. <strong>机审风控前置：</strong> 所有提交审核稿件均将触发敏感词及风控机审，出现高风险将自动流转至风控裁决台。</p>
                 <p>2. <strong>定时发布机制：</strong> 设置未来时间的定时发布任务将在到达对应时刻后由后台调度作业自动生效推送。</p>

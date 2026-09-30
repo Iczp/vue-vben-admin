@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+﻿<script lang="ts" setup>
 import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
@@ -110,7 +110,7 @@ const contentTypes = ref<ContentTypeItem[]>([
   <Page auto-content-height>
     <div class="space-y-4">
       <!-- 页面顶部说明 -->
-      <Card :bordered="false" class="shadow-sm">
+      <Card variant="borderless" class="shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-base font-semibold">CMS 内容模型与形态 (Content Types)</h2>
@@ -125,7 +125,7 @@ const contentTypes = ref<ContentTypeItem[]>([
       <!-- 卡片网格列表 -->
       <Row :gutter="[16, 16]">
         <Col v-for="item in contentTypes" :key="item.code" :xs="24" :sm="12" :xl="8">
-          <Card :bordered="false" class="h-full shadow-sm hover:shadow transition-shadow flex flex-col justify-between">
+          <Card variant="borderless" class="h-full shadow-sm hover:shadow transition-shadow flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">

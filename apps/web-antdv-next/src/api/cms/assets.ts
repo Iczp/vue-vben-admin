@@ -35,6 +35,7 @@ export async function createAssetApi(data: AssetCreateDto) {
  */
 export async function uploadAssetApi(file: File) {
   const formData = new FormData();
+  formData.append('streamContent', file);
   formData.append('file', file);
   return requestClient.post<AssetDto>('/cms/admin/assets/upload', formData, {
     headers: {

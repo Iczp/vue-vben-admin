@@ -10,6 +10,7 @@ import type {
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { VbenTiptap } from '@vben/plugins/tiptap';
 
 import {
   Col,
@@ -34,7 +35,9 @@ import {
   getTagsApi,
   SourceType,
   updateArticleApi,
+  uploadAssetApi,
 } from '#/api/cms';
+import MediaSelector from '#/views/cms/components/MediaSelector.vue';
 
 const emit = defineEmits(['success']);
 
@@ -159,6 +162,25 @@ async function initData(id?: string) {
   }
 }
 
+/**
+ * Tiptap 富文本编辑器图片上传配置
+ */
+const tiptapImageUploadOptions = {
+  upload: async (file: File) => {
+    try {
+      const res = await uploadAssetApi(file);
+      const url = res.sourceUrl || res.blobName;
+      if (!url) {
+        throw new Error('未返回有效的图片链接');
+      }
+      return url;
+    } catch (err) {
+      message.error(`图片【${file.name}】上传失败`);
+      throw err;
+    }
+  },
+};
+
 const [Modal, modalApi] = useVbenModal<string | undefined>({
   fullscreenButton: true,
   async onConfirm() {
@@ -179,11 +201,13 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
         const updateInput: AdminArticleUpdateInput = {
           allowComment: allowComment.value,
           categoryIds: categoryIds.value,
+          content: content.value,
           coverUrl: coverUrl.value || undefined,
           isRecommend: isRecommend.value,
           isTop: isTop.value,
           isVisible: isVisible.value,
           mainCategoryId: mainCategoryId.value || undefined,
+          markdownContent: markdownContent.value || undefined,
           password: password.value || undefined,
           slug: slug.value || undefined,
           sorting: sorting.value,
@@ -246,7 +270,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
 </script>
 
 <template>
-  <Modal :title="modalTitle" class="w-[900px] max-w-full">
+  <Modal :title="modalTitle" class="w-[960px] max-w-full">
     <Spin :spinning="loading">
       <Tabs v-model:activeKey="activeTab" class="px-2">
         <!-- Tab 1: 基本信息 -->
@@ -282,10 +306,10 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
               </Col>
             </Row>
 
-            <FormItem label="封面图片链接">
-              <Input
+            <FormItem label="封面图片">
+              <MediaSelector
                 v-model:value="coverUrl"
-                placeholder="请输入封面图片 URL 或在媒体库复制"
+                placeholder="请输入图片 URL 或点击右侧选择图片"
               />
             </FormItem>
 
@@ -334,20 +358,23 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
           </Form>
         </Tabs.TabPane>
 
-        <!-- Tab 2: 文章正文 -->
+        <!-- Tab 2: 文章正文 (使用 Tiptap HTML 富文本编辑器) -->
         <Tabs.TabPane key="content" tab="正文编辑">
           <Form layout="vertical" class="mt-2">
             <FormItem
-              label="文章正文 (HTML / 富文本内容)"
+              label="文章正文 (Tiptap HTML 富文本)"
               required
-              extra="支持输入完整 HTML 格式正文内容"
+              extra="使用内置 Tiptap 编辑器直接所见即所得排版，支持标题、列表、引用、表格与图片插入"
             >
-              <Input.TextArea
-                v-model:value="content"
-                placeholder="请输入文章正文 HTML 代码或段落文本..."
-                :rows="14"
-                class="font-mono text-sm"
-              />
+              <div class="border rounded-lg overflow-hidden">
+                <VbenTiptap
+                  v-model="content"
+                  :min-height="350"
+                  :max-height="600"
+                  :image-upload="tiptapImageUploadOptions"
+                  placeholder="在此输入或粘贴文章正文内容..."
+                />
+              </div>
             </FormItem>
 
             <FormItem
@@ -357,7 +384,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
               <Input.TextArea
                 v-model:value="markdownContent"
                 placeholder="可选填入 Markdown 格式源码..."
-                :rows="6"
+                :rows="4"
                 class="font-mono text-xs"
               />
             </FormItem>

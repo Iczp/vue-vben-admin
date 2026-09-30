@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+﻿<script lang="ts" setup>
 import type { RecommendationRuleDto } from '#/api/cms';
 
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -107,7 +107,7 @@ function refreshGrid() {
   <Page auto-content-height>
     <div class="h-full flex flex-col gap-3">
       <!-- 顶部操作栏 -->
-      <Card :bordered="false" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
+      <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
         <div class="flex items-center justify-between">
           <div class="text-sm font-medium">推荐策略与算法特征规则引擎</div>
           <div class="flex items-center gap-2">
