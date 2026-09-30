@@ -11,6 +11,11 @@ export default defineConfig(async (configEnv) => {
     vite: {
       server: {
         proxy: {
+          '/api/cms': {
+            changeOrigin: true,
+            target: env.VITE_CMS_API_BASE_URL || 'http://10.0.5.20:51611',
+            ws: true,
+          },
           '/api': {
             changeOrigin: true,
             target: apiTarget,
