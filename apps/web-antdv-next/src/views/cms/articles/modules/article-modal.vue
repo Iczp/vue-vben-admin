@@ -3,6 +3,7 @@ import type {
   AdminArticleCreateInput,
   AdminArticleDetailDto,
   AdminArticleUpdateInput,
+  AssetDto,
   CategoryDto,
   TagDto,
 } from '#/api/cms';
@@ -10,9 +11,11 @@ import type {
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { createIconifyIcon } from '@vben/icons';
 import { VbenTiptap } from '@vben/plugins/tiptap';
 
 import {
+  Button,
   Col,
   DatePicker,
   Form,
@@ -29,16 +32,19 @@ import {
 import dayjs from 'dayjs';
 
 import {
+  AssetType,
   createArticleApi,
   getArticleApi,
   getCategoriesApi,
   getTagsApi,
   SourceType,
+  toRelativeAssetUrl,
   updateArticleApi,
   uploadAssetApi,
 } from '#/api/cms';
 import MediaSelector from '#/views/cms/components/MediaSelector.vue';
 
+const ImageIcon = createIconifyIcon('lucide:image');
 const emit = defineEmits(['success']);
 
 const activeTab = ref('basic');
@@ -141,7 +147,7 @@ async function initData(id?: string) {
       subTitle.value = detail.subTitle || '';
       summary.value = detail.summary || '';
       slug.value = detail.slug || '';
-      coverUrl.value = detail.coverUrl || '';
+      coverUrl.value = toRelativeAssetUrl(detail.coverUrl) || '';
       content.value = detail.content || '';
       markdownContent.value = detail.markdownContent || '';
       sourceType.value = detail.sourceType || SourceType.Manual;
@@ -156,20 +162,58 @@ async function initData(id?: string) {
       isRecommend.value = detail.isRecommend ?? false;
       allowComment.value = detail.allowComment ?? true;
       sorting.value = detail.sorting || 0;
+      password.value = detail.password || '';
     } finally {
       loading.value = false;
     }
   }
 }
 
+// 正文从素材库插入图片
+const contentMediaSelectorRef = ref<InstanceType<typeof MediaSelector> | null>(null);
+let activeTiptapEditor: any = null;
+
+function openMediaLibraryForContent(editor?: any) {
+  if (editor) {
+    activeTiptapEditor = editor;
+  }
+  contentMediaSelectorRef.value?.openModal();
+}
+
+function onInsertImagesToContent(assets: AssetDto[]) {
+  if (!assets || !assets.length) return;
+  const urls = assets.map((asset) =>
+    toRelativeAssetUrl(asset.url || asset.sourceUrl || asset.blobName),
+  );
+
+  if (activeTiptapEditor && !activeTiptapEditor.isDestroyed) {
+    activeTiptapEditor.chain().focus();
+    for (const url of urls) {
+      if (url) {
+        activeTiptapEditor.chain().focus().setImage({ src: url }).run();
+      }
+    }
+  } else {
+    const imgTags = urls
+      .filter(Boolean)
+      .map((url) => `<p><img src="${url}" alt="image" style="max-width:100%;height:auto;" /></p>`)
+      .join('');
+    content.value = (content.value || '') + imgTags;
+  }
+  message.success(`已插入 ${assets.length} 张图片到正文`);
+}
+
 /**
- * Tiptap 富文本编辑器图片上传配置
+ * Tiptap 富文本编辑器图片上传与媒体库配置
  */
 const tiptapImageUploadOptions = {
+  onOpenMediaLibrary: (editor: any) => {
+    openMediaLibraryForContent(editor);
+  },
   upload: async (file: File) => {
     try {
       const res = await uploadAssetApi(file);
-      const url = res.sourceUrl || res.blobName;
+      const url = toRelativeAssetUrl(res.url || res.sourceUrl || res.blobName);
       if (!url) {
         throw new Error('未返回有效的图片链接');
       }
@@ -202,7 +246,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
           allowComment: allowComment.value,
           categoryIds: categoryIds.value,
           content: content.value,
-          coverUrl: coverUrl.value || undefined,
+          coverUrl: toRelativeAssetUrl(coverUrl.value) || undefined,
           isRecommend: isRecommend.value,
           isTop: isTop.value,
           isVisible: isVisible.value,
@@ -229,7 +273,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
           allowComment: allowComment.value,
           categoryIds: categoryIds.value,
           content: content.value,
-          coverUrl: coverUrl.value || undefined,
+          coverUrl: toRelativeAssetUrl(coverUrl.value) || undefined,
           isRecommend: isRecommend.value,
           isTop: isTop.value,
           isVisible: isVisible.value,
@@ -308,6 +352,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
 
             <FormItem label="封面图片">
               <MediaSelector
+                :asset-types="[1]"
                 v-model:value="coverUrl"
                 placeholder="请输入图片 URL 或点击右侧选择图片"
               />
@@ -362,10 +407,25 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
         <Tabs.TabPane key="content" tab="正文编辑">
           <Form layout="vertical" class="mt-2">
             <FormItem
-              label="文章正文 (Tiptap HTML 富文本)"
               required
               extra="使用内置 Tiptap 编辑器直接所见即所得排版，支持标题、列表、引用、表格与图片插入"
             >
+              <template #label>
+                <div class="flex items-center justify-between w-full">
+                  <span class="font-medium">文章正文 (Tiptap HTML 富文本)</span>
+                  <Button
+                    type="primary"
+                    ghost
+                    size="small"
+                    @click="openMediaLibraryForContent"
+                  >
+                    <template #icon>
+                      <ImageIcon class="size-4 mr-1 inline-block align-middle" />
+                    </template>
+                    从素材媒体库插入图片
+                  </Button>
+                </div>
+              </template>
               <div class="border rounded-lg overflow-hidden">
                 <VbenTiptap
                   v-model="content"
@@ -376,6 +436,16 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
                 />
               </div>
             </FormItem>
+
+            <!-- 正文插入图片所用的素材库选择器（仅作为弹窗触发） -->
+            <div class="hidden">
+              <MediaSelector
+                ref="contentMediaSelectorRef"
+                :asset-types="[AssetType.Image]"
+                multiple
+                @select="onInsertImagesToContent"
+              />
+            </div>
 
             <FormItem
               label="Markdown 源码备份 (可选)"

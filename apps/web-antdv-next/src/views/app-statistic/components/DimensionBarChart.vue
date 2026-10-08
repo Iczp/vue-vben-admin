@@ -1,16 +1,19 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
 
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import { Card as ACard, Spin as ASpin } from 'antdv-next';
+
+import { $t } from '#/locales';
 
 import StatisticEmpty from './StatisticEmpty.vue';
 
 interface Props {
   title?: string;
-  data: any[];
+  data?: object[];
   nameField?: string;
   valueField?: string;
   percentageField?: string;
@@ -22,7 +25,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: '维度分布',
+  title: $t('appStatistic.text033'),
   data: () => [],
   nameField: 'value',
   valueField: 'activeDevices',
@@ -35,7 +38,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'itemClick', item: { name: string; value: number; raw: any }): void;
+  (e: 'itemClick', item: { name: string; raw: object; value: number }): void;
 }>();
 
 const chartRef = ref<EchartsUIType>();
@@ -45,15 +48,19 @@ const normalizedData = computed(() => {
   if (!props.data || props.data.length === 0) return [];
 
   return props.data
-    .map((item) => {
-      const name = item[props.nameField] ?? item.name ?? item.range ?? 'Unknown';
-      const val = Number(item[props.valueField] ?? item.value ?? item.userCount ?? 0);
+    .map((raw) => {
+      const item = raw as Record<string, unknown>;
+      const name =
+        item[props.nameField] ?? item.name ?? item.range ?? 'Unknown';
+      const val = Number(
+        item[props.valueField] ?? item.value ?? item.userCount ?? 0,
+      );
       const pct = Number(item[props.percentageField] ?? item.percentage ?? 0);
       return {
         name: String(name),
         value: val,
         percentage: pct,
-        raw: item,
+        raw,
       };
     })
     .sort((a, b) => (props.horizontal ? a.value - b.value : b.value - a.value)); // ascending for horizontal y-axis so largest is at top
@@ -71,14 +78,10 @@ function updateChart() {
     if (props.horizontal) {
       renderEcharts({
         tooltip: {
+          renderMode: 'richText',
           trigger: 'axis',
           axisPointer: { type: 'shadow' },
-          formatter: (params: any) => {
-            const p = Array.isArray(params) ? params[0] : params;
-            const item = normalizedData.value[p.dataIndex];
-            const pctText = item?.percentage ? ` (${item.percentage}%)` : '';
-            return `<div class="font-medium">${p.name}</div><div>${props.title}: <b>${p.value.toLocaleString()}</b>${pctText}</div>`;
-          },
+          formatter: '{b}: {c}',
         },
         grid: {
           left: '3%',
@@ -122,7 +125,7 @@ function updateChart() {
       }).then((instance) => {
         if (instance && props.clickable) {
           instance.off('click');
-          instance.on('click', (params: any) => {
+          instance.on('click', (params: { dataIndex: number }) => {
             const item = normalizedData.value[params.dataIndex];
             if (item) {
               emit('itemClick', item);
@@ -184,7 +187,7 @@ function updateChart() {
 }
 
 watch(
-  [() => props.data, () => props.horizontal],
+  [() => props.data, () => props.horizontal, chartRef],
   () => {
     updateChart();
   },
@@ -206,9 +209,9 @@ watch(
     <template #title>
       <div class="flex items-center justify-between py-1">
         <span class="font-medium text-sm">{{ title }}</span>
-        <span v-if="clickable" class="text-xs text-muted-foreground">
-          点击图表项可联动筛选
-        </span>
+        <span v-if="clickable" class="text-xs text-muted-foreground">{{
+          $t('appStatistic.text031')
+        }}</span>
       </div>
     </template>
 

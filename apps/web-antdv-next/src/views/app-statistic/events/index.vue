@@ -1,5 +1,8 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
+import type { EventDto, GetEventsInput } from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import {
   Button as AButton,
@@ -8,24 +11,32 @@ import {
   Descriptions as ADescriptions,
   Drawer as ADrawer,
   Input as AInput,
-  RangePicker as ARangePicker,
   Row as ARow,
   Select as ASelect,
-  Table as ATable,
   Tag as ATag,
+  DatePicker,
   message,
 } from 'antdv-next';
+import { SelectOption as ASelectOption } from 'antdv-next';
+import { DescriptionsItem as ADescriptionsItem } from 'antdv-next';
 import dayjs, { type Dayjs } from 'dayjs';
 
 import { getEventsApi } from '#/api/app-statistic/event';
-import type { EventDto, GetEventsInput } from '#/api/app-statistic/types';
+import { $t } from '#/locales';
 
+import StatisticError from '../components/StatisticError.vue';
+import ATable from '../components/StatisticTable.vue';
+
+const router = useRouter();
+const route = useRoute();
 const loading = ref(false);
+const failed = ref(false);
+let requestId = 0;
 const eventList = ref<EventDto[]>([]);
 const totalCount = ref(0);
 
 const searchInput = ref<GetEventsInput>({
-  appId: 'default',
+  appId: undefined,
   eventName: undefined,
   userId: undefined,
   deviceId: undefined,
@@ -39,23 +50,54 @@ const searchInput = ref<GetEventsInput>({
   sorting: 'EventTime DESC',
 });
 
-const dateRange = ref<[Dayjs, Dayjs] | undefined>(undefined);
+const dateRange = ref<[Dayjs, Dayjs] | undefined>([
+  dayjs().subtract(6, 'day').startOf('day'),
+  dayjs(),
+]);
 
 const currentPagination = ref({
   current: 1,
   pageSize: 20,
   total: 0,
   showSizeChanger: true,
+  pageSizeOptions: ['20', '50', '100'],
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total.toLocaleString()} 条事件日志`,
+  showTotal: (total: number) =>
+    $t('appStatistic.eventsTotal', { count: total.toLocaleString() }),
 });
 
 // Detail Drawer
 const drawerVisible = ref(false);
 const selectedEvent = ref<EventDto | null>(null);
 
+const searchFields = [
+  'appId',
+  'eventName',
+  'userId',
+  'deviceId',
+  'sessionId',
+  'page',
+  'platform',
+  'appVersion',
+  'channel',
+] as const;
+function syncSearchUrl() {
+  const params: Record<string, string> = {};
+  for (const key of searchFields) {
+    const value = searchInput.value[key];
+    if (value) params[key] = value;
+  }
+  if (dateRange.value) {
+    params.startTime = dateRange.value[0].toISOString();
+    params.endTime = dateRange.value[1].toISOString();
+  }
+  router.replace({ query: params });
+}
+
 async function loadData() {
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
     const params: GetEventsInput = {
       ...searchInput.value,
@@ -74,30 +116,32 @@ async function loadData() {
     }
 
     const res = await getEventsApi(params);
+    if (currentRequest !== requestId) return;
     eventList.value = res.items;
     totalCount.value = res.totalCount;
     currentPagination.value.total = res.totalCount;
-  } catch (error) {
-    console.error('Failed to load events data', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
-function handleTableChange(pag: any) {
-  currentPagination.value.current = pag.current;
-  currentPagination.value.pageSize = pag.pageSize;
+function handleTableChange(pag: { current?: number; pageSize?: number }) {
+  currentPagination.value.current = pag.current ?? 1;
+  currentPagination.value.pageSize = Math.min(100, pag.pageSize ?? 20);
   loadData();
 }
 
 function handleSearch() {
+  syncSearchUrl();
   currentPagination.value.current = 1;
   loadData();
 }
 
 function handleReset() {
   searchInput.value = {
-    appId: 'default',
+    appId: undefined,
     eventName: undefined,
     userId: undefined,
     deviceId: undefined,
@@ -114,13 +158,13 @@ function handleReset() {
   handleSearch();
 }
 
-function openDrawer(record: any) {
+function openDrawer(record: EventDto) {
   selectedEvent.value = record;
   drawerVisible.value = true;
 }
 
 function formatJson(jsonStr?: string): string {
-  if (!jsonStr) return '无附加属性';
+  if (!jsonStr) return $t('appStatistic.text124');
   try {
     const obj = JSON.parse(jsonStr);
     return JSON.stringify(obj, null, 2);
@@ -129,61 +173,65 @@ function formatJson(jsonStr?: string): string {
   }
 }
 
-function copyJson(text?: string) {
+async function copyJson(text?: string) {
   if (!text) return;
-  navigator.clipboard.writeText(text);
-  message.success('已复制到剪贴板');
+  try {
+    await navigator.clipboard.writeText(text);
+    message.success($t('appStatistic.text125'));
+  } catch {
+    message.error($t('appStatistic.text126'));
+  }
 }
 
 const tableColumns = [
   {
-    title: '事件时间',
+    title: $t('appStatistic.text099'),
     dataIndex: 'eventTime',
     key: 'eventTime',
     width: 170,
-    customRender: ({ text }: { text: string }) =>
+    render: (text: string) =>
       text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
   },
   {
-    title: '事件名称',
+    title: $t('appStatistic.text100'),
     dataIndex: 'eventName',
     key: 'eventName',
     width: 160,
   },
   {
-    title: '平台',
+    title: $t('appStatistic.text015'),
     dataIndex: 'platform',
     key: 'platform',
     width: 90,
   },
   {
-    title: '版本',
+    title: $t('appStatistic.text017'),
     dataIndex: 'appVersion',
     key: 'appVersion',
     width: 90,
   },
   {
-    title: '页面',
+    title: $t('appStatistic.text101'),
     dataIndex: 'page',
     key: 'page',
     ellipsis: true,
   },
   {
-    title: '用户 ID',
+    title: $t('appStatistic.text127'),
     dataIndex: 'userId',
     key: 'userId',
     width: 140,
     ellipsis: true,
   },
   {
-    title: '设备 ID',
+    title: $t('appStatistic.text128'),
     dataIndex: 'deviceId',
     key: 'deviceId',
     width: 140,
     ellipsis: true,
   },
   {
-    title: '操作',
+    title: $t('appStatistic.text071'),
     key: 'action',
     width: 90,
     align: 'center' as const,
@@ -191,21 +239,40 @@ const tableColumns = [
 ];
 
 onMounted(() => {
+  for (const key of searchFields) {
+    const value = route.query[key];
+    if (typeof value === 'string') searchInput.value[key] = value;
+  }
+  const start = route.query.startTime;
+  const end = route.query.endTime;
+  if (
+    typeof start === 'string' &&
+    typeof end === 'string' &&
+    dayjs(start).isValid() &&
+    dayjs(end).isValid()
+  )
+    dateRange.value = [dayjs(start), dayjs(end)];
   loadData();
 });
+const ARangePicker = DatePicker.RangePicker;
 </script>
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadData" />
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">事件分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          {{ $t('appStatistic.text010') }}
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
-          实时检索应用埋点事件、追踪异常、调试客户端上报与数据核对
+          {{ $t('appStatistic.text183') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadData">
+        {{ $t('appStatistic.text011') }}
+      </AButton>
     </div>
 
     <!-- Search Form Card -->
@@ -224,7 +291,7 @@ onMounted(() => {
           <AInput
             v-model:value="searchInput.eventName"
             allow-clear
-            placeholder="事件名 (如 app_launch)"
+            :placeholder="$t('appStatistic.text129')"
             size="small"
             @press-enter="handleSearch"
           />
@@ -234,7 +301,7 @@ onMounted(() => {
           <AInput
             v-model:value="searchInput.page"
             allow-clear
-            placeholder="页面 PageKey"
+            :placeholder="$t('appStatistic.text130')"
             size="small"
             @press-enter="handleSearch"
           />
@@ -245,21 +312,24 @@ onMounted(() => {
             v-model:value="searchInput.platform"
             allow-clear
             class="w-full"
-            placeholder="平台"
+            :placeholder="$t('appStatistic.text015')"
             size="small"
           >
-            <ASelect.Option value="android">Android</ASelect.Option>
-            <ASelect.Option value="ios">iOS</ASelect.Option>
-            <ASelect.Option value="windows">Windows</ASelect.Option>
-            <ASelect.Option value="macos">macOS</ASelect.Option>
-            <ASelect.Option value="web">Web</ASelect.Option>
+            <ASelectOption value="android">Android</ASelectOption>
+            <ASelectOption value="ios">iOS</ASelectOption>
+            <ASelectOption value="windows">Windows</ASelectOption>
+            <ASelectOption value="macos">macOS</ASelectOption>
+            <ASelectOption value="web">Web</ASelectOption>
           </ASelect>
         </ACol>
 
         <ACol :lg="6" :md="12" :sm="24" :xs="24">
           <ARangePicker
             v-model:value="dateRange"
-            :placeholder="['开始时间', '结束时间']"
+            :placeholder="[
+              $t('appStatistic.text131'),
+              $t('appStatistic.text132'),
+            ]"
             class="w-full"
             format="YYYY-MM-DD HH:mm:ss"
             show-time
@@ -299,11 +369,34 @@ onMounted(() => {
 
         <ACol :lg="8" :md="24" :sm="24" :xs="24">
           <div class="flex items-center justify-end space-x-2">
-            <AButton :loading="loading" size="small" type="primary" @click="handleSearch">
-              查询
+            <AButton
+              :loading="loading"
+              size="small"
+              type="primary"
+              @click="handleSearch"
+            >
+              {{ $t('appStatistic.text012') }}
             </AButton>
-            <AButton size="small" @click="handleReset">重置</AButton>
+            <AButton size="small" @click="handleReset">
+              {{ $t('appStatistic.text013') }}
+            </AButton>
           </div>
+        </ACol>
+        <ACol :lg="6" :md="6" :sm="12" :xs="24">
+          <AInput
+            v-model:value="searchInput.deviceId"
+            allow-clear
+            placeholder="Device ID"
+            @press-enter="handleSearch"
+          />
+        </ACol>
+        <ACol :lg="6" :md="6" :sm="12" :xs="24">
+          <AInput
+            v-model:value="searchInput.channel"
+            allow-clear
+            :placeholder="$t('appStatistic.text018')"
+            @press-enter="handleSearch"
+          />
         </ACol>
       </ARow>
     </ACard>
@@ -326,7 +419,7 @@ onMounted(() => {
 
           <template v-else-if="column.key === 'action'">
             <AButton size="small" type="link" @click="openDrawer(record)">
-              详情
+              {{ $t('appStatistic.text014') }}
             </AButton>
           </template>
         </template>
@@ -337,79 +430,93 @@ onMounted(() => {
     <ADrawer
       v-model:open="drawerVisible"
       :width="640"
-      title="事件日志详情"
+      :title="$t('appStatistic.text133')"
     >
       <div v-if="selectedEvent" class="space-y-4">
         <ADescriptions :column="2" bordered size="small">
-          <ADescriptions.Item label="Event ID" :span="2">
+          <ADescriptionsItem label="Event ID" :span="2">
             <span class="font-mono text-xs">{{ selectedEvent.eventId }}</span>
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="App ID">
+          <ADescriptionsItem label="App ID">
             {{ selectedEvent.appId }}
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="事件名称">
+          <ADescriptionsItem :label="$t('appStatistic.text100')">
             <ATag color="blue">{{ selectedEvent.eventName }}</ATag>
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="客户端时间">
-            {{ dayjs(selectedEvent.eventTime).format('YYYY-MM-DD HH:mm:ss.SSS') }}
-          </ADescriptions.Item>
+          <ADescriptionsItem :label="$t('appStatistic.text134')">
+            {{
+              dayjs(selectedEvent.eventTime).format('YYYY-MM-DD HH:mm:ss.SSS')
+            }}
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="服务端接收时间">
-            {{ dayjs(selectedEvent.receivedTime).format('YYYY-MM-DD HH:mm:ss.SSS') }}
-          </ADescriptions.Item>
+          <ADescriptionsItem :label="$t('appStatistic.text135')">
+            {{
+              dayjs(selectedEvent.receivedTime).format(
+                'YYYY-MM-DD HH:mm:ss.SSS',
+              )
+            }}
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="页面 (Page)">
+          <ADescriptionsItem :label="$t('appStatistic.text136')">
             {{ selectedEvent.page || '-' }}
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="操作系统版本">
+          <ADescriptionsItem :label="$t('appStatistic.text137')">
             {{ selectedEvent.osVersion || '-' }}
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="平台">
+          <ADescriptionsItem :label="$t('appStatistic.text015')">
             {{ selectedEvent.platform || '-' }}
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="应用版本">
+          <ADescriptionsItem :label="$t('appStatistic.text102')">
             {{ selectedEvent.appVersion || '-' }}
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="渠道">
+          <ADescriptionsItem :label="$t('appStatistic.text018')">
             {{ selectedEvent.channel || '-' }}
-          </ADescriptions.Item>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="Session ID" :span="2">
-            <span class="font-mono text-xs">{{ selectedEvent.sessionId || '-' }}</span>
-          </ADescriptions.Item>
+          <ADescriptionsItem label="Session ID" :span="2">
+            <span class="font-mono text-xs">{{
+              selectedEvent.sessionId || '-'
+            }}</span>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="User ID" :span="2">
-            <span class="font-mono text-xs">{{ selectedEvent.userId || '-' }}</span>
-          </ADescriptions.Item>
+          <ADescriptionsItem label="User ID" :span="2">
+            <span class="font-mono text-xs">{{
+              selectedEvent.userId || '-'
+            }}</span>
+          </ADescriptionsItem>
 
-          <ADescriptions.Item label="Device ID" :span="2">
-            <span class="font-mono text-xs">{{ selectedEvent.deviceId || '-' }}</span>
-          </ADescriptions.Item>
+          <ADescriptionsItem label="Device ID" :span="2">
+            <span class="font-mono text-xs">{{
+              selectedEvent.deviceId || '-'
+            }}</span>
+          </ADescriptionsItem>
         </ADescriptions>
 
         <!-- Properties JSON Viewer -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <span class="font-medium text-xs text-muted-foreground">事件附加属性 (Properties JSON):</span>
+            <span class="font-medium text-xs text-muted-foreground">{{
+              $t('appStatistic.text138')
+            }}</span>
             <AButton
               v-if="selectedEvent.properties"
               size="small"
               type="dashed"
               @click="copyJson(selectedEvent.properties)"
             >
-              复制 JSON
+              {{ $t('appStatistic.text139') }}
             </AButton>
           </div>
           <pre
             class="bg-muted/50 p-3 rounded text-xs font-mono overflow-auto max-h-96 border border-border"
-          >{{ formatJson(selectedEvent.properties) }}</pre>
+            >{{ formatJson(selectedEvent.properties) }}</pre>
         </div>
       </div>
     </ADrawer>

@@ -1,4 +1,6 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
+import type { DeviceDto, GetDevicesInput } from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -9,23 +11,29 @@ import {
   Input as AInput,
   Row as ARow,
   Select as ASelect,
-  Table as ATable,
   Tag as ATag,
+  DatePicker,
 } from 'antdv-next';
+import { SelectOption as ASelectOption } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getDevicesApi } from '#/api/app-statistic/device';
-import type { DeviceDto, GetDevicesInput } from '#/api/app-statistic/types';
+import { $t } from '#/locales';
+
+import StatisticError from '../components/StatisticError.vue';
+import ATable from '../components/StatisticTable.vue';
 
 const router = useRouter();
 const route = useRoute();
 
 const loading = ref(false);
+const failed = ref(false);
+let requestId = 0;
 const deviceList = ref<DeviceDto[]>([]);
 const totalCount = ref(0);
 
 const searchInput = ref<GetDevicesInput>({
-  appId: 'default',
+  appId: undefined,
   deviceKey: undefined,
   platform: undefined,
   appVersion: undefined,
@@ -40,12 +48,38 @@ const currentPagination = ref({
   pageSize: 20,
   total: 0,
   showSizeChanger: true,
+  pageSizeOptions: ['20', '50', '100'],
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total.toLocaleString()} 台设备`,
+  showTotal: (total: number) =>
+    $t('appStatistic.devicesTotal', { count: total.toLocaleString() }),
 });
 
+const searchFields = [
+  'appId',
+  'deviceKey',
+  'platform',
+  'appVersion',
+  'channel',
+  'manufacturer',
+  'model',
+  'osVersion',
+  'minLastSeenTime',
+  'maxLastSeenTime',
+] as const;
+function syncSearchUrl() {
+  const params: Record<string, string> = {};
+  for (const key of searchFields) {
+    const value = searchInput.value[key];
+    if (value) params[key] = value;
+  }
+
+  router.replace({ query: params });
+}
+
 async function loadData() {
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
     const params: GetDevicesInput = {
       ...searchInput.value,
@@ -56,30 +90,40 @@ async function loadData() {
     };
 
     const res = await getDevicesApi(params);
+    if (currentRequest !== requestId) return;
     deviceList.value = res.items;
     totalCount.value = res.totalCount;
     currentPagination.value.total = res.totalCount;
-  } catch (error) {
-    console.error('Failed to load device list', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
-function handleTableChange(pag: any) {
-  currentPagination.value.current = pag.current;
-  currentPagination.value.pageSize = pag.pageSize;
+function setMinSeen(value: dayjs.Dayjs | dayjs.Dayjs[] | null) {
+  const v = Array.isArray(value) ? value[0] : value;
+  searchInput.value.minLastSeenTime = v?.startOf('day').toISOString();
+}
+function setMaxSeen(value: dayjs.Dayjs | dayjs.Dayjs[] | null) {
+  const v = Array.isArray(value) ? value[0] : value;
+  searchInput.value.maxLastSeenTime = v?.endOf('day').toISOString();
+}
+function handleTableChange(pag: { current?: number; pageSize?: number }) {
+  currentPagination.value.current = pag.current ?? 1;
+  currentPagination.value.pageSize = Math.min(100, pag.pageSize ?? 20);
   loadData();
 }
 
 function handleSearch() {
+  syncSearchUrl();
   currentPagination.value.current = 1;
   loadData();
 }
 
 function handleReset() {
   searchInput.value = {
-    appId: 'default',
+    appId: undefined,
     deviceKey: undefined,
     platform: undefined,
     appVersion: undefined,
@@ -91,73 +135,91 @@ function handleReset() {
   handleSearch();
 }
 
-function viewDetail(record: any) {
-  router.push(`/app-statistic/devices/${record.id}`);
+function viewDetail(record: DeviceDto) {
+  router.push({
+    path: `/app-statistic/devices/${record.id}`,
+    query: route.query,
+  });
 }
 
 const tableColumns = [
   {
-    title: '设备唯一标识 (DeviceKey)',
+    title: $t('appStatistic.text119'),
+    dataIndex: 'lastUserId',
+    key: 'lastUserId',
+    width: 180,
+    ellipsis: true,
+  },
+  {
+    title: $t('appStatistic.text115'),
+    dataIndex: 'lastLoginTime',
+    key: 'lastLoginTime',
+    width: 160,
+    render: (text: string) =>
+      text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    title: $t('appStatistic.text120'),
     dataIndex: 'deviceKey',
     key: 'deviceKey',
     width: 200,
     ellipsis: true,
   },
   {
-    title: '平台',
+    title: $t('appStatistic.text015'),
     dataIndex: 'platform',
     key: 'platform',
     width: 90,
   },
   {
-    title: '品牌',
+    title: $t('appStatistic.text016'),
     dataIndex: 'manufacturer',
     key: 'manufacturer',
     width: 100,
   },
   {
-    title: '型号',
+    title: $t('appStatistic.text121'),
     dataIndex: 'model',
     key: 'model',
     width: 120,
     ellipsis: true,
   },
   {
-    title: '系统版本',
+    title: $t('appStatistic.text122'),
     dataIndex: 'osVersion',
     key: 'osVersion',
     width: 100,
   },
   {
-    title: 'App 版本',
+    title: $t('appStatistic.text123'),
     dataIndex: 'appVersion',
     key: 'appVersion',
     width: 100,
   },
   {
-    title: '渠道',
+    title: $t('appStatistic.text018'),
     dataIndex: 'channel',
     key: 'channel',
     width: 100,
   },
   {
-    title: '首次活跃时间',
+    title: $t('appStatistic.text113'),
     dataIndex: 'firstSeenTime',
     key: 'firstSeenTime',
     width: 160,
-    customRender: ({ text }: { text: string }) =>
+    render: (text: string) =>
       text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
   },
   {
-    title: '最近活跃时间',
+    title: $t('appStatistic.text114'),
     dataIndex: 'lastSeenTime',
     key: 'lastSeenTime',
     width: 160,
-    customRender: ({ text }: { text: string }) =>
+    render: (text: string) =>
       text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
   },
   {
-    title: '操作',
+    title: $t('appStatistic.text071'),
     key: 'action',
     width: 80,
     fixed: 'right' as const,
@@ -166,6 +228,10 @@ const tableColumns = [
 ];
 
 onMounted(() => {
+  for (const key of searchFields) {
+    const value = route.query[key];
+    if (typeof value === 'string') searchInput.value[key] = value;
+  }
   const q = route.query;
   if (q.appId && typeof q.appId === 'string') searchInput.value.appId = q.appId;
   if (q.platform && typeof q.platform === 'string')
@@ -175,21 +241,36 @@ onMounted(() => {
   if (q.channel && typeof q.channel === 'string')
     searchInput.value.channel = q.channel;
 
+  if (typeof q.manufacturer === 'string')
+    searchInput.value.manufacturer = q.manufacturer;
+  if (typeof q.startDate === 'string')
+    searchInput.value.minLastSeenTime = dayjs(q.startDate)
+      .startOf('day')
+      .toISOString();
+  if (typeof q.endDate === 'string')
+    searchInput.value.maxLastSeenTime = dayjs(q.endDate)
+      .endOf('day')
+      .toISOString();
   loadData();
 });
 </script>
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadData" />
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">设备列表</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          {{ $t('appStatistic.text004') }}
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
-          检索终端物理设备、查看首次与最近活跃、排查特定设备统计信息
+          {{ $t('appStatistic.text182') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadData">
+        {{ $t('appStatistic.text011') }}
+      </AButton>
     </div>
 
     <!-- Search Form Card -->
@@ -219,14 +300,14 @@ onMounted(() => {
             v-model:value="searchInput.platform"
             allow-clear
             class="w-full"
-            placeholder="平台"
+            :placeholder="$t('appStatistic.text015')"
             size="small"
           >
-            <ASelect.Option value="android">Android</ASelect.Option>
-            <ASelect.Option value="ios">iOS</ASelect.Option>
-            <ASelect.Option value="windows">Windows</ASelect.Option>
-            <ASelect.Option value="macos">macOS</ASelect.Option>
-            <ASelect.Option value="web">Web</ASelect.Option>
+            <ASelectOption value="android">Android</ASelectOption>
+            <ASelectOption value="ios">iOS</ASelectOption>
+            <ASelectOption value="windows">Windows</ASelectOption>
+            <ASelectOption value="macos">macOS</ASelectOption>
+            <ASelectOption value="web">Web</ASelectOption>
           </ASelect>
         </ACol>
 
@@ -242,12 +323,57 @@ onMounted(() => {
 
         <ACol :lg="6" :md="24" :sm="24" :xs="24">
           <div class="flex items-center justify-end space-x-2">
-            <AButton :loading="loading" size="small" type="primary" @click="handleSearch">
-              查询
+            <AButton
+              :loading="loading"
+              size="small"
+              type="primary"
+              @click="handleSearch"
+            >
+              {{ $t('appStatistic.text012') }}
             </AButton>
-            <AButton size="small" @click="handleReset">重置</AButton>
+            <AButton size="small" @click="handleReset">
+              {{ $t('appStatistic.text013') }}
+            </AButton>
           </div>
         </ACol>
+        <ACol :lg="6" :md="6" :sm="12" :xs="24">
+          <AInput
+            v-model:value="searchInput.channel"
+            allow-clear
+            :placeholder="$t('appStatistic.text018')"
+            @press-enter="handleSearch"
+          />
+        </ACol>
+        <ACol :lg="6" :md="6" :sm="12" :xs="24">
+<AInput
+            v-model:value="searchInput.manufacturer"
+            allow-clear
+            :placeholder="$t('appStatistic.text016')"
+            @press-enter="handleSearch"
+        />
+</ACol>
+        <ACol :lg="6" :md="6" :sm="12" :xs="24">
+<DatePicker
+            :value="
+              searchInput.minLastSeenTime
+                ? dayjs(searchInput.minLastSeenTime)
+                : null
+            "
+            :placeholder="$t('appStatistic.text131')"
+            @change="setMinSeen"
+        />
+</ACol>
+        <ACol :lg="6" :md="6" :sm="12" :xs="24">
+<DatePicker
+            :value="
+              searchInput.maxLastSeenTime
+                ? dayjs(searchInput.maxLastSeenTime)
+                : null
+            "
+            :placeholder="$t('appStatistic.text132')"
+            @change="setMaxSeen"
+        />
+</ACol>
       </ARow>
     </ACard>
 
@@ -272,7 +398,7 @@ onMounted(() => {
 
           <template v-else-if="column.key === 'action'">
             <AButton size="small" type="link" @click="viewDetail(record)">
-              详情
+              {{ $t('appStatistic.text014') }}
             </AButton>
           </template>
         </template>

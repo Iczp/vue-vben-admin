@@ -1,11 +1,13 @@
 import type { RouteRecordRaw } from 'vue-router';
 
+import { $t } from '#/locales';
+
 const routes: RouteRecordRaw[] = [
   {
     meta: {
       icon: 'lucide:bar-chart-3',
       order: 25,
-      title: 'App 统计',
+      title: $t('appStatistic.title'),
     },
     name: 'AppStatistic',
     path: '/app-statistic',
@@ -14,8 +16,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/overview/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Overview'],
           icon: 'lucide:layout-dashboard',
-          title: '数据概览',
+          title: $t('appStatistic.text006'),
         },
         name: 'AppStatisticOverview',
         path: 'overview',
@@ -23,8 +26,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/activity/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Analytics'],
           icon: 'lucide:activity',
-          title: '活跃分析',
+          title: $t('appStatistic.text001'),
         },
         name: 'AppStatisticActivity',
         path: 'activity',
@@ -32,8 +36,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/device/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Analytics'],
           icon: 'lucide:smartphone',
-          title: '设备分析',
+          title: $t('appStatistic.text003'),
         },
         name: 'AppStatisticDevice',
         path: 'device',
@@ -41,8 +46,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/version/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Analytics'],
           icon: 'lucide:git-branch',
-          title: '版本分析',
+          title: $t('appStatistic.text009'),
         },
         name: 'AppStatisticVersion',
         path: 'version',
@@ -50,8 +56,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/channel/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Analytics'],
           icon: 'lucide:share-2',
-          title: '渠道分析',
+          title: $t('appStatistic.text002'),
         },
         name: 'AppStatisticChannel',
         path: 'channel',
@@ -59,8 +66,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/page/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Analytics'],
           icon: 'lucide:file-text',
-          title: '页面分析',
+          title: $t('appStatistic.text007'),
         },
         name: 'AppStatisticPage',
         path: 'page',
@@ -68,8 +76,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/retention/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Retention'],
           icon: 'lucide:repeat',
-          title: '留存分析',
+          title: $t('appStatistic.text008'),
         },
         name: 'AppStatisticRetention',
         path: 'retention',
@@ -77,8 +86,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/events/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Events'],
           icon: 'lucide:list',
-          title: '事件分析',
+          title: $t('appStatistic.text010'),
         },
         name: 'AppStatisticEvents',
         path: 'events',
@@ -86,8 +96,9 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/devices/index.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Devices'],
           icon: 'lucide:tablet-smartphone',
-          title: '设备列表',
+          title: $t('appStatistic.text004'),
         },
         name: 'AppStatisticDevices',
         path: 'devices',
@@ -95,6 +106,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/app-statistic/devices/detail.vue'),
         meta: {
+          authority: ['AppStatistic.Admin.Devices'],
           hideInMenu: true,
           title: '设备详情',
         },

@@ -1,22 +1,24 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  DeviceAnalysisDto,
+} from '#/api/app-statistic/types';
+
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { Alert } from 'antdv-next';
 import {
   Button as AButton,
   Card as ACard,
   Col as ACol,
   Row as ARow,
-  Table as ATable,
   Tag as ATag,
 } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getDeviceAnalysisApi } from '#/api/app-statistic/device';
-import type {
-  AppStatisticQueryInput,
-  DeviceAnalysisDto,
-} from '#/api/app-statistic/types';
+import { $t } from '#/locales';
 
 import {
   DimensionBarChart,
@@ -25,38 +27,59 @@ import {
   MetricCardGroup,
   StatisticFilterBar,
 } from '../components';
+import StatisticError from '../components/StatisticError.vue';
+import ATable from '../components/StatisticTable.vue';
 
 const router = useRouter();
 const route = useRoute();
 
 const loading = ref(false);
+const failed = ref(false);
+let requestId = 0;
 const deviceData = ref<DeviceAnalysisDto | null>(null);
 
 const query = ref<AppStatisticQueryInput>({
-  appId: 'default',
+  appId: undefined,
   startDate: dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
   endDate: dayjs().format('YYYY-MM-DD'),
 });
 
-const selectedManufacturer = ref<string | null>(null);
+const selectedManufacturer = computed({
+  get: () => query.value.manufacturer ?? null,
+  set: (value: null | string) => {
+    query.value.manufacturer = value ?? undefined;
+  },
+});
 
 const activeFilterTags = computed(() => {
   const tags: { key: string; label: string; value: string }[] = [];
   if (query.value.platform) {
-    tags.push({ key: 'platform', label: '平台', value: query.value.platform });
+    tags.push({
+      key: 'platform',
+      label: $t('appStatistic.text015'),
+      value: query.value.platform,
+    });
   }
   if (selectedManufacturer.value) {
     tags.push({
       key: 'manufacturer',
-      label: '品牌',
+      label: $t('appStatistic.text016'),
       value: selectedManufacturer.value,
     });
   }
   if (query.value.appVersion) {
-    tags.push({ key: 'appVersion', label: '版本', value: query.value.appVersion });
+    tags.push({
+      key: 'appVersion',
+      label: $t('appStatistic.text017'),
+      value: query.value.appVersion,
+    });
   }
   if (query.value.channel) {
-    tags.push({ key: 'channel', label: '渠道', value: query.value.channel });
+    tags.push({
+      key: 'channel',
+      label: $t('appStatistic.text018'),
+      value: query.value.channel,
+    });
   }
   return tags;
 });
@@ -78,24 +101,32 @@ function clearAllFilters() {
 }
 
 async function loadData() {
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
-    const res = await getDeviceAnalysisApi(query.value);
+    const res = await getDeviceAnalysisApi({
+      ...query.value,
+      manufacturer: selectedManufacturer.value ?? undefined,
+    });
+    if (currentRequest !== requestId) return;
     deviceData.value = res;
-  } catch (error) {
-    console.error('Failed to load device analysis data', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
-function handlePlatformClick(item: any) {
+function handlePlatformClick(item: { name: string }) {
   query.value.platform = item.name;
   loadData();
 }
 
-function handleManufacturerClick(item: any) {
+function handleManufacturerClick(item: { name: string }) {
   selectedManufacturer.value = item.name;
+  query.value.manufacturer = item.name;
+  loadData();
 }
 
 function goToDeviceList() {
@@ -104,6 +135,9 @@ function goToDeviceList() {
     query: {
       appId: query.value.appId,
       platform: query.value.platform,
+      manufacturer: selectedManufacturer.value,
+      startDate: query.value.startDate,
+      endDate: query.value.endDate,
       appVersion: query.value.appVersion,
       channel: query.value.channel,
     },
@@ -112,31 +146,31 @@ function goToDeviceList() {
 
 const modelColumns = [
   {
-    title: '设备型号',
+    title: $t('appStatistic.text087'),
     dataIndex: 'value',
     key: 'value',
     ellipsis: true,
   },
   {
-    title: '活跃设备数',
+    title: $t('appStatistic.text043'),
     dataIndex: 'activeDevices',
     key: 'activeDevices',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => text?.toLocaleString() ?? 0,
+    render: (text: number) => text?.toLocaleString() ?? 0,
   },
   {
-    title: '活跃用户数',
+    title: $t('appStatistic.text044'),
     dataIndex: 'activeUsers',
     key: 'activeUsers',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => text?.toLocaleString() ?? 0,
+    render: (text: number) => text?.toLocaleString() ?? 0,
   },
   {
-    title: '设备占比',
+    title: $t('appStatistic.text045'),
     dataIndex: 'percentage',
     key: 'percentage',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => `${Number(text ?? 0).toFixed(1)}%`,
+    render: (text: number) => `${(Number(text ?? 0) * 100).toFixed(1)}%`,
   },
 ];
 
@@ -150,36 +184,39 @@ onMounted(() => {
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadData" />
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">设备分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          {{ $t('appStatistic.text003') }}
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
-          全面分析应用在各种操作系统、终端品牌、设备型号及系统版本的覆盖分布
+          {{ $t('appStatistic.text180') }}
         </p>
       </div>
       <div class="flex items-center space-x-2">
         <AButton size="small" type="primary" @click="goToDeviceList">
-          查看设备明细列表 →
+          {{ $t('appStatistic.text088') }}
         </AButton>
-        <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+        <AButton :loading="loading" size="small" @click="loadData">
+          {{ $t('appStatistic.text011') }}
+        </AButton>
       </div>
     </div>
 
+    <Alert :message="$t('appStatistic.profileNote')" type="info" show-icon />
     <!-- Filter Bar -->
-    <StatisticFilterBar
-      v-model="query"
-      :loading="loading"
-      @change="loadData"
-      @reset="loadData"
-    />
+    <StatisticFilterBar v-model="query" :loading="loading" @change="loadData" />
 
     <!-- Active filter tags for drill-down -->
     <div
       v-if="activeFilterTags.length > 0"
       class="flex flex-wrap items-center gap-2 bg-muted/30 p-2.5 rounded-md text-xs"
     >
-      <span class="font-medium text-muted-foreground">当前下钻条件:</span>
+      <span class="font-medium text-muted-foreground">{{
+        $t('appStatistic.text089')
+      }}</span>
       <ATag
         v-for="tag in activeFilterTags"
         :key="tag.key"
@@ -190,100 +227,104 @@ onMounted(() => {
         {{ tag.label }}: {{ tag.value }}
       </ATag>
       <AButton size="small" type="link" @click="clearAllFilters">
-        清空全部下钻
+        {{ $t('appStatistic.text090') }}
       </AButton>
     </div>
 
     <!-- Top KPIs -->
-    <MetricCardGroup :cols="4">
-      <MetricCard
-        :loading="loading"
-        :value="deviceData?.totalDevices ?? 0"
-        title="累计设备总数"
-        tooltip="自应用接入以来上报的所有独立物理设备数量"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="deviceData?.activeDevices ?? 0"
-        title="筛选区间活跃设备"
-        tooltip="在指定日期范围内产生活跃事件的设备数"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="deviceData?.newDevices ?? 0"
-        title="筛选区间新增设备"
-        tooltip="在指定日期范围内首次出现的新设备数"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="deviceData?.monthlyActiveDevices ?? 0"
-        title="30日活跃设备 (MAU Devices)"
-        tooltip="过去30天内产生活跃行为的设备去重总数"
-      />
-    </MetricCardGroup>
-
-    <!-- Row 1: Platform & Manufacturer -->
-    <ARow :gutter="16">
-      <ACol :lg="10" :md="12" :sm="24" :xs="24">
-        <DimensionPieChart
-          :data="deviceData?.platforms ?? []"
+    <div v-if="!failed" class="space-y-4">
+      <MetricCardGroup :cols="4">
+        <MetricCard
           :loading="loading"
-          clickable
-          name-field="value"
-          title="系统平台分布"
-          value-field="activeDevices"
-          @item-click="handlePlatformClick"
+          :value="deviceData?.totalDevices ?? 0"
+          :title="$t('appStatistic.text091')"
+          :tooltip="$t('appStatistic.text199')"
         />
-      </ACol>
 
-      <ACol :lg="14" :md="12" :sm="24" :xs="24">
-        <DimensionBarChart
-          :data="deviceData?.manufacturers ?? []"
+        <MetricCard
           :loading="loading"
-          bar-color="#52c41a"
-          clickable
-          name-field="value"
-          title="设备品牌分布 (Top 10)"
-          value-field="activeDevices"
-          @item-click="handleManufacturerClick"
+          :value="deviceData?.activeDevices ?? 0"
+          :title="$t('appStatistic.text092')"
+          :tooltip="$t('appStatistic.text200')"
         />
-      </ACol>
-    </ARow>
 
-    <!-- Row 2: OS Versions & Models -->
-    <ARow :gutter="16">
-      <ACol :lg="12" :md="24" :sm="24" :xs="24">
-        <DimensionBarChart
-          :clickable="false"
-          :data="deviceData?.osVersions ?? []"
+        <MetricCard
           :loading="loading"
-          bar-color="#fa8c16"
-          name-field="value"
-          title="操作系统版本分布"
-          value-field="activeDevices"
+          :value="deviceData?.newDevices ?? 0"
+          :title="$t('appStatistic.text093')"
+          :tooltip="$t('appStatistic.text201')"
         />
-      </ACol>
 
-      <ACol :lg="12" :md="24" :sm="24" :xs="24">
-        <ACard :bordered="false" class="shadow-sm h-full" size="small">
-          <template #title>
-            <div class="flex items-center justify-between py-1">
-              <span class="font-medium text-sm">热门设备型号 Top 10</span>
-            </div>
-          </template>
-          <ATable
-            :columns="modelColumns"
-            :data-source="deviceData?.models ?? []"
+        <MetricCard
+          :loading="loading"
+          :value="deviceData?.monthlyActiveDevices ?? 0"
+          :title="$t('appStatistic.text094')"
+          :tooltip="$t('appStatistic.text202')"
+        />
+      </MetricCardGroup>
+
+      <!-- Row 1: Platform & Manufacturer -->
+      <ARow :gutter="16">
+        <ACol :lg="10" :md="12" :sm="24" :xs="24">
+          <DimensionPieChart
+            :data="deviceData?.platforms ?? []"
             :loading="loading"
-            :pagination="false"
-            row-key="value"
-            size="small"
+            clickable
+            name-field="value"
+            :title="$t('appStatistic.text095')"
+            value-field="activeDevices"
+            @item-click="handlePlatformClick"
           />
-        </ACard>
-      </ACol>
-    </ARow>
+        </ACol>
+
+        <ACol :lg="14" :md="12" :sm="24" :xs="24">
+          <DimensionBarChart
+            :data="deviceData?.manufacturers ?? []"
+            :loading="loading"
+            bar-color="#52c41a"
+            clickable
+            name-field="value"
+            :title="$t('appStatistic.text096')"
+            value-field="activeDevices"
+            @item-click="handleManufacturerClick"
+          />
+        </ACol>
+      </ARow>
+
+      <!-- Row 2: OS Versions & Models -->
+      <ARow :gutter="16">
+        <ACol :lg="12" :md="24" :sm="24" :xs="24">
+          <DimensionBarChart
+            :clickable="false"
+            :data="deviceData?.osVersions ?? []"
+            :loading="loading"
+            bar-color="#fa8c16"
+            name-field="value"
+            :title="$t('appStatistic.text097')"
+            value-field="activeDevices"
+          />
+        </ACol>
+
+        <ACol :lg="12" :md="24" :sm="24" :xs="24">
+          <ACard :bordered="false" class="shadow-sm h-full" size="small">
+            <template #title>
+              <div class="flex items-center justify-between py-1">
+                <span class="font-medium text-sm">{{
+                  $t('appStatistic.text098')
+                }}</span>
+              </div>
+            </template>
+            <ATable
+              :columns="modelColumns"
+              :data-source="deviceData?.models ?? []"
+              :loading="loading"
+              :pagination="false"
+              row-key="value"
+              size="small"
+            />
+          </ACard>
+        </ACol>
+      </ARow>
+    </div>
   </div>
 </template>

@@ -1,15 +1,17 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  RetentionDto,
+  StatisticTrendDto,
+} from '#/api/app-statistic/types';
+
 import { computed, onMounted, ref } from 'vue';
 
 import { Button as AButton } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getRetentionApi } from '#/api/app-statistic/retention';
-import type {
-  AppStatisticQueryInput,
-  RetentionDto,
-  StatisticTrendDto,
-} from '#/api/app-statistic/types';
+import { $t } from '#/locales';
 
 import {
   MetricCard,
@@ -18,64 +20,47 @@ import {
   StatisticFilterBar,
   TrendChart,
 } from '../components';
+import StatisticError from '../components/StatisticError.vue';
+import { weightedRetention } from '../components/statistics';
 
 const loading = ref(false);
+const failed = ref(false);
+let requestId = 0;
 const retentionList = ref<RetentionDto[]>([]);
 
 const query = ref<AppStatisticQueryInput>({
-  appId: 'default',
+  appId: undefined,
   startDate: dayjs().subtract(29, 'day').format('YYYY-MM-DD'),
   endDate: dayjs().format('YYYY-MM-DD'),
 });
 
 async function loadData() {
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
-    const res = await getRetentionApi({
-      appId: query.value.appId,
-      startDate: query.value.startDate,
-      endDate: query.value.endDate,
-    });
+    const res = await getRetentionApi(query.value);
+    if (currentRequest !== requestId) return;
     retentionList.value = res ?? [];
-  } catch (error) {
-    console.error('Failed to load retention data', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
 // Compute average retention rates
 const avgRates = computed(() => {
-  const sums: Record<number, { count: number; total: number }> = {
-    1: { count: 0, total: 0 },
-    3: { count: 0, total: 0 },
-    7: { count: 0, total: 0 },
-    14: { count: 0, total: 0 },
-    30: { count: 0, total: 0 },
+  const rate = (day: number) => {
+    const value = weightedRetention(retentionList.value, day);
+    return value === undefined ? '-' : (value * 100).toFixed(1);
   };
-
-  retentionList.value.forEach((item) => {
-    if (sums[item.retentionDay]) {
-      sums[item.retentionDay]!.count += 1;
-      sums[item.retentionDay]!.total += Number(item.retentionRate ?? 0);
-    }
-  });
-
   return {
-    d1:
-      sums[1]!.count > 0 ? (sums[1]!.total / sums[1]!.count).toFixed(1) : '0.0',
-    d3:
-      sums[3]!.count > 0 ? (sums[3]!.total / sums[3]!.count).toFixed(1) : '0.0',
-    d7:
-      sums[7]!.count > 0 ? (sums[7]!.total / sums[7]!.count).toFixed(1) : '0.0',
-    d14:
-      sums[14]!.count > 0
-        ? (sums[14]!.total / sums[14]!.count).toFixed(1)
-        : '0.0',
-    d30:
-      sums[30]!.count > 0
-        ? (sums[30]!.total / sums[30]!.count).toFixed(1)
-        : '0.0',
+    d1: rate(1),
+    d3: rate(3),
+    d7: rate(7),
+    d14: rate(14),
+    d30: rate(30),
   };
 });
 
@@ -87,7 +72,7 @@ const retentionTrends = computed<StatisticTrendDto[]>(() => {
       trends.push({
         date: item.cohortDate,
         metric: `d${item.retentionDay}`,
-        value: Number(item.retentionRate ?? 0),
+        value: Number(item.retentionRate ?? 0) * 100,
       });
     }
   });
@@ -101,79 +86,82 @@ onMounted(() => {
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadData" />
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">留存分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          {{ $t('appStatistic.text008') }}
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
-          通过同期群（Cohort）矩阵与长期衰退曲线评估产品健康度与用户忠诚度
+          {{ $t('appStatistic.text185') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadData">
+        {{ $t('appStatistic.text011') }}
+      </AButton>
     </div>
 
     <!-- Filter Bar -->
     <StatisticFilterBar
       v-model="query"
       :loading="loading"
-      :show-channel="false"
-      :show-platform="false"
-      :show-version="false"
       @change="loadData"
-      @reset="loadData"
     />
 
     <!-- Average Retention KPIs -->
-    <MetricCardGroup :cols="5">
-      <MetricCard
+    <div v-if="!failed" class="space-y-4">
+      <MetricCardGroup :cols="5">
+        <MetricCard
+          :loading="loading"
+          :value="`${avgRates.d1}%`"
+          :title="$t('appStatistic.text157')"
+          :tooltip="$t('appStatistic.text206')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="`${avgRates.d3}%`"
+          :title="$t('appStatistic.text158')"
+          :tooltip="$t('appStatistic.text207')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="`${avgRates.d7}%`"
+          :title="$t('appStatistic.text159')"
+          :tooltip="$t('appStatistic.text208')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="`${avgRates.d14}%`"
+          :title="$t('appStatistic.text160')"
+          :tooltip="$t('appStatistic.text209')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="`${avgRates.d30}%`"
+          :title="$t('appStatistic.text161')"
+          :tooltip="$t('appStatistic.text210')"
+        />
+      </MetricCardGroup>
+
+      <!-- Cohort Heatmap -->
+      <RetentionHeatmap :data="retentionList" :loading="loading" />
+
+      <!-- Retention Trends Chart -->
+      <TrendChart
+        :data="retentionTrends"
         :loading="loading"
-        :value="`${avgRates.d1}%`"
-        title="平均次日留存 (D1)"
-        tooltip="新增用户在次日继续使用应用的平均比例"
+        :metrics="[
+          { key: 'd1', label: $t('appStatistic.text162'), color: '#1677ff' },
+          { key: 'd7', label: $t('appStatistic.text163'), color: '#52c41a' },
+          { key: 'd30', label: $t('appStatistic.text164'), color: '#fa8c16' },
+        ]"
+        :title="$t('appStatistic.text165')"
       />
-
-      <MetricCard
-        :loading="loading"
-        :value="`${avgRates.d3}%`"
-        title="平均3日留存 (D3)"
-        tooltip="新增用户在第3天继续使用应用的平均比例"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="`${avgRates.d7}%`"
-        title="平均7日留存 (D7)"
-        tooltip="新增用户在第7天继续使用应用的平均比例"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="`${avgRates.d14}%`"
-        title="平均14日留存 (D14)"
-        tooltip="新增用户在第14天继续使用应用的平均比例"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="`${avgRates.d30}%`"
-        title="平均30日留存 (D30)"
-        tooltip="新增用户在第30天继续使用应用的平均比例"
-      />
-    </MetricCardGroup>
-
-    <!-- Cohort Heatmap -->
-    <RetentionHeatmap :data="retentionList" :loading="loading" />
-
-    <!-- Retention Trends Chart -->
-    <TrendChart
-      :data="retentionTrends"
-      :loading="loading"
-      :metrics="[
-        { key: 'd1', label: '次日留存率(%)', color: '#1677ff' },
-        { key: 'd7', label: '7日留存率(%)', color: '#52c41a' },
-        { key: 'd30', label: '30日留存率(%)', color: '#fa8c16' },
-      ]"
-      title="留存率变动趋势 (D1 / D7 / D30)"
-    />
+    </div>
   </div>
 </template>

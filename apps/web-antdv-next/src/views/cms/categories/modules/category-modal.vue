@@ -23,8 +23,10 @@ import {
   createCategoryApi,
   getCategoriesApi,
   getCategoryApi,
+  toRelativeAssetUrl,
   updateCategoryApi,
 } from '#/api/cms';
+import MediaSelector from '#/views/cms/components/MediaSelector.vue';
 
 const emit = defineEmits(['success']);
 
@@ -94,7 +96,7 @@ async function initData(payload?: { parentId?: string; record?: CategoryDto }) {
       code.value = detail.code || '';
       slug.value = detail.slug || '';
       description.value = detail.description || '';
-      coverUrl.value = detail.coverUrl || '';
+      coverUrl.value = toRelativeAssetUrl(detail.coverUrl) || '';
       sorting.value = detail.sorting || 0;
       isActive.value = detail.isActive ?? true;
       seoTitle.value = detail.seoTitle || '';
@@ -130,7 +132,7 @@ const [Modal, modalApi] = useVbenModal<{
       modalApi.lock();
       if (isEdit.value && recordId.value) {
         const updateData: CategoryUpdateDto = {
-          coverUrl: coverUrl.value || undefined,
+          coverUrl: toRelativeAssetUrl(coverUrl.value) || undefined,
           description: description.value || undefined,
           isActive: isActive.value,
           name: name.value,
@@ -147,7 +149,7 @@ const [Modal, modalApi] = useVbenModal<{
       } else {
         const createData: CategoryCreateDto = {
           code: code.value,
-          coverUrl: coverUrl.value || undefined,
+          coverUrl: toRelativeAssetUrl(coverUrl.value) || undefined,
           description: description.value || undefined,
           isActive: isActive.value,
           name: name.value,
@@ -238,10 +240,11 @@ const [Modal, modalApi] = useVbenModal<{
               </Col>
             </Row>
 
-            <FormItem label="分类图标 / 封面图 URL">
-              <Input
+            <FormItem label="分类图标 / 封面图">
+              <MediaSelector
+                :asset-types="[1]"
                 v-model:value="coverUrl"
-                placeholder="请输入封面图片 URL 或图标地址"
+                placeholder="请输入封面图片 URL 或点击右侧选择图片"
               />
             </FormItem>
 

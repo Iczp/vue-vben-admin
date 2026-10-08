@@ -18,6 +18,8 @@ export interface ImageUploadOptions {
   maxSize?: number;
   /** 上传失败回调，未提供时使用 alert 弹窗提示 */
   onUploadError?: (error: unknown) => void;
+  /** 打开素材媒体库回调，提供后在图片菜单第一项显示“素材媒体库” */
+  onOpenMediaLibrary?: (editor: Editor) => void;
   /** 上传函数，返回图片 URL，可选 onProgress 回调报告上传进度 */
   upload: (
     file: File,

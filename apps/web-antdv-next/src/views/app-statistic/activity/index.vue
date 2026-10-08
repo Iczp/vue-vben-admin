@@ -1,20 +1,24 @@
-﻿<script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
-
-import {
-  Button as AButton,
-  Card as ACard,
-  Col as ACol,
-  Radio as ARadio,
-  Row as ARow,
-} from 'antdv-next';
-import dayjs from 'dayjs';
-
-import { getActivityAnalysisApi } from '#/api/app-statistic/activity';
+<script lang="ts" setup>
 import type {
   ActivityAnalysisDto,
   AppStatisticQueryInput,
 } from '#/api/app-statistic/types';
+
+import { computed, onMounted, ref } from 'vue';
+
+import { Alert } from 'antdv-next';
+import {
+  Button as AButton,
+  Card as ACard,
+  Col as ACol,
+  Row as ARow,
+} from 'antdv-next';
+import { RadioButton as ARadioButton } from 'antdv-next';
+import { RadioGroup as ARadioGroup } from 'antdv-next';
+import dayjs from 'dayjs';
+
+import { getActivityAnalysisApi } from '#/api/app-statistic/activity';
+import { $t } from '#/locales';
 
 import {
   DimensionBarChart,
@@ -23,48 +27,53 @@ import {
   StatisticFilterBar,
   TrendChart,
 } from '../components';
+import StatisticError from '../components/StatisticError.vue';
+import { formatDuration } from '../components/statistics';
 
 const loading = ref(false);
+const failed = ref(false);
+let requestId = 0;
 const activityData = ref<ActivityAnalysisDto | null>(null);
 
 const activeTrendTab = ref<'dau' | 'mau' | 'wau'>('dau');
 
 const query = ref<AppStatisticQueryInput>({
-  appId: 'default',
+  appId: undefined,
   startDate: dayjs().subtract(13, 'day').format('YYYY-MM-DD'),
   endDate: dayjs().format('YYYY-MM-DD'),
 });
 
-function formatDuration(seconds: number): string {
-  if (!seconds || seconds <= 0) return '0秒';
-  const mins = Math.floor(seconds / 60);
-  const remSecs = Math.round(seconds % 60);
-  if (mins === 0) return `${remSecs}秒`;
-  return remSecs > 0 ? `${mins}分${remSecs}秒` : `${mins}分钟`;
-}
-
 async function loadData() {
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
     const res = await getActivityAnalysisApi(query.value);
+    if (currentRequest !== requestId) return;
     activityData.value = res;
-  } catch (error) {
-    console.error('Failed to load activity analysis data', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
 const currentTrendMetrics = computed(() => {
   switch (activeTrendTab.value) {
-    case 'wau': {
-      return [{ key: 'wau', label: '周活跃用户 (WAU)', color: '#52c41a' }];
-    }
     case 'mau': {
-      return [{ key: 'mau', label: '月活跃用户 (MAU)', color: '#722ed1' }];
+      return [
+        { key: 'mau', label: $t('appStatistic.text056'), color: '#722ed1' },
+      ];
+    }
+    case 'wau': {
+      return [
+        { key: 'wau', label: $t('appStatistic.text055'), color: '#52c41a' },
+      ];
     }
     default: {
-      return [{ key: 'dau', label: '日活跃用户 (DAU)', color: '#1677ff' }];
+      return [
+        { key: 'dau', label: $t('appStatistic.text057'), color: '#1677ff' },
+      ];
     }
   }
 });
@@ -76,119 +85,147 @@ onMounted(() => {
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadData" />
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">活跃分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          {{ $t('appStatistic.text001') }}
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
-          深度分析应用用户黏性 (DAU/MAU)、使用频次与访问时长分布
+          {{ $t('appStatistic.text179') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadData">
+        {{ $t('appStatistic.text011') }}
+      </AButton>
     </div>
 
+    <Alert :message="$t('appStatistic.aggregateNote')" type="info" show-icon />
     <!-- Filter Bar -->
     <StatisticFilterBar
       v-model="query"
       :loading="loading"
       @change="loadData"
-      @reset="loadData"
     />
 
+    <Alert
+      v-if="activityData && !activityData.hasRollingMetrics"
+      :message="$t('appStatistic.rollingNote')"
+      type="warning"
+    />
     <!-- Core KPIs -->
-    <MetricCardGroup :cols="6">
-      <MetricCard
-        :loading="loading"
-        :value="activityData?.dau ?? 0"
-        title="日活跃 (DAU)"
-        tooltip="当日产生事件的独立用户数"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="activityData?.wau ?? 0"
-        title="周活跃 (WAU)"
-        tooltip="过去7天去重独立活跃用户数"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="activityData?.mau ?? 0"
-        title="月活跃 (MAU)"
-        tooltip="过去30天去重独立活跃用户数"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="`${((activityData?.dauMauRatio ?? 0) * 100).toFixed(1)}%`"
-        title="活跃粘性 (DAU/MAU)"
-        tooltip="衡量用户使用频率的经典指标，比例越高代表用户黏性越强"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="Number(activityData?.avgLaunchCountPerUser ?? 0).toFixed(1)"
-        title="人均启动次数"
-        tooltip="平均每个活跃用户启动应用的次数"
-        unit="次"
-      />
-
-      <MetricCard
-        :loading="loading"
-        :value="formatDuration(activityData?.avgDurationSecondsPerUser ?? 0)"
-        title="人均使用时长"
-        tooltip="平均每个活跃用户的单日使用时长"
-      />
-    </MetricCardGroup>
-
-    <!-- Activity Trend with separated Tabs -->
-    <ACard :bordered="false" class="shadow-sm" size="small">
-      <template #title>
-        <div class="flex flex-wrap items-center justify-between gap-2 py-1">
-          <span class="font-medium text-sm">活跃趋势</span>
-          <ARadio.Group v-model:value="activeTrendTab" button-style="solid" size="small">
-            <ARadio.Button value="dau">DAU 趋势</ARadio.Button>
-            <ARadio.Button value="wau">WAU 趋势</ARadio.Button>
-            <ARadio.Button value="mau">MAU 趋势</ARadio.Button>
-          </ARadio.Group>
-        </div>
-      </template>
-
-      <TrendChart
-        :data="activityData?.trends ?? []"
-        :loading="loading"
-        :metrics="currentTrendMetrics"
-        title=""
-      />
-    </ACard>
-
-    <!-- Frequency & Duration Distributions -->
-    <ARow :gutter="16">
-      <ACol :lg="12" :md="24" :sm="24" :xs="24">
-        <DimensionBarChart
-          :clickable="false"
-          :data="activityData?.launchDistributions ?? []"
+    <div v-if="!failed" class="space-y-4">
+      <MetricCardGroup :cols="6">
+        <MetricCard
           :loading="loading"
-          bar-color="#722ed1"
-          name-field="range"
-          percentage-field="percentage"
-          title="用户启动次数分布"
-          value-field="userCount"
+          :value="activityData?.dau ?? 0"
+          :title="$t('appStatistic.text058')"
+          :tooltip="$t('appStatistic.text187')"
         />
-      </ACol>
 
-      <ACol :lg="12" :md="24" :sm="24" :xs="24">
-        <DimensionBarChart
-          :clickable="false"
-          :data="activityData?.durationDistributions ?? []"
+        <MetricCard
           :loading="loading"
-          bar-color="#13c2c2"
-          name-field="range"
-          percentage-field="percentage"
-          title="用户单日使用时长分布"
-          value-field="userCount"
+          :value="activityData?.hasRollingMetrics ? activityData.wau : '-'"
+          :title="$t('appStatistic.text059')"
+          :tooltip="$t('appStatistic.text188')"
         />
-      </ACol>
-    </ARow>
+
+        <MetricCard
+          :loading="loading"
+          :value="activityData?.hasRollingMetrics ? activityData.mau : '-'"
+          :title="$t('appStatistic.text060')"
+          :tooltip="$t('appStatistic.text189')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="
+            activityData?.hasRollingMetrics
+              ? `${(activityData.dauMauRatio * 100).toFixed(1)}%`
+              : '-'
+          "
+          :title="$t('appStatistic.text061')"
+          :tooltip="$t('appStatistic.text190')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="Number(activityData?.avgLaunchCountPerUser ?? 0).toFixed(1)"
+          :title="$t('appStatistic.text053')"
+          :tooltip="$t('appStatistic.text191')"
+          :unit="$t('appStatistic.launchesUnit')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="formatDuration(activityData?.avgDurationSecondsPerUser ?? 0)"
+          :title="$t('appStatistic.text052')"
+          :tooltip="$t('appStatistic.text192')"
+        />
+      </MetricCardGroup>
+
+      <!-- Activity Trend with separated Tabs -->
+      <ACard :bordered="false" class="shadow-sm" size="small">
+        <template #title>
+          <div class="flex flex-wrap items-center justify-between gap-2 py-1">
+            <span class="font-medium text-sm">{{
+              $t('appStatistic.text062')
+            }}</span>
+            <ARadioGroup
+              v-model:value="activeTrendTab"
+              button-style="solid"
+              size="small"
+            >
+              <ARadioButton value="dau">
+                {{ $t('appStatistic.text063') }}
+              </ARadioButton>
+              <ARadioButton value="wau">
+                {{ $t('appStatistic.text064') }}
+              </ARadioButton>
+              <ARadioButton value="mau">
+                {{ $t('appStatistic.text065') }}
+              </ARadioButton>
+            </ARadioGroup>
+          </div>
+        </template>
+
+        <TrendChart
+          :data="activityData?.trends ?? []"
+          :loading="loading"
+          :metrics="currentTrendMetrics"
+          title=""
+        />
+      </ACard>
+
+      <!-- Frequency & Duration Distributions -->
+      <ARow :gutter="16">
+        <ACol :lg="12" :md="24" :sm="24" :xs="24">
+          <DimensionBarChart
+            :clickable="false"
+            :data="activityData?.launchDistributions ?? []"
+            :loading="loading"
+            bar-color="#722ed1"
+            name-field="range"
+            percentage-field="percentage"
+            :title="$t('appStatistic.text066')"
+            value-field="userCount"
+          />
+        </ACol>
+
+        <ACol :lg="12" :md="24" :sm="24" :xs="24">
+          <DimensionBarChart
+            :clickable="false"
+            :data="activityData?.durationDistributions ?? []"
+            :loading="loading"
+            bar-color="#13c2c2"
+            name-field="range"
+            percentage-field="percentage"
+            :title="$t('appStatistic.text067')"
+            value-field="userCount"
+          />
+        </ACol>
+      </ARow>
+    </div>
   </div>
 </template>

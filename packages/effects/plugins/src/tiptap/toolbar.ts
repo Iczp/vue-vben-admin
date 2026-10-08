@@ -289,6 +289,16 @@ export function createToolbarGroups(
               action: () => {},
               menu: {
                 items: [
+                  ...(imageUpload.onOpenMediaLibrary
+                    ? [
+                        {
+                          action: (editor: Editor) => {
+                            imageUpload.onOpenMediaLibrary?.(editor);
+                          },
+                          label: $t('ui.tiptap.toolbar.imageLibrary'),
+                        },
+                      ]
+                    : []),
                   {
                     action: (editor) => {
                       if (typeof editor.commands.uploadImage === 'function') {

@@ -1,5 +1,7 @@
-﻿<script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+<script lang="ts" setup>
+import type { DeviceDetailDto } from '#/api/app-statistic/types';
+
+import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import {
@@ -7,34 +9,41 @@ import {
   Card as ACard,
   Descriptions as ADescriptions,
   Spin as ASpin,
-  Table as ATable,
   Tag as ATag,
 } from 'antdv-next';
+import { DescriptionsItem as ADescriptionsItem } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getDeviceDetailApi } from '#/api/app-statistic/device';
-import type { DeviceDetailDto } from '#/api/app-statistic/types';
+import { $t } from '#/locales';
 
 import { TrendChart } from '../components';
+import StatisticError from '../components/StatisticError.vue';
+import ATable from '../components/StatisticTable.vue';
 
 const route = useRoute();
 const router = useRouter();
 
 const loading = ref(false);
+const failed = ref(false);
+let requestId = 0;
 const deviceDetail = ref<DeviceDetailDto | null>(null);
 
-const id = String(route.params.id);
-
 async function loadDetail() {
-  if (!id) return;
+  const id = route.params.id;
+  if (typeof id !== 'string' || !id) return;
+  deviceDetail.value = null;
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
     const res = await getDeviceDetailApi(id);
+    if (currentRequest !== requestId) return;
     deviceDetail.value = res;
-  } catch (error) {
-    console.error('Failed to load device detail', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
@@ -44,26 +53,26 @@ function goBack() {
 
 const eventColumns = [
   {
-    title: '事件时间',
+    title: $t('appStatistic.text099'),
     dataIndex: 'eventTime',
     key: 'eventTime',
     width: 170,
-    customRender: ({ text }: { text: string }) =>
+    render: (text: string) =>
       text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
   },
   {
-    title: '事件名称',
+    title: $t('appStatistic.text100'),
     dataIndex: 'eventName',
     key: 'eventName',
     width: 150,
   },
   {
-    title: '页面',
+    title: $t('appStatistic.text101'),
     dataIndex: 'page',
     key: 'page',
   },
   {
-    title: '应用版本',
+    title: $t('appStatistic.text102'),
     dataIndex: 'appVersion',
     key: 'appVersion',
     width: 100,
@@ -75,95 +84,124 @@ const eventColumns = [
     ellipsis: true,
   },
   {
-    title: '附加属性 (Properties)',
+    title: $t('appStatistic.text103'),
     dataIndex: 'properties',
     key: 'properties',
     ellipsis: true,
   },
 ];
 
-onMounted(() => {
-  loadDetail();
-});
+watch(() => route.params.id, loadDetail, { immediate: true });
 </script>
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadDetail" />
     <!-- Top Action Bar -->
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <AButton size="small" @click="goBack">← 返回设备列表</AButton>
+        <AButton size="small" @click="goBack">
+          {{ $t('appStatistic.text104') }}
+        </AButton>
         <h2 class="text-xl font-bold tracking-tight text-foreground m-0">
-          设备统计详情
+          {{ $t('appStatistic.text005') }}
         </h2>
       </div>
-      <AButton :loading="loading" size="small" @click="loadDetail">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadDetail">
+        {{ $t('appStatistic.text011') }}
+      </AButton>
     </div>
 
     <ASpin :spinning="loading">
-      <div v-if="deviceDetail" class="space-y-4">
+      <div v-if="deviceDetail && !failed" class="space-y-4">
         <!-- Device Info Card -->
-        <ACard :bordered="false" class="shadow-sm" size="small" title="设备基本信息">
-          <ADescriptions :column="{ xs: 1, sm: 2, md: 3, lg: 4 }" bordered size="small">
-            <ADescriptions.Item label="DeviceKey" :span="2">
-              <span class="font-mono text-xs">{{ deviceDetail.device.deviceKey }}</span>
-            </ADescriptions.Item>
+        <ACard
+          :bordered="false"
+          class="shadow-sm"
+          size="small"
+          :title="$t('appStatistic.text105')"
+        >
+          <ADescriptions
+            :column="{ xs: 1, sm: 2, md: 3, lg: 4 }"
+            bordered
+            size="small"
+          >
+            <ADescriptionsItem label="DeviceKey" :span="2">
+              <span class="font-mono text-xs">{{
+                deviceDetail.device.deviceKey
+              }}</span>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="App ID">
+            <ADescriptionsItem label="App ID">
               {{ deviceDetail.device.appId }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="平台">
-              <ATag color="blue">{{ deviceDetail.device.platform || '-' }}</ATag>
-            </ADescriptions.Item>
+            <ADescriptionsItem :label="$t('appStatistic.text015')">
+              <ATag color="blue">
+                {{ deviceDetail.device.platform || '-' }}
+              </ATag>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="设备品牌">
+            <ADescriptionsItem :label="$t('appStatistic.text106')">
               {{ deviceDetail.device.manufacturer || '-' }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="设备型号">
+            <ADescriptionsItem :label="$t('appStatistic.text087')">
               {{ deviceDetail.device.model || '-' }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="操作系统">
-              {{ deviceDetail.device.osName }} {{ deviceDetail.device.osVersion }}
-            </ADescriptions.Item>
+            <ADescriptionsItem :label="$t('appStatistic.text107')">
+              {{ deviceDetail.device.osName }}
+              {{ deviceDetail.device.osVersion }}
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="当前 App 版本">
+            <ADescriptionsItem :label="$t('appStatistic.text108')">
               {{ deviceDetail.device.appVersion || '-' }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="分发渠道">
+            <ADescriptionsItem :label="$t('appStatistic.text109')">
               {{ deviceDetail.device.channel || '-' }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="系统语言">
+            <ADescriptionsItem :label="$t('appStatistic.text110')">
               {{ deviceDetail.device.language || '-' }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="时区">
+            <ADescriptionsItem :label="$t('appStatistic.text111')">
               {{ deviceDetail.device.timeZone || '-' }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="最近登录用户">
-              <span class="font-mono text-xs">{{ deviceDetail.device.lastUserId || '-' }}</span>
-            </ADescriptions.Item>
+            <ADescriptionsItem :label="$t('appStatistic.text112')">
+              <span class="font-mono text-xs">{{
+                deviceDetail.device.lastUserId || '-'
+              }}</span>
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="首次活跃时间">
-              {{ dayjs(deviceDetail.device.firstSeenTime).format('YYYY-MM-DD HH:mm:ss') }}
-            </ADescriptions.Item>
+            <ADescriptionsItem :label="$t('appStatistic.text113')">
+              {{
+                dayjs(deviceDetail.device.firstSeenTime).format(
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              }}
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="最近活跃时间">
-              {{ dayjs(deviceDetail.device.lastSeenTime).format('YYYY-MM-DD HH:mm:ss') }}
-            </ADescriptions.Item>
+            <ADescriptionsItem :label="$t('appStatistic.text114')">
+              {{
+                dayjs(deviceDetail.device.lastSeenTime).format(
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              }}
+            </ADescriptionsItem>
 
-            <ADescriptions.Item label="最近登录时间" :span="2">
+            <ADescriptionsItem :label="$t('appStatistic.text115')" :span="2">
               {{
                 deviceDetail.device.lastLoginTime
-                  ? dayjs(deviceDetail.device.lastLoginTime).format('YYYY-MM-DD HH:mm:ss')
+                  ? dayjs(deviceDetail.device.lastLoginTime).format(
+                      'YYYY-MM-DD HH:mm:ss',
+                    )
                   : '-'
               }}
-            </ADescriptions.Item>
+            </ADescriptionsItem>
           </ADescriptions>
         </ACard>
 
@@ -171,15 +209,44 @@ onMounted(() => {
         <TrendChart
           :data="deviceDetail.recent30DaysTrends"
           :metrics="[
-            { key: 'launch_count', label: '启动次数', color: '#1677ff' },
-            { key: 'page_view_count', label: '浏览量 (PV)', color: '#52c41a' },
-            { key: 'duration_seconds', label: '使用时长(秒)', color: '#722ed1' },
+            {
+              key: 'events',
+              label: $t('appStatistic.text116'),
+              color: '#1677ff',
+            },
           ]"
-          title="近 30 天活跃度趋势"
+          :title="$t('appStatistic.text117')"
         />
 
+        <ACard :title="$t('appStatistic.text177')" :bordered="false">
+          <ATable
+            :data-source="deviceDetail.recentSessions ?? []"
+            :pagination="false"
+            row-key="sessionId"
+            size="small"
+            :columns="[
+              { title: 'Session ID', dataIndex: 'sessionId' },
+              { title: $t('appStatistic.text127'), dataIndex: 'userId' },
+              {
+                title: $t('appStatistic.text131'),
+                dataIndex: 'startTime',
+                render: (text: string) =>
+                  dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
+              },
+              {
+                title: $t('appStatistic.text050'),
+                dataIndex: 'durationSeconds',
+              },
+            ]"
+          />
+        </ACard>
         <!-- Recent Events -->
-        <ACard :bordered="false" class="shadow-sm" size="small" title="该设备最近上报事件">
+        <ACard
+          :bordered="false"
+          class="shadow-sm"
+          size="small"
+          :title="$t('appStatistic.text118')"
+        >
           <ATable
             :columns="eventColumns"
             :data-source="deviceDetail.recentEvents"

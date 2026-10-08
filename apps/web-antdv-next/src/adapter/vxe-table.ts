@@ -166,7 +166,32 @@ setupVbenVxeTable({
       renderTableDefault(renderOpts, params) {
         const { props } = renderOpts;
         const { column, row } = params;
-        return h(Image, { src: row[column.field], ...props });
+        const src = row[column.field];
+        const width = props?.width ?? 55;
+        const height = props?.height ?? 40;
+        if (!src) {
+          // 无图片时显示占位框，不显示裂图
+          return h(
+            'div',
+            {
+              style: {
+                alignItems: 'center',
+                background: '#f5f5f5',
+                border: '1px solid #e8e8e8',
+                borderRadius: '4px',
+                color: '#bfbfbf',
+                display: 'flex',
+                fontSize: '11px',
+                height: `${height}px`,
+                justifyContent: 'center',
+                margin: '0 auto',
+                width: `${width}px`,
+              },
+            },
+            '无图',
+          );
+        }
+        return h(Image, { src, ...props });
       },
     });
 

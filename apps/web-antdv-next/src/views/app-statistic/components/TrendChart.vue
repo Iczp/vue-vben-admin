@@ -1,16 +1,19 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
+
+import type { StatisticTrendDto } from '#/api/app-statistic/types';
 
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import {
   Card as ACard,
   Checkbox as ACheckbox,
   Spin as ASpin,
 } from 'antdv-next';
 
-import type { StatisticTrendDto } from '#/api/app-statistic/types';
+import { $t } from '#/locales';
 
 import StatisticEmpty from './StatisticEmpty.vue';
 
@@ -27,21 +30,33 @@ interface Props {
   loading?: boolean;
   height?: number | string;
   chartType?: 'bar' | 'line';
+  maxMetrics?: number;
+  initialMetrics?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: '趋势分析',
+  title: $t('appStatistic.text035'),
   metrics: () => [
     { key: 'dau', label: 'DAU', color: '#1677ff' },
-    { key: 'new_users', label: '新增用户', color: '#52c41a' },
-    { key: 'new_devices', label: '新增设备', color: '#fa8c16' },
-    { key: 'launch_count', label: '启动次数', color: '#722ed1' },
+    { key: 'new_users', label: $t('appStatistic.text039'), color: '#52c41a' },
+    { key: 'new_devices', label: $t('appStatistic.text040'), color: '#fa8c16' },
+    {
+      key: 'launch_count',
+      label: $t('appStatistic.text047'),
+      color: '#722ed1',
+    },
     { key: 'page_view_count', label: 'PV', color: '#13c2c2' },
-    { key: 'duration_seconds', label: '使用时长(秒)', color: '#eb2f96' },
+    {
+      key: 'duration_seconds',
+      label: $t('appStatistic.text050'),
+      color: '#eb2f96',
+    },
   ],
   loading: false,
   height: 360,
   chartType: 'line',
+  maxMetrics: 3,
+  initialMetrics: 1,
 });
 
 const chartRef = ref<EchartsUIType>();
@@ -49,7 +64,7 @@ const { renderEcharts } = useEcharts(chartRef);
 
 // Selected metrics (default: first metric in list)
 const activeMetrics = ref<string[]>(
-  props.metrics.length > 0 ? [props.metrics[0]!.key] : ['dau'],
+  props.metrics.slice(0, props.initialMetrics).map((item) => item.key),
 );
 
 function toggleMetric(key: string) {
@@ -59,7 +74,7 @@ function toggleMetric(key: string) {
       activeMetrics.value.splice(index, 1);
     }
   } else {
-    if (activeMetrics.value.length >= 3) {
+    if (activeMetrics.value.length >= props.maxMetrics) {
       activeMetrics.value.shift();
     }
     activeMetrics.value.push(key);
@@ -74,7 +89,9 @@ const distinctDates = computed(() => {
   return Array.from(dateSet).sort();
 });
 
-const hasData = computed(() => props.data && props.data.length > 0);
+const hasData = computed(() =>
+  props.data.some((item) => activeMetrics.value.includes(item.metric)),
+);
 
 const colorPalette = [
   '#1677ff',
@@ -91,7 +108,12 @@ function updateChart() {
   if (!hasData.value || distinctDates.value.length === 0) return;
 
   const dates = distinctDates.value;
-  const series: any[] = [];
+  const series: {
+    [key: string]: unknown;
+    data: (null | number)[];
+    name: string;
+    type: 'bar' | 'line';
+  }[] = [];
   const legendNames: string[] = [];
 
   activeMetrics.value.forEach((metricKey, idx) => {
@@ -107,7 +129,7 @@ function updateChart() {
         dateMap.set(d.date, Number(d.value) || 0);
       });
 
-    const seriesData = dates.map((date) => dateMap.get(date) ?? 0);
+    const seriesData = dates.map((date) => dateMap.get(date) ?? null);
 
     if (props.chartType === 'line') {
       series.push({
@@ -172,7 +194,7 @@ function updateChart() {
 }
 
 watch(
-  [() => props.data, activeMetrics, () => props.chartType],
+  [() => props.data, activeMetrics, () => props.chartType, chartRef],
   () => {
     updateChart();
   },
@@ -187,6 +209,17 @@ watch(
     }
   },
 );
+watch(
+  () => props.metrics,
+  (metrics) => {
+    const keys = new Set(metrics.map((item) => item.key));
+    const retained = activeMetrics.value.filter((key) => keys.has(key));
+    activeMetrics.value = retained.length
+      ? retained
+      : metrics.slice(0, props.initialMetrics).map((item) => item.key);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -196,7 +229,9 @@ watch(
         <span class="font-medium text-sm">{{ title }}</span>
         <!-- Metric selector tags -->
         <div class="flex flex-wrap items-center gap-1.5">
-          <span class="text-xs text-muted-foreground mr-1">指标 (最多3项):</span>
+          <span class="text-xs text-muted-foreground mr-1">{{
+            $t('appStatistic.metricSelection', { count: maxMetrics })
+          }}</span>
           <ACheckbox
             v-for="item in metrics"
             :key="item.key"

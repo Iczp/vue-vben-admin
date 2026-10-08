@@ -1,12 +1,14 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import { Empty as AEmpty } from 'antdv-next';
+
+import { $t } from '#/locales';
 
 interface Props {
   description?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-  description: '当前筛选范围暂无统计数据',
+  description: $t('appStatistic.text030'),
 });
 </script>
 

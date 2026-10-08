@@ -1,4 +1,4 @@
-import { BarChart, LineChart, PieChart, RadarChart } from 'echarts/charts';
+import { BarChart, HeatmapChart, LineChart, PieChart, RadarChart } from 'echarts/charts';
 import {
   DatasetComponent,
   GridComponent,
@@ -7,6 +7,7 @@ import {
   ToolboxComponent,
   TooltipComponent,
   TransformComponent,
+  VisualMapComponent,
 } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import {
@@ -25,6 +26,8 @@ echarts.use([
   DatasetComponent,
   TransformComponent,
   BarChart,
+  HeatmapChart,
+  VisualMapComponent,
   LineChart,
   LabelLayout,
   LegacyGridContainLabel,

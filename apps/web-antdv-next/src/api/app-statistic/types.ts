@@ -11,14 +11,19 @@ export interface AppStatisticQueryInput {
   appId?: string;
   startDate: string;
   endDate: string;
+  manufacturer?: string;
   platform?: string;
   appVersion?: string;
   channel?: string;
 }
 
 export interface OverviewDto {
+  hasData: boolean;
   appId: string;
   date: string;
+  todayActiveDevices: number;
+  todaySessionCount: number;
+  todayUniqueVisitorCount: number;
   todayDau: number;
   yesterdayDau: number;
   todayNewUsers: number;
@@ -37,6 +42,11 @@ export interface StatisticTrendDto {
 }
 
 export interface DimensionStatisticDto {
+  newDevices?: null | number;
+  launchCount?: null | number;
+  newUsers?: null | number;
+  firstSeenDate?: string;
+  lastActiveDate?: string;
   dimension: string;
   value: string;
   activeUsers: number;
@@ -76,6 +86,7 @@ export interface DurationDistributionDto {
 }
 
 export interface ActivityAnalysisDto {
+  hasRollingMetrics: boolean;
   dau: number;
   wau: number;
   mau: number;
@@ -119,7 +130,7 @@ export interface PageStatisticDto {
   pageViewCount: number;
   uniqueVisitorCount: number;
   avgVisitsPerUser: number;
-  avgDurationSeconds: number;
+  avgDurationSeconds?: null | number;
   percentage: number;
 }
 
@@ -150,6 +161,9 @@ export interface DeviceDto {
 }
 
 export interface GetDevicesInput {
+  manufacturer?: string;
+  model?: string;
+  osVersion?: string;
   appId?: string;
   deviceKey?: string;
   platform?: string;
@@ -166,6 +180,7 @@ export interface DeviceDetailDto {
   device: DeviceDto;
   recent30DaysTrends: StatisticTrendDto[];
   recentEvents: EventDto[];
+  recentSessions: StatisticSessionDto[];
 }
 
 export interface EventDto {
@@ -206,4 +221,13 @@ export interface GetEventsInput {
 export interface RebuildDailyDataInput {
   appId: string;
   date: string;
+}
+
+export interface StatisticSessionDto {
+  sessionId: string;
+  userId?: string;
+  startTime: string;
+  endTime?: string;
+  durationSeconds: number;
+  isCompleted: boolean;
 }

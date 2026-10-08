@@ -3,6 +3,8 @@ import type { AssetDto } from '#/api/cms';
 
 import { AssetStatus, AssetType } from '#/api/cms';
 
+import { formatMediaDuration, mediaDimensions } from '../components/media';
+
 export const assetTypeOptions = [
   { color: 'blue', label: '图片', value: AssetType.Image },
   { color: 'purple', label: '视频', value: AssetType.Video },
@@ -42,7 +44,7 @@ export function useColumns(
           width: 50,
         },
       },
-      field: 'sourceUrl',
+      field: 'previewUrl',
       title: '缩略图',
       width: 75,
     },
@@ -78,6 +80,21 @@ export function useColumns(
       width: 100,
     },
     {
+      field: 'dimensions',
+      title: '宽 × 高',
+      width: 130,
+      formatter: ({ row }) => mediaDimensions(row),
+    },
+    {
+      field: 'duration',
+      title: '时长',
+      width: 100,
+      formatter: ({ row }) =>
+        row.type === AssetType.Video || row.type === AssetType.Audio
+          ? formatMediaDuration(row.duration)
+          : '—',
+    },
+    {
       field: 'mimeType',
       minWidth: 120,
       title: 'MIME 类型',
@@ -106,6 +123,7 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
+          { code: 'preview', text: '预览详情' },
           { code: 'copy_url', text: '复制链接' },
           {
             code: 'delete',
@@ -117,7 +135,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 140,
+      width: 220,
     },
   ];
 }

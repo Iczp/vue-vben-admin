@@ -1,18 +1,18 @@
-﻿<script lang="ts" setup>
-import { onMounted, ref } from 'vue';
-
-import {
-  Button as AButton,
-  Card as ACard,
-  Table as ATable,
-} from 'antdv-next';
-import dayjs from 'dayjs';
-
-import { getPageAnalysisApi } from '#/api/app-statistic/page';
+<script lang="ts" setup>
 import type {
   AppStatisticQueryInput,
   PageAnalysisDto,
+  PageStatisticDto,
 } from '#/api/app-statistic/types';
+
+import { onMounted, ref } from 'vue';
+
+import { Alert } from 'antdv-next';
+import { Button as AButton, Card as ACard } from 'antdv-next';
+import dayjs from 'dayjs';
+
+import { getPageAnalysisApi } from '#/api/app-statistic/page';
+import { $t } from '#/locales';
 
 import {
   DimensionBarChart,
@@ -20,85 +20,88 @@ import {
   MetricCardGroup,
   StatisticFilterBar,
 } from '../components';
+import StatisticError from '../components/StatisticError.vue';
+import { formatDuration } from '../components/statistics';
+import ATable from '../components/StatisticTable.vue';
 
 const loading = ref(false);
-const pageData = ref<PageAnalysisDto | null>(null);
+const failed = ref(false);
+let requestId = 0;
+const pageData = ref<null | PageAnalysisDto>(null);
 
 const query = ref<AppStatisticQueryInput>({
-  appId: 'default',
+  appId: undefined,
   startDate: dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
   endDate: dayjs().format('YYYY-MM-DD'),
 });
 
-function formatDuration(seconds: number): string {
-  if (!seconds || seconds <= 0) return '0秒';
-  if (seconds < 60) return `${seconds}秒`;
-  const mins = Math.floor(seconds / 60);
-  const remSecs = seconds % 60;
-  return remSecs > 0 ? `${mins}分${remSecs}秒` : `${mins}分钟`;
-}
-
 async function loadData() {
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
     const res = await getPageAnalysisApi(query.value);
+    if (currentRequest !== requestId) return;
     pageData.value = res;
-  } catch (error) {
-    console.error('Failed to load page analysis data', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
 const tableColumns = [
   {
-    title: '页面标识 (PageKey)',
+    title: $t('appStatistic.text146'),
     dataIndex: 'pageKey',
     key: 'pageKey',
     ellipsis: true,
   },
   {
-    title: '页面名称',
+    title: $t('appStatistic.text147'),
     dataIndex: 'pageName',
     key: 'pageName',
-    customRender: ({ text, record }: any) => text || record.pageKey,
+    render: (text: string | undefined, record: PageStatisticDto) =>
+      text || record.pageKey,
   },
   {
-    title: '浏览量 (PV)',
+    title: $t('appStatistic.text148'),
     dataIndex: 'pageViewCount',
     key: 'pageViewCount',
     align: 'right' as const,
-    sorter: (a: any, b: any) => a.pageViewCount - b.pageViewCount,
-    customRender: ({ text }: { text: number }) => text?.toLocaleString() ?? 0,
+    sorter: (a: PageStatisticDto, b: PageStatisticDto) =>
+      a.pageViewCount - b.pageViewCount,
+    render: (text: number) => text?.toLocaleString() ?? 0,
   },
   {
-    title: '独立访客 (UV)',
+    title: $t('appStatistic.text141'),
     dataIndex: 'uniqueVisitorCount',
     key: 'uniqueVisitorCount',
     align: 'right' as const,
-    sorter: (a: any, b: any) => a.uniqueVisitorCount - b.uniqueVisitorCount,
-    customRender: ({ text }: { text: number }) => text?.toLocaleString() ?? 0,
+    sorter: (a: PageStatisticDto, b: PageStatisticDto) =>
+      a.uniqueVisitorCount - b.uniqueVisitorCount,
+    render: (text: number) => text?.toLocaleString() ?? 0,
   },
   {
-    title: '人均访问次数',
+    title: $t('appStatistic.text149'),
     dataIndex: 'avgVisitsPerUser',
     key: 'avgVisitsPerUser',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => Number(text ?? 0).toFixed(1),
+    render: (text: number) => Number(text ?? 0).toFixed(1),
   },
   {
-    title: '平均停留时长',
+    title: $t('appStatistic.text150'),
     dataIndex: 'avgDurationSeconds',
     key: 'avgDurationSeconds',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => formatDuration(text),
+    render: (text: number) => (text == null ? '-' : formatDuration(text)),
   },
   {
-    title: 'PV 占比',
+    title: $t('appStatistic.text151'),
     dataIndex: 'percentage',
     key: 'percentage',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => `${Number(text ?? 0).toFixed(1)}%`,
+    render: (text: number) => `${(Number(text ?? 0) * 100).toFixed(1)}%`,
   },
 ];
 
@@ -109,79 +112,88 @@ onMounted(() => {
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadData" />
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">页面分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          {{ $t('appStatistic.text007') }}
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
-          统计各个功能模块页面的访问深度、独立访客与平均停留时间
+          {{ $t('appStatistic.text184') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadData">
+        {{ $t('appStatistic.text011') }}
+      </AButton>
     </div>
 
-    <!-- Filter Bar -->
-    <StatisticFilterBar
-      v-model="query"
-      :loading="loading"
-      @change="loadData"
-      @reset="loadData"
+    <Alert
+      :message="$t('appStatistic.durationUnknown')"
+      type="info"
+      show-icon
     />
+    <!-- Filter Bar -->
+    <StatisticFilterBar v-model="query" :loading="loading" @change="loadData" />
 
     <!-- KPIs -->
-    <MetricCardGroup :cols="3">
-      <MetricCard
+    <div v-if="!failed" class="space-y-4">
+      <MetricCardGroup :cols="3">
+        <MetricCard
+          :loading="loading"
+          :value="pageData?.totalPageViewCount ?? 0"
+          :title="$t('appStatistic.text152')"
+          :tooltip="$t('appStatistic.text203')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="pageData?.totalUniqueVisitors ?? 0"
+          :title="$t('appStatistic.text153')"
+          :tooltip="$t('appStatistic.text204')"
+        />
+
+        <MetricCard
+          :loading="loading"
+          :value="pageData?.pages?.length ?? 0"
+          :title="$t('appStatistic.text154')"
+          :tooltip="$t('appStatistic.text205')"
+          :unit="$t('appStatistic.pagesUnit')"
+        />
+      </MetricCardGroup>
+
+      <!-- PV Ranking Bar Chart -->
+      <DimensionBarChart
+        :clickable="false"
+        :data="pageData?.pages ?? []"
+        :height="300"
         :loading="loading"
-        :value="pageData?.totalPageViewCount ?? 0"
-        title="页面浏览总量 (Total PV)"
-        tooltip="应用在指定周期内的所有页面浏览事件累计总量"
+        bar-color="#1677ff"
+        name-field="pageKey"
+        percentage-field="percentage"
+        :title="$t('appStatistic.text155')"
+        value-field="pageViewCount"
       />
 
-      <MetricCard
-        :loading="loading"
-        :value="pageData?.totalUniqueVisitors ?? 0"
-        title="独立访客总量 (Total UV)"
-        tooltip="访问页面的独立用户去重总数"
-      />
+      <!-- Detailed Table -->
+      <ACard :bordered="false" class="shadow-sm" size="small">
+        <template #title>
+          <div class="flex items-center justify-between py-1">
+            <span class="font-medium text-sm">{{
+              $t('appStatistic.text156')
+            }}</span>
+          </div>
+        </template>
 
-      <MetricCard
-        :loading="loading"
-        :value="pageData?.pages?.length ?? 0"
-        title="被访问页面数"
-        tooltip="在周期内有访问记录的不同 PageKey 数量"
-        unit="个"
-      />
-    </MetricCardGroup>
-
-    <!-- PV Ranking Bar Chart -->
-    <DimensionBarChart
-      :clickable="false"
-      :data="pageData?.pages ?? []"
-      :height="300"
-      :loading="loading"
-      bar-color="#1677ff"
-      name-field="pageKey"
-      percentage-field="percentage"
-      title="页面浏览量 (PV) 排行 Top 10"
-      value-field="pageViewCount"
-    />
-
-    <!-- Detailed Table -->
-    <ACard :bordered="false" class="shadow-sm" size="small">
-      <template #title>
-        <div class="flex items-center justify-between py-1">
-          <span class="font-medium text-sm">页面访问明细报表</span>
-        </div>
-      </template>
-
-      <ATable
-        :columns="tableColumns"
-        :data-source="pageData?.pages ?? []"
-        :loading="loading"
-        :pagination="{ pageSize: 20, showSizeChanger: true }"
-        row-key="pageKey"
-        size="small"
-      />
-    </ACard>
+        <ATable
+          :columns="tableColumns"
+          :data-source="pageData?.pages ?? []"
+          :loading="loading"
+          :pagination="{ pageSize: 20, showSizeChanger: true }"
+          row-key="pageKey"
+          size="small"
+        />
+      </ACard>
+    </div>
   </div>
 </template>

@@ -37,10 +37,21 @@ const newSummary = ref('');
 const newContent = ref('');
 const newChangeLog = ref('');
 
+// 预览正文弹窗状态
+const previewVisible = ref(false);
+const previewTitle = ref('');
+const previewHtml = ref('');
+
 const columns = [
   { dataIndex: 'version', title: '版本号', width: 90 },
   { dataIndex: 'title', title: '版本标题', ellipsis: true },
-  { dataIndex: 'changeLog', title: '修改说明', ellipsis: true },
+  {
+    customRender: ({ record }: { record: ArticleRevisionDto }) =>
+      record.changeSummary || record.changeLog || '-',
+    dataIndex: 'changeSummary',
+    title: '修改说明',
+    ellipsis: true,
+  },
   {
     customRender: ({ text }: { text: string }) =>
       text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
@@ -68,11 +79,14 @@ async function loadRevisions() {
 }
 
 function onViewContent(record: ArticleRevisionDto) {
-  AntModal.info({
-    content: record.content,
-    title: `版本 V${record.version} 正文内容预览`,
-    width: 800,
-  });
+  previewTitle.value = `版本 V${record.version} 正文内容预览 - ${record.title || ''}`;
+  previewHtml.value =
+    record.contentHtml ||
+    record.content ||
+    record.contentText ||
+    record.contentJson ||
+    '';
+  previewVisible.value = true;
 }
 
 async function onSubmitNewRevision() {
@@ -182,5 +196,25 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
         </Form>
       </div>
     </Spin>
+
+    <!-- 正文内容预览弹窗 -->
+    <AntModal
+      v-model:open="previewVisible"
+      :title="previewTitle"
+      :width="800"
+      :footer="null"
+      destroy-on-close
+    >
+      <div class="max-h-[65vh] overflow-y-auto p-4 border rounded bg-background">
+        <div
+          v-if="previewHtml"
+          class="prose dark:prose-invert max-w-none text-sm leading-relaxed"
+          v-html="previewHtml"
+        ></div>
+        <div v-else class="text-center text-muted-foreground py-8">
+          该版本暂无正文内容
+        </div>
+      </div>
+    </AntModal>
   </Modal>
 </template>

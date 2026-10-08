@@ -173,15 +173,20 @@ export interface ArticleRevisionDto {
   version: number;
   title: string;
   subTitle?: string;
+  subtitle?: string;
   summary?: string;
   coverUrl?: string;
-  content: string;
+  content?: string;
+  contentHtml?: string;
+  contentText?: string;
+  contentJson?: string;
   markdownContent?: string;
-  sourceType: SourceType;
+  sourceType?: SourceType;
   sourceUrl?: string;
   sourceAuthor?: string;
   editorUserId?: string;
   changeLog?: string;
+  changeSummary?: string;
   creationTime: string;
 }
 
@@ -192,6 +197,7 @@ export interface AdminArticleDetailDto extends AdminArticleListItemDto {
   slug?: string;
   content?: string;
   markdownContent?: string;
+  password?: string;
   revisionCount: number;
   categories: CategoryDto[];
   mainCategoryId?: string;
@@ -369,6 +375,7 @@ export interface TagGetListInput extends PagedAndSortedResultRequestDto {
 
 // ==================== Assets ====================
 export interface AssetVariantDto {
+  url: string;
   id: string;
   assetId: string;
   variantType: string;
@@ -379,6 +386,8 @@ export interface AssetVariantDto {
 }
 
 export interface AssetDto {
+  url: string;
+  thumbnailUrl?: null | string;
   id: string;
   fileName: string;
   type: AssetType;

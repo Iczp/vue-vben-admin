@@ -1,20 +1,21 @@
-﻿<script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+<script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  ChannelAnalysisDto,
+} from '#/api/app-statistic/types';
+
+import { computed, onMounted, ref } from 'vue';
 
 import {
   Button as AButton,
   Card as ACard,
   Col as ACol,
   Row as ARow,
-  Table as ATable,
 } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getChannelAnalysisApi } from '#/api/app-statistic/channel';
-import type {
-  AppStatisticQueryInput,
-  ChannelAnalysisDto,
-} from '#/api/app-statistic/types';
+import { $t } from '#/locales';
 
 import {
   DimensionBarChart,
@@ -22,69 +23,109 @@ import {
   StatisticFilterBar,
   TrendChart,
 } from '../components';
+import StatisticError from '../components/StatisticError.vue';
+import ATable from '../components/StatisticTable.vue';
 
+const trendMetrics = computed(() =>
+  [
+    ...new Set(
+      [
+        ...(channelData.value?.activeTrends ?? []),
+        ...(channelData.value?.newTrends ?? []),
+      ].map((item) => item.metric),
+    ),
+  ]
+    .slice(0, 5)
+    .map((key) => ({ key, label: key })),
+);
 const loading = ref(false);
+const failed = ref(false);
+let requestId = 0;
 const channelData = ref<ChannelAnalysisDto | null>(null);
 
 const query = ref<AppStatisticQueryInput>({
-  appId: 'default',
+  appId: undefined,
   startDate: dayjs().subtract(13, 'day').format('YYYY-MM-DD'),
   endDate: dayjs().format('YYYY-MM-DD'),
 });
 
 async function loadData() {
+  const currentRequest = ++requestId;
   loading.value = true;
+  failed.value = false;
   try {
     const res = await getChannelAnalysisApi(query.value);
+    if (currentRequest !== requestId) return;
     channelData.value = res;
-  } catch (error) {
-    console.error('Failed to load channel analysis data', error);
+  } catch {
+    if (currentRequest === requestId) failed.value = true;
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 
-function handleChannelClick(item: any) {
+function handleChannelClick(item: { name: string }) {
   query.value.channel = item.name;
   loadData();
 }
 
 const tableColumns = [
   {
-    title: '渠道名称',
+    title: $t('appStatistic.channelNewDevices'),
+    dataIndex: 'newDevices',
+    key: 'newDevices',
+    align: 'right' as const,
+    render: (text: null | number) => text?.toLocaleString() ?? '—',
+  },
+  {
+    title: $t('appStatistic.channelNewUsers'),
+    dataIndex: 'newUsers',
+    key: 'newUsers',
+    align: 'right' as const,
+    render: (text: null | number) => text?.toLocaleString() ?? '—',
+  },
+  {
+    title: $t('appStatistic.channelLaunches'),
+    dataIndex: 'launchCount',
+    key: 'launchCount',
+    align: 'right' as const,
+    render: (text: null | number) => text?.toLocaleString() ?? '—',
+  },
+  {
+    title: $t('appStatistic.text068'),
     dataIndex: 'value',
     key: 'value',
   },
   {
-    title: '活跃设备数',
+    title: $t('appStatistic.text043'),
     dataIndex: 'activeDevices',
     key: 'activeDevices',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => text?.toLocaleString() ?? 0,
+    render: (text: number) => text?.toLocaleString() ?? 0,
   },
   {
-    title: '活跃用户数',
+    title: $t('appStatistic.text044'),
     dataIndex: 'activeUsers',
     key: 'activeUsers',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => text?.toLocaleString() ?? 0,
+    render: (text: number) => text?.toLocaleString() ?? 0,
   },
   {
-    title: '设备占比',
+    title: $t('appStatistic.text045'),
     dataIndex: 'percentage',
     key: 'percentage',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => `${Number(text ?? 0).toFixed(1)}%`,
+    render: (text: number) => `${(Number(text ?? 0) * 100).toFixed(1)}%`,
   },
   {
-    title: '事件总数',
+    title: $t('appStatistic.text069'),
     dataIndex: 'eventCount',
     key: 'eventCount',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => text?.toLocaleString() ?? 0,
+    render: (text: number) => text?.toLocaleString() ?? 0,
   },
   {
-    title: '操作',
+    title: $t('appStatistic.text071'),
     key: 'action',
     align: 'center' as const,
     width: 100,
@@ -98,15 +139,20 @@ onMounted(() => {
 
 <template>
   <div class="p-4 space-y-4">
+    <StatisticError v-if="failed" @retry="loadData" />
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">渠道分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          {{ $t('appStatistic.text002') }}
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
-          分析官方、各大应用商店及分发渠道的用户获客与活跃质量
+          {{ $t('appStatistic.text181') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadData">
+        {{ $t('appStatistic.text011') }}
+      </AButton>
     </div>
 
     <!-- Filter Bar -->
@@ -114,7 +160,6 @@ onMounted(() => {
       v-model="query"
       :loading="loading"
       @change="loadData"
-      @reset="loadData"
     />
 
     <!-- Charts Row: Channel Share & Bar Ranking -->
@@ -125,7 +170,7 @@ onMounted(() => {
           :loading="loading"
           clickable
           name-field="value"
-          title="渠道设备占比"
+          :title="$t('appStatistic.text072')"
           value-field="activeDevices"
           @item-click="handleChannelClick"
         />
@@ -138,7 +183,7 @@ onMounted(() => {
           bar-color="#722ed1"
           clickable
           name-field="value"
-          title="渠道活跃排行"
+          :title="$t('appStatistic.text073')"
           value-field="activeDevices"
           @item-click="handleChannelClick"
         />
@@ -149,19 +194,21 @@ onMounted(() => {
     <ARow :gutter="16">
       <ACol :lg="12" :md="24" :sm="24" :xs="24">
         <TrendChart
+          :metrics="trendMetrics"
           :data="channelData?.newTrends ?? []"
           :loading="loading"
           chart-type="line"
-          title="渠道新增趋势"
+          :title="$t('appStatistic.text074')"
         />
       </ACol>
 
       <ACol :lg="12" :md="24" :sm="24" :xs="24">
         <TrendChart
+          :metrics="trendMetrics"
           :data="channelData?.activeTrends ?? []"
           :loading="loading"
           chart-type="line"
-          title="渠道活跃趋势"
+          :title="$t('appStatistic.text075')"
         />
       </ACol>
     </ARow>
@@ -170,7 +217,9 @@ onMounted(() => {
     <ACard :bordered="false" class="shadow-sm" size="small">
       <template #title>
         <div class="flex items-center justify-between py-1">
-          <span class="font-medium text-sm">渠道明细报表</span>
+          <span class="font-medium text-sm">{{
+            $t('appStatistic.text076')
+          }}</span>
         </div>
       </template>
 
@@ -189,7 +238,7 @@ onMounted(() => {
               type="link"
               @click="handleChannelClick({ name: record.value })"
             >
-              锁定渠道
+              {{ $t('appStatistic.text077') }}
             </AButton>
           </template>
         </template>

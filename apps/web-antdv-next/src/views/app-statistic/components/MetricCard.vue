@@ -1,4 +1,4 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import { computed } from 'vue';
 
 import {
@@ -6,6 +6,8 @@ import {
   Skeleton as ASkeleton,
   Tooltip as ATooltip,
 } from 'antdv-next';
+
+import { $t } from '#/locales';
 
 interface Props {
   title: string;
@@ -48,24 +50,42 @@ const formattedPrevValue = computed(() => {
   return props.previousValue;
 });
 
-const isPositive = computed(() => (props.changeRate ?? 0) > 0);
-const isNegative = computed(() => (props.changeRate ?? 0) < 0);
+const effectiveChangeRate = computed(() => {
+  if (props.changeRate !== undefined) return props.changeRate;
+  if (
+    typeof props.value !== 'number' ||
+    typeof props.previousValue !== 'number' ||
+    props.previousValue === 0
+  )
+    return undefined;
+  return ((props.value - props.previousValue) / props.previousValue) * 100;
+});
+const isPositive = computed(() => (effectiveChangeRate.value ?? 0) > 0);
+const isNegative = computed(() => (effectiveChangeRate.value ?? 0) < 0);
 const formattedChangeRate = computed(() => {
-  if (props.changeRate === undefined || props.changeRate === null) return null;
-  const abs = Math.abs(props.changeRate).toFixed(1);
+  if (effectiveChangeRate.value === undefined) return null;
+  const abs = Math.abs(effectiveChangeRate.value).toFixed(1);
   return `${abs}%`;
 });
 </script>
 
 <template>
-  <ACard :bordered="false" class="h-full shadow-sm hover:shadow-md transition-shadow" size="small">
+  <ACard
+    :bordered="false"
+    class="h-full shadow-sm hover:shadow-md transition-shadow"
+    size="small"
+  >
     <ASkeleton :loading="loading" :paragraph="{ rows: 2 }" active>
       <div class="flex flex-col justify-between">
         <!-- Title & Tooltip -->
-        <div class="flex items-center justify-between text-muted-foreground text-xs">
+        <div
+          class="flex items-center justify-between text-muted-foreground text-xs"
+        >
           <span class="font-medium truncate">{{ title }}</span>
           <ATooltip v-if="tooltip" :title="tooltip">
-            <span class="cursor-pointer text-muted-foreground hover:text-foreground">ⓘ</span>
+            <span
+              class="cursor-pointer text-muted-foreground hover:text-foreground"
+              >ⓘ</span>
           </ATooltip>
         </div>
 
@@ -75,12 +95,19 @@ const formattedChangeRate = computed(() => {
           <span class="text-2xl font-bold tracking-tight text-foreground">
             {{ formattedValue }}
           </span>
-          <span v-if="unit" class="text-xs text-muted-foreground ml-1">{{ unit }}</span>
+          <span v-if="unit" class="text-xs text-muted-foreground ml-1">{{
+            unit
+          }}</span>
         </div>
 
         <!-- Change Rate & Previous Value -->
-        <div class="flex items-center justify-between text-xs pt-1 border-t border-border/40">
-          <div v-if="formattedChangeRate !== null" class="flex items-center space-x-1 font-medium">
+        <div
+          class="flex items-center justify-between text-xs pt-1 border-t border-border/40"
+        >
+          <div
+            v-if="formattedChangeRate !== null"
+            class="flex items-center space-x-1 font-medium"
+          >
             <span
               v-if="isPositive"
               class="text-emerald-600 dark:text-emerald-400 flex items-center"
@@ -96,13 +123,18 @@ const formattedChangeRate = computed(() => {
               <span>{{ formattedChangeRate }}</span>
             </span>
             <span v-else class="text-muted-foreground">
-              <span>持平 0.0%</span>
+              <span>{{ $t('appStatistic.text037') }}</span>
             </span>
           </div>
           <div v-else class="text-muted-foreground text-[11px]">-</div>
 
-          <div v-if="formattedPrevValue !== null" class="text-muted-foreground text-[11px]">
-            <span>对比 {{ formattedPrevValue }}</span>
+          <div
+            v-if="formattedPrevValue !== null"
+            class="text-muted-foreground text-[11px]"
+          >
+            <span>{{
+              $t('appStatistic.compare', { value: formattedPrevValue })
+            }}</span>
           </div>
         </div>
       </div>
