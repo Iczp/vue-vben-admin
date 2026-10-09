@@ -36,6 +36,16 @@ const emit = defineEmits(['success']);
 const activeTab = ref('');
 const loading = ref(false);
 const permissionGroups = ref<PermissionGroupDto[]>([]);
+const duplicateGroupLabels = computed(() => {
+  const counts = new Map<string, number>();
+  for (const group of permissionGroups.value) {
+    const label = group.displayName || group.name;
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+  return new Set(
+    [...counts].filter(([, count]) => count > 1).map(([label]) => label),
+  );
+});
 const permissionStates = ref<Record<string, boolean>>({});
 const modalData = ref<null | PermissionModalData>(null);
 
@@ -44,6 +54,13 @@ const getTitle = computed(() => {
     modalData.value?.displayName || modalData.value?.providerKey || '';
   return `${$t('page.permission.modalTitle', '权限管理')} - ${name}`;
 });
+
+function getGroupLabel(group: PermissionGroupDto) {
+  const label = group.displayName || group.name;
+  return duplicateGroupLabels.value.has(label)
+    ? `${label} (${group.name})`
+    : label;
+}
 
 /**
  * 递归获取某权限的所有子权限名称
@@ -218,12 +235,12 @@ defineExpose({ modalApi });
           <Tabs.TabPane
             v-for="group in permissionGroups"
             :key="group.name"
-            :tab="group.displayName || group.name"
+            :tab="getGroupLabel(group)"
           >
             <div class="px-3">
               <div class="mb-3 flex items-center justify-between">
                 <span class="text-base font-semibold">
-                  {{ group.displayName || group.name }}
+                  {{ getGroupLabel(group) }}
                 </span>
                 <Checkbox
                   :checked="isGroupAllChecked(group)"
