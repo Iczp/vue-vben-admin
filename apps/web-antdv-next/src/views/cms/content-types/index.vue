@@ -1,17 +1,17 @@
-﻿<script lang="ts" setup>
-import { ref } from 'vue';
+<script lang="ts" setup>
+import { markRaw, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { createIconifyIcon } from '@vben/icons';
 import { Card, Col, Row, Switch, Tag } from 'antdv-next';
 
-const FileTextIcon = createIconifyIcon('lucide:file-text');
-const NewspaperIcon = createIconifyIcon('lucide:newspaper');
-const BellIcon = createIconifyIcon('lucide:bell');
-const ImageIcon = createIconifyIcon('lucide:image');
-const VideoIcon = createIconifyIcon('lucide:video');
-const BookOpenIcon = createIconifyIcon('lucide:book-open');
-const Share2Icon = createIconifyIcon('lucide:share-2');
+const FileTextIcon = markRaw(createIconifyIcon('lucide:file-text'));
+const NewspaperIcon = markRaw(createIconifyIcon('lucide:newspaper'));
+const BellIcon = markRaw(createIconifyIcon('lucide:bell'));
+const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
+const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
+const BookOpenIcon = markRaw(createIconifyIcon('lucide:book-open'));
+const Share2Icon = markRaw(createIconifyIcon('lucide:share-2'));
 
 interface ContentTypeItem {
   code: string;

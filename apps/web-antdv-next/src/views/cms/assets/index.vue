@@ -28,9 +28,13 @@ import { copyToClipboard } from '#/utils/clipboard';
 
 import MediaPreview from '../components/MediaPreview.vue';
 import { useColumns } from './data';
+import AssetReferenceModal from './modules/asset-reference-modal.vue';
+import AssetStatusModal from './modules/asset-status-modal.vue';
+import AssetThumbnailModal from './modules/asset-thumbnail-modal.vue';
+import AssetUploadModal from './modules/asset-upload-modal.vue';
+
 const previewAsset = ref<AssetDto>();
 const previewOpen = ref(false);
-import AssetUploadModal from './modules/asset-upload-modal.vue';
 
 const filters = reactive<{
   keyword: string;
@@ -47,8 +51,38 @@ const [UploadModal, uploadModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
+const [ThumbnailModal, thumbnailModalApi] = useVbenModal({
+  connectedComponent: AssetThumbnailModal,
+  destroyOnClose: true,
+});
+
+const [ReferenceModal, referenceModalApi] = useVbenModal({
+  connectedComponent: AssetReferenceModal,
+  destroyOnClose: true,
+});
+
+const [StatusModal, statusModalApi] = useVbenModal({
+  connectedComponent: AssetStatusModal,
+  destroyOnClose: true,
+});
+
 function onUpload() {
   uploadModalApi.open();
+}
+
+function onSetThumbnail(row: AssetDto) {
+  thumbnailModalApi.setData({ asset: row });
+  thumbnailModalApi.open();
+}
+
+function onOpenReferences(row: AssetDto) {
+  referenceModalApi.setData({ asset: row });
+  referenceModalApi.open();
+}
+
+function onEditStatus(row: AssetDto) {
+  statusModalApi.setData({ asset: row });
+  statusModalApi.open();
 }
 
 async function onCopyUrl(row: AssetDto) {
@@ -67,14 +101,23 @@ async function onCopyUrl(row: AssetDto) {
 
 function onDelete(row: AssetDto) {
   Modal.confirm({
-    content: `确定删除素材【${row.fileName}】吗？若文章中引用了该素材可能会造成外链失效。`,
+    content: `确定删除素材【${row.fileName}】吗？若已被引用，系统将阻止删除以防止页面出现损坏。`,
     okText: '确认删除',
     okType: 'danger',
     title: '删除素材确认',
     async onOk() {
-      await deleteAssetApi(row.id);
-      message.success('素材删除成功');
-      refreshGrid();
+      try {
+        await deleteAssetApi(row.id);
+        message.success('素材删除成功');
+        refreshGrid();
+      } catch (error: any) {
+        // 后端若因被引用拦截抛错，友好提示
+        const errorMsg =
+          error?.response?.data?.error?.message ||
+          error?.message ||
+          '删除失败，该素材可能正被文章或分类引用';
+        message.error(errorMsg);
+      }
     },
   });
 }
@@ -92,6 +135,18 @@ function onActionClick({ code, row }: { code: string; row: AssetDto }) {
     case 'preview': {
       previewAsset.value = row;
       previewOpen.value = true;
+      break;
+    }
+    case 'references': {
+      onOpenReferences(row);
+      break;
+    }
+    case 'set_thumbnail': {
+      onSetThumbnail(row);
+      break;
+    }
+    case 'edit_status': {
+      onEditStatus(row);
       break;
     }
   }
@@ -118,32 +173,53 @@ const [Grid, gridApi] = useVbenVxeGrid({
             status: filters.status,
             type: filters.type,
           });
-          return {
-            ...result,
-            items: result.items.map((asset) => ({
-              ...asset,
-              previewUrl:
-                asset.thumbnailUrl ||
-                (asset.type === AssetType.Image ? asset.url : ''),
-            })),
-          };
+            const now = Date.now();
+            return {
+              ...result,
+              items: result.items.map((asset) => {
+                const baseThumbnail = asset.thumbnailUrl;
+                const thumbWithT = baseThumbnail
+                  ? `${baseThumbnail}${baseThumbnail.includes('?') ? '&' : '?'}_t=${now}`
+                  : '';
+                return {
+                  ...asset,
+                  thumbnailUrl: thumbWithT || asset.thumbnailUrl,
+                  previewUrl:
+                    thumbWithT ||
+                    (asset.type === AssetType.Image ? asset.url : ''),
+                };
+              }),
+            };
+          },
         },
       },
+      round: true,
+      size: 'small',
+      toolbarConfig: {
+        custom: true,
+        export: false,
+        refresh: true,
+        zoom: true,
+      },
     },
-    round: true,
-    size: 'small',
-    toolbarConfig: {
-      custom: true,
-      export: false,
-      refresh: true,
-      zoom: true,
-    },
-  },
-});
+  });
 
-function refreshGrid() {
-  gridApi.query();
-}
+  function refreshGrid() {
+    gridApi.reload();
+  }
+
+  function onThumbnailUpdated(updated: AssetDto) {
+    if (previewAsset.value && previewAsset.value.id === updated.id) {
+      previewAsset.value = {
+        ...previewAsset.value,
+        ...updated,
+        thumbnailUrl: updated.thumbnailUrl
+          ? `${updated.thumbnailUrl}${updated.thumbnailUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`
+          : updated.thumbnailUrl,
+      };
+    }
+    refreshGrid();
+  }
 
 function onFilterChange() {
   gridApi.reload();
@@ -157,7 +233,7 @@ function onFilterChange() {
       <Card
         variant="borderless"
         class="shrink-0 shadow-sm"
-        :body-style="{ padding: '12px 16px' }"
+        :styles="{ body: { padding: '12px 16px' } }"
       >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-3">
@@ -217,8 +293,15 @@ function onFilterChange() {
       </div>
     </div>
 
-    <!-- 上传弹窗挂载 -->
+    <!-- 弹窗挂载 -->
     <UploadModal @success="refreshGrid" />
-    <MediaPreview v-model:open="previewOpen" :asset="previewAsset" />
+    <ThumbnailModal @success="onThumbnailUpdated" />
+    <ReferenceModal @go-disable="onEditStatus" />
+    <StatusModal @success="refreshGrid" />
+    <MediaPreview
+      v-model:open="previewOpen"
+      :asset="previewAsset"
+      @set-thumbnail="onSetThumbnail"
+    />
   </Page>
 </template>

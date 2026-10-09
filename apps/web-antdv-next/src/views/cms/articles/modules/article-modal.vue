@@ -11,11 +11,9 @@ import type {
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { createIconifyIcon } from '@vben/icons';
 import { VbenTiptap } from '@vben/plugins/tiptap';
 
 import {
-  Button,
   Col,
   DatePicker,
   Form,
@@ -44,9 +42,7 @@ import {
 } from '#/api/cms';
 import MediaSelector from '#/views/cms/components/MediaSelector.vue';
 
-const ImageIcon = createIconifyIcon('lucide:image');
 const emit = defineEmits(['success']);
-
 const activeTab = ref('basic');
 const loading = ref(false);
 const recordId = ref<null | string>(null);
@@ -59,6 +55,7 @@ const tagOptions = ref<{ label: string; value: string }[]>([]);
 
 // 表单字段
 const title = ref('');
+const contentType = ref('Article');
 const subTitle = ref('');
 const summary = ref('');
 const slug = ref('');
@@ -79,6 +76,16 @@ const allowComment = ref(true);
 const sorting = ref<number>(0);
 const password = ref('');
 
+const contentTypeSelectOptions = [
+  { label: '标准图文文章', value: 'Article' },
+  { label: '快讯要闻', value: 'News' },
+  { label: '通知公告', value: 'Notice' },
+  { label: '图集画廊', value: 'Gallery' },
+  { label: '视频内容', value: 'Video' },
+  { label: '百科词条', value: 'Wiki' },
+  { label: '外部转存', value: 'Wechat' },
+];
+
 const sourceTypeOptions = [
   { label: '原创手动编写', value: SourceType.Manual },
   { label: '批量导入', value: SourceType.Import },
@@ -94,6 +101,7 @@ function resetState() {
   recordId.value = null;
   activeTab.value = 'basic';
   title.value = '';
+  contentType.value = 'Article';
   subTitle.value = '';
   summary.value = '';
   slug.value = '';
@@ -136,14 +144,17 @@ async function loadOptions() {
 
 async function initData(id?: string) {
   resetState();
-  await loadOptions();
+  loading.value = true;
+  modalApi.setState({ loading: true });
 
-  if (id) {
-    recordId.value = id;
-    loading.value = true;
-    try {
+  try {
+    await loadOptions();
+
+    if (id) {
+      recordId.value = id;
       const detail: AdminArticleDetailDto = await getArticleApi(id);
       title.value = detail.title || '';
+      contentType.value = detail.contentType || 'Article';
       subTitle.value = detail.subTitle || '';
       summary.value = detail.summary || '';
       slug.value = detail.slug || '';
@@ -163,9 +174,13 @@ async function initData(id?: string) {
       allowComment.value = detail.allowComment ?? true;
       sorting.value = detail.sorting || 0;
       password.value = detail.password || '';
-    } finally {
-      loading.value = false;
     }
+  } catch (error) {
+    console.error('加载文章详情失败', error);
+    message.error('加载文章数据失败');
+  } finally {
+    loading.value = false;
+    modalApi.setState({ loading: false });
   }
 }
 
@@ -240,12 +255,14 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
     }
 
     try {
-      modalApi.lock();
+      modalApi.lock(true);
+      modalApi.setState({ confirmLoading: true });
       if (isEdit.value && recordId.value) {
         const updateInput: AdminArticleUpdateInput = {
           allowComment: allowComment.value,
           categoryIds: categoryIds.value,
           content: content.value,
+          contentType: contentType.value,
           coverUrl: toRelativeAssetUrl(coverUrl.value) || undefined,
           isRecommend: isRecommend.value,
           isTop: isTop.value,
@@ -273,6 +290,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
           allowComment: allowComment.value,
           categoryIds: categoryIds.value,
           content: content.value,
+          contentType: contentType.value,
           coverUrl: toRelativeAssetUrl(coverUrl.value) || undefined,
           isRecommend: isRecommend.value,
           isTop: isTop.value,
@@ -301,7 +319,8 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
     } catch (error) {
       console.error('保存文章失败', error);
     } finally {
-      modalApi.unlock();
+      modalApi.lock(false);
+      modalApi.setState({ confirmLoading: false });
     }
   },
   onOpenChange(isOpen) {
@@ -315,8 +334,9 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
 
 <template>
   <Modal :title="modalTitle" class="w-[960px] max-w-full">
-    <Spin :spinning="loading">
-      <Tabs v-model:activeKey="activeTab" class="px-2">
+    <Spin :spinning="loading" tip="正在加载文章数据，请稍候...">
+      <div class="min-h-[420px]">
+        <Tabs v-model:active-key="activeTab" class="px-2">
         <!-- Tab 1: 基本信息 -->
         <Tabs.TabPane key="basic" tab="基本信息">
           <Form layout="vertical" class="mt-2">
@@ -331,11 +351,11 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
 
             <Row :gutter="16">
               <Col :span="12">
-                <FormItem label="副标题">
-                  <Input
-                    v-model:value="subTitle"
-                    placeholder="可选，请输入副标题"
-                    :maxlength="256"
+                <FormItem label="内容模型/形态" required>
+                  <Select
+                    v-model:value="contentType"
+                    placeholder="请选择内容模型与形态"
+                    :options="contentTypeSelectOptions"
                   />
                 </FormItem>
               </Col>
@@ -349,6 +369,14 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
                 </FormItem>
               </Col>
             </Row>
+
+            <FormItem label="副标题">
+              <Input
+                v-model:value="subTitle"
+                placeholder="可选，请输入副标题"
+                :maxlength="256"
+              />
+            </FormItem>
 
             <FormItem label="封面图片">
               <MediaSelector
@@ -413,7 +441,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
               <template #label>
                 <div class="flex items-center justify-between w-full">
                   <span class="font-medium">文章正文 (Tiptap HTML 富文本)</span>
-                  <Button
+                  <!-- <Button
                     type="primary"
                     ghost
                     size="small"
@@ -423,7 +451,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
                       <ImageIcon class="size-4 mr-1 inline-block align-middle" />
                     </template>
                     从素材媒体库插入图片
-                  </Button>
+                  </Button> -->
                 </div>
               </template>
               <div class="border rounded-lg overflow-hidden">
@@ -556,6 +584,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
           </div>
         </Tabs.TabPane>
       </Tabs>
+      </div>
     </Spin>
   </Modal>
 </template>

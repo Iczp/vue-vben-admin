@@ -161,7 +161,7 @@ setupVbenVxeTable({
     // 2. 自定义单元格渲染器 (DevExpress 风格 Renderers)
     // ==========================================
 
-    // 图片渲染
+    // 图片渲染 (自适应居中显示全、不变形)
     vxeUI.renderer.add('CellImage', {
       renderTableDefault(renderOpts, params) {
         const { props } = renderOpts;
@@ -191,7 +191,35 @@ setupVbenVxeTable({
             '无图',
           );
         }
-        return h(Image, { src, ...props });
+        return h(
+          'div',
+          {
+            style: {
+              alignItems: 'center',
+              display: 'flex',
+              height: `${height}px`,
+              justifyContent: 'center',
+              margin: '0 auto',
+              overflow: 'hidden',
+              width: `${width}px`,
+            },
+          },
+          [
+            h(Image, {
+              ...props,
+              height: '100%',
+              preview: props?.preview ?? true,
+              src,
+              style: {
+                maxHeight: '100%',
+                maxWidth: '100%',
+                objectFit: 'contain',
+                ...props?.style,
+              },
+              width: '100%',
+            }),
+          ],
+        );
       },
     });
 
@@ -242,12 +270,25 @@ setupVbenVxeTable({
 
     // 链接/按钮渲染
     vxeUI.renderer.add('CellLink', {
-      renderTableDefault(renderOpts) {
-        const { props } = renderOpts;
+      renderTableDefault({ attrs, props }, { column, row }) {
+        const val = get(row, column.field);
+        const text =
+          props?.text !== undefined
+            ? isFunction(props.text)
+              ? props.text(row)
+              : props.text
+            : val;
+        const clickHandler = attrs?.onClick || props?.onClick;
         return h(
           Button,
-          { size: 'small', type: 'link' },
-          { default: () => props?.text },
+          {
+            size: 'small',
+            type: 'link',
+            style: { padding: 0, height: 'auto', ...props?.style },
+            ...props,
+            onClick: clickHandler ? () => clickHandler({ column, row, value: val }) : undefined,
+          },
+          { default: () => text },
         );
       },
     });
@@ -256,6 +297,22 @@ setupVbenVxeTable({
     vxeUI.renderer.add('CellTag', {
       renderTableDefault({ options, props }, { column, row }) {
         const value = get(row, column.field);
+        if (Array.isArray(value)) {
+          if (value.length === 0) return h('span', { class: 'text-muted-foreground' }, '-');
+          return h(
+            'div',
+            { class: 'flex flex-wrap gap-1 items-center' },
+            value.map((item: any) => {
+              const label = typeof item === 'object' && item !== null ? item.name || item.label : String(item);
+              const color = item?.color || 'blue';
+              return h(
+                Tag,
+                { color, style: { margin: 0, fontSize: '11px' } },
+                { default: () => label },
+              );
+            }),
+          );
+        }
         const tagOptions = options ?? [
           {
             color: 'success',

@@ -24,6 +24,7 @@ import { getStatisticApplicationsApi } from '#/api/app-statistic/applications';
 import type { StatisticApplicationDto } from '#/api/app-statistic/applications';
 import { $t } from '#/locales';
 
+import { getStoredAppId, setStoredAppId } from '../utils/app-storage';
 import StatisticDateRange from './StatisticDateRange.vue';
 
 interface Props {
@@ -59,6 +60,7 @@ const timeZone = computed(() => applications.value.find(app => app.appId === int
 function onAppChange(value: unknown) {
   if (typeof value !== 'string') return;
   internalQuery.value.appId = value;
+  setStoredAppId(value);
   const app = applications.value.find(item => item.appId === value);
   if (app && currentShortcut.value !== 'custom') {
     const span = Math.max(0, dayjs(internalQuery.value.endDate).diff(dayjs(internalQuery.value.startDate), 'day'));
@@ -70,19 +72,40 @@ function onAppChange(value: unknown) {
 onMounted(async () => {
   try {
     applications.value = await getStatisticApplicationsApi();
-    if (!route.query.appId && !props.modelValue.appId && applications.value[0]) onAppChange(applications.value[0].appId);
+    const storedAppId = getStoredAppId();
+    const validStoredApp = storedAppId && applications.value.some(app => app.appId === storedAppId) ? storedAppId : undefined;
+    const initialAppId =
+      (typeof route.query.appId === 'string' && route.query.appId !== 'default' ? route.query.appId : undefined) ||
+      (props.modelValue.appId && props.modelValue.appId !== 'default' ? props.modelValue.appId : undefined) ||
+      validStoredApp ||
+      (applications.value[0]?.appId);
+
+    if (initialAppId && initialAppId !== internalQuery.value.appId) {
+      onAppChange(initialAppId);
+    } else if (initialAppId) {
+      setStoredAppId(initialAppId);
+    }
   } catch { applicationsFailed.value = true; }
 });
 const invalidRange = ref(false);
 const currentShortcut = ref<string>('7d');
 
 // Local query state
+const initialStoredAppId = getStoredAppId();
 const internalQuery = ref<AppStatisticQueryInput>({
-  appId: props.modelValue.appId || undefined,
+  appId:
+    (typeof route.query.appId === 'string' && route.query.appId !== 'default' ? route.query.appId : undefined) ||
+    (props.modelValue.appId && props.modelValue.appId !== 'default' ? props.modelValue.appId : undefined) ||
+    initialStoredAppId ||
+    undefined,
   startDate:
+    (typeof route.query.startDate === 'string' ? route.query.startDate : undefined) ||
     props.modelValue.startDate ||
     dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
-  endDate: props.modelValue.endDate || dayjs().format('YYYY-MM-DD'),
+  endDate:
+    (typeof route.query.endDate === 'string' ? route.query.endDate : undefined) ||
+    props.modelValue.endDate ||
+    dayjs().format('YYYY-MM-DD'),
   platform: props.modelValue.platform || undefined,
   appVersion: props.modelValue.appVersion || undefined,
   channel: props.modelValue.channel || undefined,
@@ -181,8 +204,13 @@ function syncToUrl(query: AppStatisticQueryInput) {
 
   if (query.manufacturer) nextQuery.manufacturer = query.manufacturer;
   else delete nextQuery.manufacturer;
-  if (JSON.stringify(route.query) !== JSON.stringify(nextQuery))
+
+  const currentParams = new URLSearchParams(route.query as Record<string, string>).toString();
+  const nextParams = new URLSearchParams(nextQuery as Record<string, string>).toString();
+
+  if (currentParams !== nextParams) {
     router.replace({ query: nextQuery });
+  }
 }
 
 function handleDateRangeChange(start: string, end: string) {
@@ -204,7 +232,7 @@ function handleSearch() {
   if (invalidRange.value) return;
   const payload: AppStatisticQueryInput = {
     manufacturer: internalQuery.value.manufacturer,
-    appId: internalQuery.value.appId?.trim() || 'default',
+    appId: internalQuery.value.appId?.trim() || undefined,
     startDate: internalQuery.value.startDate,
     endDate: internalQuery.value.endDate,
     platform: props.showPlatform
@@ -243,7 +271,7 @@ watch(
   (val) => {
     if (val) {
       internalQuery.value = {
-        appId: val.appId || 'default',
+        appId: val.appId || internalQuery.value.appId || getStoredAppId(),
         startDate: val.startDate,
         endDate: val.endDate,
         platform: val.platform,
@@ -251,7 +279,7 @@ watch(
         channel: val.channel,
         manufacturer: val.manufacturer,
       };
-      syncToUrl(val);
+      syncToUrl(internalQuery.value);
     }
   },
   { deep: true },
@@ -261,34 +289,55 @@ function readUrl() {
   const q = route.query;
   let changed = false;
 
-  if (q.appId && typeof q.appId === 'string') {
-    internalQuery.value.appId = q.appId;
-    changed = true;
+  if (q.appId && typeof q.appId === 'string' && q.appId !== 'default') {
+    if (internalQuery.value.appId !== q.appId) {
+      internalQuery.value.appId = q.appId;
+      setStoredAppId(q.appId);
+      changed = true;
+    }
+  } else if (!internalQuery.value.appId) {
+    const stored = getStoredAppId();
+    if (stored) {
+      internalQuery.value.appId = stored;
+      changed = true;
+    }
   }
   if (q.startDate && typeof q.startDate === 'string') {
-    internalQuery.value.startDate = q.startDate;
-    changed = true;
+    if (internalQuery.value.startDate !== q.startDate) {
+      internalQuery.value.startDate = q.startDate;
+      changed = true;
+    }
   }
   if (q.endDate && typeof q.endDate === 'string') {
-    internalQuery.value.endDate = q.endDate;
-    changed = true;
+    if (internalQuery.value.endDate !== q.endDate) {
+      internalQuery.value.endDate = q.endDate;
+      changed = true;
+    }
   }
   if (props.showPlatform && q.platform && typeof q.platform === 'string') {
-    internalQuery.value.platform = q.platform;
-    changed = true;
+    if (internalQuery.value.platform !== q.platform) {
+      internalQuery.value.platform = q.platform;
+      changed = true;
+    }
   }
   if (props.showVersion && q.appVersion && typeof q.appVersion === 'string') {
-    internalQuery.value.appVersion = q.appVersion;
-    changed = true;
+    if (internalQuery.value.appVersion !== q.appVersion) {
+      internalQuery.value.appVersion = q.appVersion;
+      changed = true;
+    }
   }
   if (props.showChannel && q.channel && typeof q.channel === 'string') {
-    internalQuery.value.channel = q.channel;
-    changed = true;
+    if (internalQuery.value.channel !== q.channel) {
+      internalQuery.value.channel = q.channel;
+      changed = true;
+    }
   }
 
   if (typeof q.manufacturer === 'string') {
-    internalQuery.value.manufacturer = q.manufacturer;
-    changed = true;
+    if (internalQuery.value.manufacturer !== q.manufacturer) {
+      internalQuery.value.manufacturer = q.manufacturer;
+      changed = true;
+    }
   }
   if (changed) {
     currentShortcut.value = 'custom';
@@ -299,52 +348,7 @@ readUrl();
 watch(
   () => route.query,
   () => {
-    const next = { ...props.modelValue };
-    for (const key of [
-      'appId',
-      'platform',
-      'appVersion',
-      'channel',
-      'manufacturer',
-    ] as const) {
-      const value = route.query[key];
-      next[key] =
-        typeof value === 'string'
-          ? value
-          : key === 'appId'
-            ? 'default'
-            : undefined;
-    }
-    for (const key of ['startDate', 'endDate'] as const) {
-      const value = route.query[key];
-      if (
-        typeof value === 'string' &&
-        /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-        dayjs(value).isValid()
-      )
-        next[key] = value;
-    }
-    if (!props.showPlatform) next.platform = undefined;
-    if (!props.showVersion) next.appVersion = undefined;
-    if (!props.showChannel) next.channel = undefined;
-    if (
-      [
-        'appId',
-        'startDate',
-        'endDate',
-        'platform',
-        'appVersion',
-        'channel',
-        'manufacturer',
-      ].some(
-        (key) =>
-          next[key as keyof AppStatisticQueryInput] !==
-          props.modelValue[key as keyof AppStatisticQueryInput],
-      )
-    ) {
-      emit('update:modelValue', next);
-      emit('change', next);
-    }
+    readUrl();
   },
 );
 </script>

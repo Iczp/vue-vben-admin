@@ -41,6 +41,26 @@ export function useColumns(
       width: 90,
     },
     {
+      align: 'center',
+      cellRender: {
+        attrs: {
+          onClick: ({ row }: any) => {
+            onActionClick({ code: 'view_articles', row });
+          },
+        },
+        name: 'CellLink',
+        props: {
+          text: (row: any) => {
+            const count = Number(row?.articleCount ?? 0);
+            return count > 0 ? `${count} 篇` : '0 篇';
+          },
+        },
+      },
+      field: 'articleCount',
+      title: '关联文章数',
+      width: 110,
+    },
+    {
       field: 'description',
       formatter: 'formatEmpty',
       minWidth: 200,
@@ -62,6 +82,7 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
+          { code: 'view_articles', text: '关联文章' },
           { code: 'edit', text: '编辑' },
           {
             code: 'delete',
@@ -73,7 +94,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 140,
+      width: 200,
     },
   ];
 }

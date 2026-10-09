@@ -37,16 +37,17 @@ export function useColumns(
       width: 55,
     },
     {
+      align: 'center',
       cellRender: {
         name: 'CellImage',
         props: {
-          height: 40,
-          width: 50,
+          height: 42,
+          width: 64,
         },
       },
       field: 'previewUrl',
       title: '缩略图',
-      width: 75,
+      width: 85,
     },
     {
       align: 'left',
@@ -72,6 +73,26 @@ export function useColumns(
       field: 'status',
       title: '状态',
       width: 90,
+    },
+    {
+      align: 'center',
+      cellRender: {
+        attrs: {
+          onClick: ({ row }: any) => {
+            onActionClick({ code: 'references', row });
+          },
+        },
+        name: 'CellLink',
+        props: {
+          text: (row: any) => {
+            const count = Number(row?.referenceCount ?? 0);
+            return count > 0 ? `${count} 次` : '0 次';
+          },
+        },
+      },
+      field: 'referenceCount',
+      title: '引用次数',
+      width: 100,
     },
     {
       field: 'fileSize',
@@ -124,6 +145,16 @@ export function useColumns(
         name: 'CellOperation',
         options: [
           { code: 'preview', text: '预览详情' },
+          { code: 'references', text: '引用关系' },
+          {
+            code: 'set_thumbnail',
+            show: (rowOrParams: any) => {
+              const row = rowOrParams?.row ?? rowOrParams;
+              return row?.type === AssetType.Video;
+            },
+            text: '设置封面',
+          },
+          { code: 'edit_status', text: '修改状态' },
           { code: 'copy_url', text: '复制链接' },
           {
             code: 'delete',
@@ -135,7 +166,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 220,
+      width: 290,
     },
   ];
 }

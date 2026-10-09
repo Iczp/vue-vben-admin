@@ -296,6 +296,7 @@ export function createToolbarGroups(
                             imageUpload.onOpenMediaLibrary?.(editor);
                           },
                           label: $t('ui.tiptap.toolbar.imageLibrary'),
+                          shortLabel: 'LIB',
                         },
                       ]
                     : []),

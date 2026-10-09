@@ -17,15 +17,19 @@ import {
 import { SelectOption as ASelectOption } from 'antdv-next';
 import dayjs from 'dayjs';
 
+import { getStatisticApplicationsApi, type StatisticApplicationDto } from '#/api/app-statistic/applications';
 import { getDevicesApi } from '#/api/app-statistic/device';
 import { $t } from '#/locales';
 
 import StatisticError from '../components/StatisticError.vue';
 import ATable from '../components/StatisticTable.vue';
+import { getStoredAppId, setStoredAppId } from '../utils/app-storage';
 
 const router = useRouter();
 const route = useRoute();
 
+const applications = ref<StatisticApplicationDto[]>([]);
+const appOptions = ref<{ label: string; value: string }[]>([]);
 const loading = ref(false);
 const failed = ref(false);
 let requestId = 0;
@@ -33,7 +37,7 @@ const deviceList = ref<DeviceDto[]>([]);
 const totalCount = ref(0);
 
 const searchInput = ref<GetDevicesInput>({
-  appId: undefined,
+  appId: (route.query.appId as string) || getStoredAppId() || undefined,
   deviceKey: undefined,
   platform: undefined,
   appVersion: undefined,
@@ -227,13 +231,30 @@ const tableColumns = [
   },
 ];
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    applications.value = await getStatisticApplicationsApi();
+    appOptions.value = applications.value.map(app => ({ label: app.name, value: app.appId }));
+  } catch {
+    // ignore
+  }
+
   for (const key of searchFields) {
     const value = route.query[key];
     if (typeof value === 'string') searchInput.value[key] = value;
   }
   const q = route.query;
-  if (q.appId && typeof q.appId === 'string') searchInput.value.appId = q.appId;
+  const storedAppId = getStoredAppId();
+  if (q.appId && typeof q.appId === 'string' && q.appId !== 'default') {
+    searchInput.value.appId = q.appId;
+    setStoredAppId(q.appId);
+  } else if (!searchInput.value.appId && storedAppId) {
+    searchInput.value.appId = storedAppId;
+  } else if (!searchInput.value.appId && applications.value[0]?.appId) {
+    searchInput.value.appId = applications.value[0].appId;
+    setStoredAppId(applications.value[0].appId);
+  }
+
   if (q.platform && typeof q.platform === 'string')
     searchInput.value.platform = q.platform;
   if (q.appVersion && typeof q.appVersion === 'string')
@@ -277,11 +298,25 @@ onMounted(() => {
     <ACard :bordered="false" class="shadow-sm" size="small">
       <ARow :gutter="[12, 10]" align="middle">
         <ACol :lg="4" :md="6" :sm="12" :xs="24">
+          <ASelect
+            v-if="applications.length"
+            v-model:value="searchInput.appId"
+            :options="appOptions"
+            allow-clear
+            show-search
+            option-filter-prop="label"
+            placeholder="App"
+            size="small"
+            class="w-full"
+            @change="(val: unknown) => { if (typeof val === 'string') setStoredAppId(val); handleSearch(); }"
+          />
           <AInput
+            v-else
             v-model:value="searchInput.appId"
             allow-clear
             placeholder="AppId"
             size="small"
+            @press-enter="handleSearch"
           />
         </ACol>
 

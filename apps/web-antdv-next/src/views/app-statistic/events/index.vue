@@ -21,22 +21,26 @@ import { SelectOption as ASelectOption } from 'antdv-next';
 import { DescriptionsItem as ADescriptionsItem } from 'antdv-next';
 import dayjs, { type Dayjs } from 'dayjs';
 
+import { getStatisticApplicationsApi, type StatisticApplicationDto } from '#/api/app-statistic/applications';
 import { getEventsApi } from '#/api/app-statistic/event';
 import { $t } from '#/locales';
 
 import StatisticError from '../components/StatisticError.vue';
 import ATable from '../components/StatisticTable.vue';
+import { getStoredAppId, setStoredAppId } from '../utils/app-storage';
 
 const router = useRouter();
 const route = useRoute();
 const loading = ref(false);
 const failed = ref(false);
 let requestId = 0;
+const applications = ref<StatisticApplicationDto[]>([]);
+const appOptions = ref<{ label: string; value: string }[]>([]);
 const eventList = ref<EventDto[]>([]);
 const totalCount = ref(0);
 
 const searchInput = ref<GetEventsInput>({
-  appId: undefined,
+  appId: (route.query.appId as string) || getStoredAppId() || undefined,
   eventName: undefined,
   userId: undefined,
   deviceId: undefined,
@@ -238,11 +242,30 @@ const tableColumns = [
   },
 ];
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    applications.value = await getStatisticApplicationsApi();
+    appOptions.value = applications.value.map(app => ({ label: app.name, value: app.appId }));
+  } catch {
+    // ignore
+  }
+
   for (const key of searchFields) {
     const value = route.query[key];
     if (typeof value === 'string') searchInput.value[key] = value;
   }
+  const q = route.query;
+  const storedAppId = getStoredAppId();
+  if (q.appId && typeof q.appId === 'string' && q.appId !== 'default') {
+    searchInput.value.appId = q.appId;
+    setStoredAppId(q.appId);
+  } else if (!searchInput.value.appId && storedAppId) {
+    searchInput.value.appId = storedAppId;
+  } else if (!searchInput.value.appId && applications.value[0]?.appId) {
+    searchInput.value.appId = applications.value[0].appId;
+    setStoredAppId(applications.value[0].appId);
+  }
+
   const start = route.query.startTime;
   const end = route.query.endTime;
   if (
@@ -279,11 +302,25 @@ const ARangePicker = DatePicker.RangePicker;
     <ACard :bordered="false" class="shadow-sm" size="small">
       <ARow :gutter="[12, 10]" align="middle">
         <ACol :lg="4" :md="6" :sm="12" :xs="24">
+          <ASelect
+            v-if="applications.length"
+            v-model:value="searchInput.appId"
+            :options="appOptions"
+            allow-clear
+            show-search
+            option-filter-prop="label"
+            placeholder="App"
+            size="small"
+            class="w-full"
+            @change="(val: unknown) => { if (typeof val === 'string') setStoredAppId(val); handleSearch(); }"
+          />
           <AInput
+            v-else
             v-model:value="searchInput.appId"
             allow-clear
             placeholder="AppId"
             size="small"
+            @press-enter="handleSearch"
           />
         </ACol>
 

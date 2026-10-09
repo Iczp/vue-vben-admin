@@ -1,7 +1,8 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import type { CategoryDto } from '#/api/cms';
 
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { Plus, RotateCw } from '@vben/icons';
@@ -13,6 +14,8 @@ import { deleteCategoryApi, getCategoriesApi } from '#/api/cms';
 
 import { useColumns } from './data';
 import CategoryModal from './modules/category-modal.vue';
+
+const router = useRouter();
 
 const filters = reactive<{
   activeFilter?: number;
@@ -53,6 +56,16 @@ function onDelete(row: CategoryDto) {
   });
 }
 
+function onGoArticles(row: CategoryDto) {
+  void router.push({
+    path: '/cms/articles',
+    query: {
+      categoryId: row.id,
+      categoryName: row.name,
+    },
+  });
+}
+
 function onActionClick({
   code,
   row,
@@ -71,6 +84,10 @@ function onActionClick({
     }
     case 'edit': {
       onEdit(row);
+      break;
+    }
+    case 'view_articles': {
+      onGoArticles(row);
       break;
     }
   }

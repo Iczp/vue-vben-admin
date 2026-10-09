@@ -81,6 +81,7 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
+          { code: 'preview', text: '效果预览' },
           { code: 'edit', text: '编辑' },
           {
             code: 'delete',
@@ -92,7 +93,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 140,
+      width: 170,
     },
   ];
 }

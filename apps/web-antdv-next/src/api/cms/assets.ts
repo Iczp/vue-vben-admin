@@ -70,10 +70,10 @@ export async function createAssetApi(data: AssetCreateDto) {
 /**
  * 上传文件素材 (Multipart Form)
  */
-export async function uploadAssetApi(file: File) {
+export async function uploadAssetApi(file: File, customThumbnail?: File) {
   const formData = new FormData();
   formData.append('streamContent', file);
-  const metadata = await readMediaUploadMetadata(file);
+  const metadata = await readMediaUploadMetadata(file, customThumbnail);
   for (const key of [
     'width',
     'height',
@@ -99,3 +99,54 @@ export async function uploadAssetApi(file: File) {
 export async function deleteAssetApi(id: string) {
   return requestClient.delete<void>(`/cms/admin/assets/${id}`);
 }
+
+/**
+ * 设置/更新素材缩略图 (封面)
+ */
+export async function setAssetThumbnailApi(
+  id: string,
+  thumbnail: File,
+  width?: number,
+  height?: number,
+) {
+  const formData = new FormData();
+  formData.append('thumbnail', thumbnail);
+  const params: Record<string, any> = {};
+  if (width != null) params.width = width;
+  if (height != null) params.height = height;
+
+  return withAssetUrls(
+    await requestClient.post<AssetDto>(
+      `/cms/admin/assets/${id}/thumbnail`,
+      formData,
+      {
+        params,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    ),
+  );
+}
+
+/**
+ * 获取素材被引用列表
+ */
+export async function getAssetReferencesApi(id: string) {
+  return requestClient.get<import('./types').AssetReferenceDto[]>(
+    `/cms/admin/assets/${id}/references`,
+  );
+}
+
+/**
+ * 更新素材状态（正常/处理中/失败/已禁用）
+ */
+export async function updateAssetStatusApi(
+  id: string,
+  data: import('./types').AssetStatusUpdateDto,
+) {
+  return withAssetUrls(
+    await requestClient.put<AssetDto>(`/cms/admin/assets/${id}/status`, data),
+  );
+}
+

@@ -1,21 +1,32 @@
 <script lang="ts" setup>
 import type { AssetDto } from '#/api/cms';
 
-import { computed, ref, watch } from 'vue';
+import { computed, markRaw, ref, watch } from 'vue';
+
+import { createIconifyIcon } from '@vben/icons';
 
 import {
   Button,
+  Divider,
   Empty,
   Input,
   InputSearch,
   message,
   Modal,
   Pagination,
+  RadioButton,
+  RadioGroup,
   Select,
+  Slider,
   Spin,
   Tabs,
+  Tag,
+  Upload,
   UploadDragger,
 } from 'antdv-next';
+
+const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
+const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
 
 import {
   AssetStatus,
@@ -25,6 +36,10 @@ import {
   toRelativeAssetUrl,
   uploadAssetApi,
 } from '#/api/cms';
+import {
+  createThumbnailFromFile,
+  extractVideoFrame,
+} from '#/api/cms/media-metadata';
 
 import {
   formatMediaDuration,
@@ -244,15 +259,110 @@ function beforeUpload(file: File) {
   }
   return true;
 }
+const stagedFile = ref<File | null>(null);
+const isStagedVideo = ref(false);
+const stagedVideoDuration = ref(0);
+const stagedCoverMode = ref<'auto' | 'custom'>('auto');
+const stagedCaptureTime = ref(0.1);
+const stagedThumbnailFile = ref<File | null>(null);
+const stagedThumbnailUrl = ref('');
+const extractingVideo = ref(false);
+
+function resetStaged() {
+  stagedFile.value = null;
+  isStagedVideo.value = false;
+  stagedVideoDuration.value = 0;
+  stagedCoverMode.value = 'auto';
+  stagedCaptureTime.value = 0.1;
+  stagedThumbnailFile.value = null;
+  stagedThumbnailUrl.value = '';
+}
+
+async function extractStagedVideoFrame(timeSec: number) {
+  if (!stagedFile.value || !isStagedVideo.value) return;
+  extractingVideo.value = true;
+  try {
+    const res = await extractVideoFrame(stagedFile.value, timeSec);
+    stagedVideoDuration.value = res.duration;
+    stagedThumbnailFile.value = res.file;
+    stagedThumbnailUrl.value = res.dataUrl;
+  } catch (error) {
+    console.error('视频帧提取失败', error);
+  } finally {
+    extractingVideo.value = false;
+  }
+}
+
+function onStagedSliderChange(value: number) {
+  stagedCaptureTime.value = value;
+  void extractStagedVideoFrame(value);
+}
+
+async function onStagedCustomCoverSelected(file: File) {
+  if (!file.type.startsWith('image/')) {
+    message.error('封面必须为图片格式');
+    return false;
+  }
+  extractingVideo.value = true;
+  try {
+    const thumb = await createThumbnailFromFile(file);
+    stagedThumbnailFile.value = thumb.file;
+    stagedThumbnailUrl.value = URL.createObjectURL(thumb.file);
+    message.success('已应用自定义封面图片');
+  } catch (e) {
+    message.error('封面图片生成失败');
+  } finally {
+    extractingVideo.value = false;
+  }
+  return false;
+}
+
+async function submitStagedUpload() {
+  if (!stagedFile.value) return;
+  uploading.value = true;
+  try {
+    const asset = await uploadAssetApi(
+      stagedFile.value,
+      stagedThumbnailFile.value || undefined,
+    );
+    message.success('文件上传成功，已加入选择');
+    handleSelectAsset(asset);
+    resetStaged();
+    activeTab.value = 'library';
+    page.value = 1;
+    void loadAssets();
+  } catch (error) {
+    message.error('文件上传失败');
+  } finally {
+    uploading.value = false;
+  }
+}
+
 async function handleCustomUpload(options: {
   file: Blob | File | string;
   onError?: (error: Error) => void;
   onSuccess?: (result: AssetDto) => void;
 }) {
   if (!(options.file instanceof File) || uploading.value) return;
+  const file = options.file;
+  const isVid =
+    file.type.startsWith('video/') ||
+    /\.(mp4|mov|avi|mkv|webm|m4v)$/i.test(file.name);
+
+  if (isVid) {
+    // 视频文件进入专门的封面定制与帧提取界面
+    stagedFile.value = file;
+    isStagedVideo.value = true;
+    stagedCoverMode.value = 'auto';
+    stagedCaptureTime.value = 0.1;
+    await extractStagedVideoFrame(0.1);
+    return;
+  }
+
+  // 非视频常规文件直接上传
   uploading.value = true;
   try {
-    const asset = await uploadAssetApi(options.file);
+    const asset = await uploadAssetApi(file);
     options.onSuccess?.(asset);
     message.success('文件上传成功，已加入选择');
     handleSelectAsset(asset);
@@ -486,19 +596,158 @@ defineExpose({
         </Tabs.TabPane>
         <Tabs.TabPane key="upload" tab="上传素材">
           <Spin :spinning="uploading">
-            <UploadDragger
-              :disabled="uploading || disabled"
-              :multiple="false"
-              :accept="accept"
-              :before-upload="beforeUpload"
-              :custom-request="handleCustomUpload"
-              :show-upload-list="false"
-            >
-              <p class="p-8">点击或拖拽文件上传</p>
-              <p class="pb-4 text-xs text-muted-foreground">
-                上传后加入待选列表，点击确定保存选择。视频封面和媒体信息会在浏览器支持时自动读取。
-              </p>
-            </UploadDragger>
+            <!-- 场景 1：未选择文件或非视频时的常规拖拽区 -->
+            <div v-if="!stagedFile">
+              <UploadDragger
+                :disabled="uploading || disabled"
+                :multiple="false"
+                :accept="accept"
+                :before-upload="beforeUpload"
+                :custom-request="handleCustomUpload"
+                :show-upload-list="false"
+              >
+                <p class="p-8">点击或拖拽文件上传</p>
+                <p class="pb-4 text-xs text-muted-foreground">
+                  上传后加入待选列表，点击确定保存选择。上传视频文件将支持自定义封面设置与画面帧提取。
+                </p>
+              </UploadDragger>
+            </div>
+
+            <!-- 场景 2：已选定视频，进入封面设置与画面提取面板 -->
+            <div v-else class="space-y-4 p-2">
+              <div class="flex items-center justify-between p-3 border rounded bg-muted/20">
+                <div class="flex items-center gap-3 overflow-hidden">
+                  <div class="p-2 rounded bg-primary/10 text-primary shrink-0">
+                    <VideoIcon class="size-6" />
+                  </div>
+                  <div class="overflow-hidden">
+                    <div class="font-medium text-sm truncate" :title="stagedFile.name">
+                      {{ stagedFile.name }}
+                    </div>
+                    <div class="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                      <span>{{ (stagedFile.size / 1024 / 1024).toFixed(2) }} MB</span>
+                      <Tag color="blue">视频媒体</Tag>
+                    </div>
+                  </div>
+                </div>
+
+                <Button size="small" @click="resetStaged">重新选择</Button>
+              </div>
+
+              <!-- 视频专属：封面设置与提取区 -->
+              <div class="border rounded p-4 bg-background space-y-3">
+                <div class="flex items-center justify-between border-b pb-2">
+                  <span class="font-medium text-sm flex items-center gap-2">
+                    <span>视频封面设置</span>
+                    <span class="text-xs text-muted-foreground font-normal">
+                      (可自定义上传或从视频画面截取)
+                    </span>
+                  </span>
+
+                  <RadioGroup v-model:value="stagedCoverMode" size="small" button-style="solid">
+                    <RadioButton value="auto">从视频截取</RadioButton>
+                    <RadioButton value="custom">自定义上传</RadioButton>
+                  </RadioGroup>
+                </div>
+
+                <Spin :spinning="extractingVideo" tip="正在截取画面...">
+                  <div class="flex gap-4 items-start">
+                    <!-- 封面预览图（完整显示不剪裁） -->
+                    <div class="w-[180px] h-[110px] border rounded bg-black/90 overflow-hidden flex items-center justify-center shrink-0 relative shadow-inner">
+                      <img
+                        v-if="stagedThumbnailUrl"
+                        :src="stagedThumbnailUrl"
+                        class="max-w-full max-h-full object-contain"
+                        alt="视频封面预览"
+                      />
+                      <div v-else class="text-xs text-white/60 text-center p-2">
+                        暂无封面预览
+                      </div>
+
+                      <span
+                        v-if="stagedThumbnailUrl"
+                        class="absolute bottom-1 right-1 text-[10px] bg-black/70 text-white px-1.5 py-0.5 rounded backdrop-blur"
+                      >
+                        完整封面预览
+                      </span>
+                    </div>
+
+                    <!-- 模式 A：从视频进度提取 -->
+                    <div v-if="stagedCoverMode === 'auto'" class="flex-1 space-y-2 min-w-0">
+                      <div class="text-xs text-muted-foreground">
+                        拖动滑块截取视频中不同秒数的画面作为封面：
+                      </div>
+                      <Slider
+                        v-model:value="stagedCaptureTime"
+                        :min="0"
+                        :max="stagedVideoDuration > 0 ? Number(stagedVideoDuration.toFixed(1)) : 10"
+                        :step="0.5"
+                        @after-change="onStagedSliderChange"
+                      />
+                      <div class="flex justify-between items-center text-xs text-muted-foreground">
+                        <span>当前截取点: {{ stagedCaptureTime }} 秒</span>
+                        <span>总时长: {{ stagedVideoDuration > 0 ? `${stagedVideoDuration.toFixed(1)} 秒` : '获取中...' }}</span>
+                      </div>
+                      <div class="flex gap-2 pt-1">
+                        <Button
+                          size="small"
+                          @click="onStagedSliderChange(0.1)"
+                        >
+                          首帧
+                        </Button>
+                        <Button
+                          v-if="stagedVideoDuration > 1"
+                          size="small"
+                          @click="onStagedSliderChange(Number((stagedVideoDuration * 0.25).toFixed(1)))"
+                        >
+                          1/4 处
+                        </Button>
+                        <Button
+                          v-if="stagedVideoDuration > 2"
+                          size="small"
+                          @click="onStagedSliderChange(Number((stagedVideoDuration * 0.5).toFixed(1)))"
+                        >
+                          居中帧
+                        </Button>
+                      </div>
+                    </div>
+
+                    <!-- 模式 B：自定义上传图片封面 -->
+                    <div v-else class="flex-1 space-y-2">
+                      <div class="text-xs text-muted-foreground">
+                        从本地选择一张图片作为此视频的专属封面：
+                      </div>
+                      <Upload
+                        :show-upload-list="false"
+                        accept="image/*"
+                        :before-upload="onStagedCustomCoverSelected"
+                      >
+                        <Button size="small">
+                          <template #icon><ImageIcon class="size-3.5" /></template>
+                          选择本地图片作为封面
+                        </Button>
+                      </Upload>
+                      <p class="text-[11px] text-muted-foreground">
+                        推荐上传 16:9 比例 (如 1280x720) 的高清图片。
+                      </p>
+                    </div>
+                  </div>
+                </Spin>
+              </div>
+
+              <Divider class="my-2" />
+
+              <div class="flex justify-end gap-2 pt-1">
+                <Button @click="resetStaged">取消</Button>
+                <Button
+                  type="primary"
+                  :loading="uploading || extractingVideo"
+                  @click="submitStagedUpload"
+                >
+                  确认上传
+                </Button>
+              </div>
+            </div>
           </Spin>
         </Tabs.TabPane>
       </Tabs>

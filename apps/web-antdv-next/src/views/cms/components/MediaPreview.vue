@@ -13,8 +13,13 @@ import {
   mediaDimensions,
   mediaTypes,
 } from './media';
+import { Button } from 'antdv-next';
+
 const props = defineProps<{ asset?: AssetDto; open: boolean }>();
-const emit = defineEmits<{ 'update:open': [value: boolean] }>();
+const emit = defineEmits<{
+  'update:open': [value: boolean];
+  'set-thumbnail': [asset: AssetDto];
+}>();
 const loaded = ref<{ duration?: number; height?: number; width?: number }>({});
 watch(
   () => props.asset?.url,
@@ -34,6 +39,13 @@ function onMetadata(event: Event) {
       : {}),
   };
 }
+
+function handleSetCover() {
+  if (props.asset) {
+    emit('update:open', false);
+    emit('set-thumbnail', props.asset);
+  }
+}
 </script>
 <template>
   <Modal
@@ -41,7 +53,7 @@ function onMetadata(event: Event) {
     title="素材预览与详情"
     :width="860"
     :footer="null"
-    destroy-on-close
+    destroy-on-hidden
     @update:open="emit('update:open', $event)"
   >
     <template v-if="asset && details">
@@ -57,7 +69,7 @@ function onMetadata(event: Event) {
         />
         <video
           v-else-if="asset.type === AssetType.Video"
-          :key="asset.url"
+          :key="`${asset.url}_${asset.thumbnailUrl || ''}`"
           :src="asset.url"
           :poster="asset.thumbnailUrl || undefined"
           controls
@@ -130,10 +142,25 @@ function onMetadata(event: Event) {
             class="text-primary"
             >{{ asset.url }}</a>
         </dd>
-        <template v-if="asset.thumbnailUrl">
-<dt>缩略图</dt>
+        <template v-if="asset.type === AssetType.Video">
+          <dt>视频封面</dt>
+          <dd class="flex items-center gap-3">
+            <Image
+              v-if="asset.thumbnailUrl"
+              :src="asset.thumbnailUrl"
+              :width="140"
+              class="rounded border bg-black/80 object-contain shadow-sm"
+            />
+            <span v-else class="text-xs text-muted-foreground">暂无封面</span>
+            <Button size="small" type="primary" ghost @click="handleSetCover">
+              {{ asset.thumbnailUrl ? '修改/重新提取封面' : '设置视频封面' }}
+            </Button>
+          </dd>
+        </template>
+        <template v-else-if="asset.thumbnailUrl">
+          <dt>缩略图</dt>
           <dd><Image :src="asset.thumbnailUrl" :width="120" /></dd>
-</template>
+        </template>
         <template v-if="asset.hash">
 <dt>文件哈希</dt>
           <dd>{{ asset.hash }}</dd>

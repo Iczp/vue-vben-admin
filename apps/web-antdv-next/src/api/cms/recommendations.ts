@@ -59,3 +59,15 @@ export async function updateRecommendationRuleApi(
 export async function deleteRecommendationRuleApi(id: string) {
   return requestClient.delete<void>(`/cms/admin/recommendation-rules/${id}`);
 }
+
+/**
+ * 实时预览推荐规则计算与排序结果
+ */
+export async function previewRecommendationRuleApi(
+  data: import('./types').PreviewRecommendationRuleInput,
+) {
+  return requestClient.post<import('./types').RecommendationRulePreviewItemDto[]>(
+    '/cms/admin/recommendation-rules/preview',
+    data,
+  );
+}

@@ -1,7 +1,8 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import type { TagDto } from '#/api/cms';
 
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { Plus, RotateCw } from '@vben/icons';
@@ -13,6 +14,8 @@ import { deleteTagApi, getTagsApi } from '#/api/cms';
 
 import { useColumns } from './data';
 import TagModal from './modules/tag-modal.vue';
+
+const router = useRouter();
 
 const filters = reactive<{
   enabledFilter?: number;
@@ -33,6 +36,16 @@ function onCreate() {
 
 function onEdit(row: TagDto) {
   tagFormModalApi.setData(row).open();
+}
+
+function onGoArticles(row: TagDto) {
+  void router.push({
+    path: '/cms/articles',
+    query: {
+      tagId: row.id,
+      tagName: row.name,
+    },
+  });
 }
 
 function onDelete(row: TagDto) {
@@ -63,6 +76,10 @@ function onActionClick({
     }
     case 'edit': {
       onEdit(row);
+      break;
+    }
+    case 'view_articles': {
+      onGoArticles(row);
       break;
     }
   }

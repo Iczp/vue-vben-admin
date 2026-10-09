@@ -43,9 +43,24 @@ export function useColumns(
       width: 130,
     },
     {
+      align: 'center',
+      cellRender: {
+        attrs: {
+          onClick: ({ row }: any) => {
+            onActionClick({ code: 'view_articles', row });
+          },
+        },
+        name: 'CellLink',
+        props: {
+          text: (row: any) => {
+            const count = Number(row?.articleCount ?? 0);
+            return count > 0 ? `${count} 篇` : '0 篇';
+          },
+        },
+      },
       field: 'articleCount',
       title: '文章总数',
-      width: 90,
+      width: 100,
     },
     {
       field: 'sorting',

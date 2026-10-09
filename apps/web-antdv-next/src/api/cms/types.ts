@@ -38,6 +38,21 @@ export const CmsPermissions = {
   Moderations: {
     Default: 'Cms.Moderations',
     Review: 'Cms.Moderations.Review',
+    SensitiveWords: {
+      Default: 'Cms.Moderations.SensitiveWords',
+      Create: 'Cms.Moderations.SensitiveWords.Create',
+      Update: 'Cms.Moderations.SensitiveWords.Update',
+      Delete: 'Cms.Moderations.SensitiveWords.Delete',
+      Import: 'Cms.Moderations.SensitiveWords.Import',
+      Export: 'Cms.Moderations.SensitiveWords.Export',
+    },
+    Whitelists: {
+      Default: 'Cms.Moderations.Whitelists',
+      Create: 'Cms.Moderations.Whitelists.Create',
+      Update: 'Cms.Moderations.Whitelists.Update',
+      Delete: 'Cms.Moderations.Whitelists.Delete',
+    },
+    Test: 'Cms.Moderations.Test',
   },
   Recommendations: {
     Default: 'Cms.Recommendations',
@@ -145,6 +160,7 @@ export interface ArticleListItemBaseDto {
 
 export interface AdminArticleListItemDto extends ArticleListItemBaseDto {
   id: string;
+  contentType?: string;
   status: ArticleStatus;
   currentRevisionId?: string;
   activeSnapshotId?: string;
@@ -165,6 +181,9 @@ export interface AdminArticleListItemDto extends ArticleListItemBaseDto {
   scheduledPublishTime?: string;
   offlineTime?: string;
   auditOpinion?: string;
+  tags?: TagDto[];
+  categories?: CategoryDto[];
+  mainCategoryId?: string;
 }
 
 export interface ArticleRevisionDto {
@@ -209,6 +228,7 @@ export interface AdminArticleListInput extends PagedAndSortedResultRequestDto {
   keyword?: string;
   categoryId?: string;
   tagId?: string;
+  contentType?: string;
   publisherActorId?: string;
   publisherActorType?: string;
   publishTimeFrom?: string;
@@ -228,6 +248,7 @@ export interface AdminArticleCreateInput {
   summary?: string;
   slug?: string;
   coverUrl?: string;
+  contentType?: string;
   content: string;
   markdownContent?: string;
   sourceType?: SourceType;
@@ -254,6 +275,7 @@ export interface AdminArticleUpdateInput {
   summary?: string;
   slug?: string;
   coverUrl?: string;
+  contentType?: string;
   content?: string;
   markdownContent?: string;
   sourceType?: SourceType;
@@ -269,6 +291,27 @@ export interface AdminArticleUpdateInput {
   isRecommend?: boolean;
   sorting?: number;
   password?: string;
+}
+
+export interface AdminArticleBatchIdsInput {
+  ids: string[];
+}
+
+export interface AdminArticleBatchCategoriesInput {
+  ids: string[];
+  categoryIds: string[];
+  overwrite?: boolean;
+}
+
+export interface AdminArticleBatchTagsInput {
+  ids: string[];
+  tagNames: string[];
+  overwrite?: boolean;
+}
+
+export interface AdminArticleBatchStatusInput {
+  ids: string[];
+  status: ArticleStatus;
 }
 
 export interface AdminArticleScheduleInput {
@@ -351,6 +394,7 @@ export interface TagDto {
   sorting: number;
   isEnabled: boolean;
   creationTime?: string;
+  articleCount?: number;
 }
 
 export interface TagCreateDto {
@@ -405,6 +449,7 @@ export interface AssetDto {
   actorType?: string;
   actorId?: string;
   actorName?: string;
+  referenceCount?: number;
   variants: AssetVariantDto[];
   creationTime: string;
 }
@@ -430,6 +475,18 @@ export interface AssetGetListInput extends PagedAndSortedResultRequestDto {
   keyword?: string;
   type?: AssetType;
   status?: AssetStatus;
+}
+
+export interface AssetStatusUpdateDto {
+  status: AssetStatus;
+}
+
+export interface AssetReferenceDto {
+  referenceTime?: string;
+  targetId: string;
+  targetTitle: string;
+  targetType: string;
+  targetUrl?: string;
 }
 
 // ==================== Comments ====================
@@ -550,6 +607,32 @@ export interface RecommendationRuleUpdateDto {
   maxSamePublisherCount?: number;
   algorithmVersion?: string;
   extraConfigJson?: string;
+}
+
+export interface PreviewRecommendationRuleInput {
+  ruleId?: string;
+  scene?: string;
+  freshnessWeight?: number;
+  similarityWeight?: number;
+  interestWeight?: number;
+  popularityWeight?: number;
+  manualWeight?: number;
+  resultCount?: number;
+}
+
+export interface RecommendationRulePreviewItemDto {
+  articleId: string;
+  title: string;
+  code: string;
+  coverUrl?: string;
+  publishTime?: string;
+  categoryName?: string;
+  authorName?: string;
+  viewCount: number;
+  likeCount: number;
+  sorting: number;
+  calculatedScore: number;
+  rank: number;
 }
 
 // ==================== Promotions ====================
@@ -697,3 +780,172 @@ export interface ContentDailyStatGetListInput extends PagedAndSortedResultReques
   startDate?: string;
   endDate?: string;
 }
+
+// ==================== Sensitive Words & Moderation Rules ====================
+export enum ModerationScene {
+  General = 0,
+  ContentCreate = 10,
+  ContentPublish = 20,
+  CommentCreate = 30,
+  MediaMetadata = 40,
+  ActorProfile = 50,
+  SearchQuery = 60,
+}
+
+export enum SensitiveRiskLevel {
+  Low = 1,
+  Medium = 2,
+  High = 3,
+}
+
+export enum SensitiveWordAction {
+  Pass = 1,
+  Review = 2,
+  Reject = 3,
+}
+
+export const SensitiveWordCategories = {
+  Political: 'Political',
+  Violence: 'Violence',
+  Sexual: 'Sexual',
+  Abuse: 'Abuse',
+  Fraud: 'Fraud',
+  Advertisement: 'Advertisement',
+  ContactInfo: 'ContactInfo',
+  Illegal: 'Illegal',
+  Custom: 'Custom',
+} as const;
+
+export interface SensitiveWordDto {
+  id: string;
+  word: string;
+  category: string;
+  riskLevel: SensitiveRiskLevel;
+  action: SensitiveWordAction;
+  scene?: ModerationScene;
+  isEnabled: boolean;
+  isRegex: boolean;
+  remark?: string;
+  creationTime: string;
+  creatorId?: string;
+  lastModificationTime?: string;
+  lastModifierId?: string;
+}
+
+export interface CreateSensitiveWordInput {
+  word: string;
+  category: string;
+  riskLevel?: SensitiveRiskLevel;
+  action?: SensitiveWordAction;
+  scene?: ModerationScene;
+  isRegex?: boolean;
+  remark?: string;
+}
+
+export interface UpdateSensitiveWordInput {
+  category: string;
+  riskLevel: SensitiveRiskLevel;
+  action: SensitiveWordAction;
+  scene?: ModerationScene;
+  isRegex: boolean;
+  remark?: string;
+}
+
+export interface GetSensitiveWordsInput extends PagedAndSortedResultRequestDto {
+  keyword?: string;
+  category?: string;
+  riskLevel?: SensitiveRiskLevel;
+  scene?: ModerationScene;
+  isEnabled?: boolean;
+}
+
+export interface SensitiveWordBatchImportInput {
+  content: string;
+  defaultCategory?: string;
+  defaultRiskLevel?: SensitiveRiskLevel;
+  defaultAction?: SensitiveWordAction;
+  defaultScene?: ModerationScene;
+  conflictStrategy?: 'Skip' | 'Overwrite';
+}
+
+export interface BatchImportResultDto {
+  totalCount: number;
+  createdCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  failedCount: number;
+  errorMessages: string[];
+}
+
+export interface SensitiveWordExportDto {
+  word: string;
+  category: string;
+  riskLevel: string;
+  action: string;
+  scene?: string;
+  isEnabled: boolean;
+  remark?: string;
+}
+
+export interface SensitiveWordWhitelistDto {
+  id: string;
+  text: string;
+  scene?: ModerationScene;
+  isEnabled: boolean;
+  remark?: string;
+  creationTime: string;
+  creatorId?: string;
+  lastModificationTime?: string;
+  lastModifierId?: string;
+}
+
+export interface CreateSensitiveWordWhitelistInput {
+  text: string;
+  scene?: ModerationScene;
+  remark?: string;
+}
+
+export interface UpdateSensitiveWordWhitelistInput {
+  scene?: ModerationScene;
+  remark?: string;
+}
+
+export interface GetSensitiveWordWhitelistsInput extends PagedAndSortedResultRequestDto {
+  keyword?: string;
+  scene?: ModerationScene;
+  isEnabled?: boolean;
+}
+
+export interface ModerationRuleTestInput {
+  text: string;
+  scene?: ModerationScene;
+}
+
+export interface SensitiveWordHitDto {
+  sensitiveWordId: string;
+  word: string;
+  category: string;
+  riskLevel: SensitiveRiskLevel;
+  action: SensitiveWordAction;
+  startIndex: number;
+  length: number;
+}
+
+export interface ModerationRuleTestResultDto {
+  decision: ModerationDecision;
+  riskLevel: ContentRiskLevel;
+  score: number;
+  ruleVersion: string;
+  elapsedMilliseconds: number;
+  hits: SensitiveWordHitDto[];
+}
+
+export interface SensitiveWordRuntimeStateDto {
+  version: string;
+  wordCount: number;
+  whitelistCount: number;
+  lastReloadTime: string;
+  lastReloadSuccess: boolean;
+  lastErrorMessage?: string;
+}
+

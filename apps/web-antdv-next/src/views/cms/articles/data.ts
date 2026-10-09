@@ -13,14 +13,36 @@ export const articleStatusOptions = [
   { color: 'error', label: '已归档', value: ArticleStatus.Archived },
 ];
 
+export const contentTypeOptions = [
+  { color: 'blue', label: '标准图文', value: 'Article' },
+  { color: 'blue', label: '标准图文', value: 'article' },
+  { color: 'cyan', label: '快讯要闻', value: 'News' },
+  { color: 'cyan', label: '快讯要闻', value: 'news' },
+  { color: 'orange', label: '通知公告', value: 'Notice' },
+  { color: 'orange', label: '通知公告', value: 'notice' },
+  { color: 'purple', label: '图集画廊', value: 'Gallery' },
+  { color: 'purple', label: '图集画廊', value: 'gallery' },
+  { color: 'red', label: '视频内容', value: 'Video' },
+  { color: 'red', label: '视频内容', value: 'video' },
+  { color: 'green', label: '百科词条', value: 'Wiki' },
+  { color: 'green', label: '百科词条', value: 'wiki' },
+  { color: 'gold', label: '外部转存', value: 'Wechat' },
+  { color: 'gold', label: '外部转存', value: 'wechat' },
+];
+
 export function useColumns(
   onActionClick: OnActionClickFn<AdminArticleListItemDto>,
 ): VxeTableGridColumns<AdminArticleListItemDto> {
   return [
     {
+      fixed: 'left',
+      type: 'checkbox',
+      width: 45,
+    },
+    {
       title: '#',
       type: 'seq',
-      width: 55,
+      width: 50,
     },
     {
       cellRender: {
@@ -43,11 +65,39 @@ export function useColumns(
     },
     {
       cellRender: {
+        name: 'CellTag',
+        options: contentTypeOptions,
+      },
+      field: 'contentType',
+      title: '内容形态',
+      width: 105,
+    },
+    {
+      cellRender: {
+        name: 'CellTag',
+        props: {
+          color: 'cyan',
+        },
+      },
+      field: 'categories',
+      minWidth: 140,
+      title: '所属分类',
+    },
+    {
+      cellRender: {
         name: 'CellCopyable',
       },
       field: 'code',
       title: '短代码',
       width: 110,
+    },
+    {
+      cellRender: {
+        name: 'CellTag',
+      },
+      field: 'tags',
+      minWidth: 140,
+      title: '标签',
     },
     {
       cellRender: {
@@ -172,7 +222,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 220,
+      width: 320,
     },
   ];
 }

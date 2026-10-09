@@ -30,6 +30,16 @@ const routes: RouteRecordRaw[] = [
         path: 'articles',
       },
       {
+        component: () => import('#/views/cms/articles/index.vue'),
+        meta: {
+          hideInMenu: true,
+          icon: 'lucide:file-text',
+          title: '编辑文章',
+        },
+        name: 'CmsArticleDetail',
+        path: 'articles/:id',
+      },
+      {
         component: () => import('#/views/cms/categories/index.vue'),
         meta: {
           icon: 'lucide:folder-tree',
@@ -82,6 +92,33 @@ const routes: RouteRecordRaw[] = [
         },
         name: 'CmsModeration',
         path: 'moderation',
+      },
+      {
+        component: () => import('#/views/cms/sensitive-words/index.vue'),
+        meta: {
+          icon: 'lucide:shield-alert',
+          title: '敏感词库',
+        },
+        name: 'CmsSensitiveWords',
+        path: 'sensitive-words',
+      },
+      {
+        component: () => import('#/views/cms/sensitive-word-whitelists/index.vue'),
+        meta: {
+          icon: 'lucide:shield-check',
+          title: '敏感词白名单',
+        },
+        name: 'CmsSensitiveWordWhitelists',
+        path: 'sensitive-word-whitelists',
+      },
+      {
+        component: () => import('#/views/cms/moderation-rules/index.vue'),
+        meta: {
+          icon: 'lucide:cpu',
+          title: '规则调试台',
+        },
+        name: 'CmsModerationRules',
+        path: 'moderation-rules',
       },
       {
         component: () => import('#/views/cms/recommendations/index.vue'),

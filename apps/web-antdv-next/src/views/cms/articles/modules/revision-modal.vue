@@ -1,36 +1,47 @@
 <script lang="ts" setup>
 import type { ArticleRevisionDto } from '#/api/cms';
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
 import {
   Button,
+  Descriptions,
+  DescriptionsItem,
+  Divider,
   Form,
   FormItem,
   Input,
   message,
   Modal as AntModal,
+  Popconfirm,
+  Radio,
+  RadioGroup,
+  Space,
   Spin,
   Table,
   Tag,
+  Tooltip,
 } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import {
   createArticleRevisionApi,
+  deleteArticleRevisionApi,
   getArticleRevisionsApi,
+  rollbackArticleRevisionApi,
 } from '#/api/cms';
 
 const emit = defineEmits(['success']);
 
 const loading = ref(false);
+const actionLoading = ref(false);
 const articleId = ref('');
 const articleTitle = ref('');
 const revisions = ref<ArticleRevisionDto[]>([]);
 
-// 新建版本抽屉
+// 新建版本抽屉/视图
 const showAddRevision = ref(false);
 const newTitle = ref('');
 const newSummary = ref('');
@@ -41,6 +52,19 @@ const newChangeLog = ref('');
 const previewVisible = ref(false);
 const previewTitle = ref('');
 const previewHtml = ref('');
+const previewRevision = ref<ArticleRevisionDto | null>(null);
+
+// 版本对比弹窗状态
+const diffVisible = ref(false);
+const diffSourceVersion = ref<number | null>(null);
+const diffTargetVersion = ref<number | null>(null);
+
+const sourceRevision = computed(() =>
+  revisions.value.find((r) => r.version === diffSourceVersion.value),
+);
+const targetRevision = computed(() =>
+  revisions.value.find((r) => r.version === diffTargetVersion.value),
+);
 
 const columns = [
   { dataIndex: 'version', title: '版本号', width: 90 },
@@ -60,9 +84,10 @@ const columns = [
     width: 170,
   },
   {
+    fixed: 'right' as const,
     key: 'action',
     title: '操作',
-    width: 100,
+    width: 200,
   },
 ];
 
@@ -79,7 +104,8 @@ async function loadRevisions() {
 }
 
 function onViewContent(record: ArticleRevisionDto) {
-  previewTitle.value = `版本 V${record.version} 正文内容预览 - ${record.title || ''}`;
+  previewRevision.value = record;
+  previewTitle.value = `版本 V${record.version} 详情与正文预览 - ${record.title || ''}`;
   previewHtml.value =
     record.contentHtml ||
     record.content ||
@@ -87,6 +113,51 @@ function onViewContent(record: ArticleRevisionDto) {
     record.contentJson ||
     '';
   previewVisible.value = true;
+}
+
+async function onRollback(record: ArticleRevisionDto) {
+  actionLoading.value = true;
+  try {
+    await rollbackArticleRevisionApi(articleId.value, record.id);
+    message.success(`已成功恢复并生成基于 V${record.version} 的新修订版本！`);
+    await loadRevisions();
+    emit('success');
+  } catch (error) {
+    console.error('版本回滚失败', error);
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+async function onDeleteRevision(record: ArticleRevisionDto) {
+  actionLoading.value = true;
+  try {
+    await deleteArticleRevisionApi(articleId.value, record.id);
+    message.success(`版本 V${record.version} 已删除`);
+    await loadRevisions();
+    emit('success');
+  } catch (error) {
+    console.error('删除版本失败', error);
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+function onOpenDiff(record?: ArticleRevisionDto) {
+  if (revisions.value.length < 2) {
+    message.warning('历史版本数量少于2个，无法进行版本对比');
+    return;
+  }
+  // 默认对比当前选中的版本与它的前一个版本，或者最新两个版本
+  if (record) {
+    diffTargetVersion.value = record.version;
+    const prev = revisions.value.find((r) => r.version < record.version);
+    diffSourceVersion.value = prev ? prev.version : revisions.value[revisions.value.length - 1]?.version ?? null;
+  } else {
+    diffTargetVersion.value = revisions.value[0]?.version ?? null;
+    diffSourceVersion.value = revisions.value[1]?.version ?? null;
+  }
+  diffVisible.value = true;
 }
 
 async function onSubmitNewRevision() {
@@ -131,20 +202,30 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
 </script>
 
 <template>
-  <Modal class="w-[850px] max-w-full">
-    <Spin :spinning="loading">
+  <Modal class="w-[980px] max-w-full">
+    <Spin :spinning="loading || actionLoading">
       <div class="mb-3 flex items-center justify-between">
         <div>
           <span class="text-muted-foreground">当前文章：</span>
           <span class="font-medium">{{ articleTitle }}</span>
+          <span class="ml-3 text-xs text-muted-foreground">共 {{ revisions.length }} 个版本记录</span>
         </div>
-        <Button
-          type="primary"
-          size="small"
-          @click="showAddRevision = !showAddRevision"
-        >
-          {{ showAddRevision ? '返回版本列表' : '+ 创建新版本' }}
-        </Button>
+        <Space>
+          <Button
+            v-if="!showAddRevision && revisions.length >= 2"
+            size="small"
+            @click="onOpenDiff()"
+          >
+            版本对比
+          </Button>
+          <Button
+            type="primary"
+            size="small"
+            @click="showAddRevision = !showAddRevision"
+          >
+            {{ showAddRevision ? '返回版本列表' : '+ 创建新快照版本' }}
+          </Button>
+        </Space>
       </div>
 
       <div v-if="!showAddRevision">
@@ -157,12 +238,51 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'version'">
-              <Tag color="blue">V{{ record.version }}</Tag>
+              <Tag :color="record.version === revisions[0]?.version ? 'green' : 'blue'">
+                V{{ record.version }}
+                <span v-if="record.version === revisions[0]?.version" class="text-[10px] ml-0.5">(最新)</span>
+              </Tag>
             </template>
             <template v-else-if="column.key === 'action'">
-              <Button type="link" size="small" @click="onViewContent(record)">
-                查看正文
-              </Button>
+              <Space :size="4">
+                <Button type="link" size="small" @click="onViewContent(record)">
+                  查看
+                </Button>
+
+                <Button
+                  v-if="revisions.length >= 2"
+                  type="link"
+                  size="small"
+                  @click="onOpenDiff(record)"
+                >
+                  对比
+                </Button>
+
+                <Popconfirm
+                  :title="`确认将文章内容回滚恢复至版本 V${record.version} 吗？`"
+                  ok-text="确认回滚"
+                  cancel-text="取消"
+                  @confirm="onRollback(record)"
+                >
+                  <Tooltip title="恢复当前文章为此版本，并自动生成新的回滚修订记录">
+                    <Button type="link" size="small">
+                      回滚
+                    </Button>
+                  </Tooltip>
+                </Popconfirm>
+
+                <Popconfirm
+                  :title="`确认删除历史版本 V${record.version} 吗？`"
+                  ok-text="确认删除"
+                  cancel-text="取消"
+                  ok-type="danger"
+                  @confirm="onDeleteRevision(record)"
+                >
+                  <Button type="link" danger size="small">
+                    删除
+                  </Button>
+                </Popconfirm>
+              </Space>
             </template>
           </template>
         </Table>
@@ -197,15 +317,40 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
       </div>
     </Spin>
 
-    <!-- 正文内容预览弹窗 -->
+    <!-- 正文内容与元数据预览弹窗 -->
     <AntModal
       v-model:open="previewVisible"
       :title="previewTitle"
-      :width="800"
+      :width="850"
       :footer="null"
-      destroy-on-close
+      destroy-on-hidden
     >
-      <div class="max-h-[65vh] overflow-y-auto p-4 border rounded bg-background">
+      <div v-if="previewRevision" class="mb-3">
+        <Descriptions size="small" bordered :column="2">
+          <DescriptionsItem label="版本号">
+            <Tag color="blue">V{{ previewRevision.version }}</Tag>
+          </DescriptionsItem>
+          <DescriptionsItem label="修改时间">
+            {{ previewRevision.creationTime ? dayjs(previewRevision.creationTime).format('YYYY-MM-DD HH:mm:ss') : '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="版本标题" :span="2">
+            {{ previewRevision.title }}
+          </DescriptionsItem>
+          <DescriptionsItem v-if="previewRevision.subtitle" label="副标题" :span="2">
+            {{ previewRevision.subtitle }}
+          </DescriptionsItem>
+          <DescriptionsItem v-if="previewRevision.changeSummary || previewRevision.changeLog" label="修订说明" :span="2">
+            {{ previewRevision.changeSummary || previewRevision.changeLog }}
+          </DescriptionsItem>
+          <DescriptionsItem v-if="previewRevision.summary" label="摘要" :span="2">
+            {{ previewRevision.summary }}
+          </DescriptionsItem>
+        </Descriptions>
+      </div>
+
+      <Divider class="my-2">正文内容</Divider>
+
+      <div class="max-h-[55vh] overflow-y-auto p-4 border rounded bg-background">
         <div
           v-if="previewHtml"
           class="prose dark:prose-invert max-w-none text-sm leading-relaxed"
@@ -214,6 +359,108 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
         <div v-else class="text-center text-muted-foreground py-8">
           该版本暂无正文内容
         </div>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <Popconfirm
+          v-if="previewRevision"
+          :title="`确认将文章内容回滚恢复至版本 V${previewRevision.version} 吗？`"
+          ok-text="确认回滚"
+          cancel-text="取消"
+          @confirm="onRollback(previewRevision)"
+        >
+          <Button type="primary">
+            回滚恢复至此版本
+          </Button>
+        </Popconfirm>
+        <Button @click="previewVisible = false">关闭</Button>
+      </div>
+    </AntModal>
+
+    <!-- 版本对比弹窗 -->
+    <AntModal
+      v-model:open="diffVisible"
+      title="版本内容对比"
+      :width="1000"
+      :footer="null"
+      destroy-on-hidden
+    >
+      <div class="mb-4 flex items-center justify-between gap-4 p-3 bg-muted/20 border rounded">
+        <div class="flex items-center gap-2">
+          <span class="font-medium text-xs">对比基准版本 (左)：</span>
+          <RadioGroup v-model:value="diffSourceVersion" size="small">
+            <Radio
+              v-for="item in revisions"
+              :key="`source-${item.version}`"
+              :value="item.version"
+            >
+              V{{ item.version }}
+            </Radio>
+          </RadioGroup>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-medium text-xs">目标版本 (右)：</span>
+          <RadioGroup v-model:value="diffTargetVersion" size="small">
+            <Radio
+              v-for="item in revisions"
+              :key="`target-${item.version}`"
+              :value="item.version"
+            >
+              V{{ item.version }}
+            </Radio>
+          </RadioGroup>
+        </div>
+      </div>
+
+      <div v-if="sourceRevision && targetRevision" class="grid grid-cols-2 gap-4">
+        <!-- 左侧基准版本 -->
+        <div class="border rounded p-3 bg-background flex flex-col">
+          <div class="flex items-center justify-between border-b pb-2 mb-2">
+            <Tag color="blue">V{{ sourceRevision.version }}</Tag>
+            <span class="text-xs text-muted-foreground">
+              {{ dayjs(sourceRevision.creationTime).format('YYYY-MM-DD HH:mm') }}
+            </span>
+          </div>
+          <div class="font-medium text-sm mb-1">{{ sourceRevision.title }}</div>
+          <div class="text-xs text-muted-foreground mb-2">
+            说明: {{ sourceRevision.changeSummary || sourceRevision.changeLog || '无' }}
+          </div>
+          <Divider class="my-1" />
+          <div class="flex-1 max-h-[50vh] overflow-y-auto text-xs leading-relaxed p-2 bg-muted/10 rounded">
+            <div
+              class="prose dark:prose-invert max-w-none text-xs"
+              v-html="sourceRevision.contentHtml || sourceRevision.contentText || '无正文'"
+            ></div>
+          </div>
+        </div>
+
+        <!-- 右侧目标版本 -->
+        <div class="border rounded p-3 bg-background flex flex-col">
+          <div class="flex items-center justify-between border-b pb-2 mb-2">
+            <Tag color="green">V{{ targetRevision.version }}</Tag>
+            <span class="text-xs text-muted-foreground">
+              {{ dayjs(targetRevision.creationTime).format('YYYY-MM-DD HH:mm') }}
+            </span>
+          </div>
+          <div class="font-medium text-sm mb-1">{{ targetRevision.title }}</div>
+          <div class="text-xs text-muted-foreground mb-2">
+            说明: {{ targetRevision.changeSummary || targetRevision.changeLog || '无' }}
+          </div>
+          <Divider class="my-1" />
+          <div class="flex-1 max-h-[50vh] overflow-y-auto text-xs leading-relaxed p-2 bg-muted/10 rounded">
+            <div
+              class="prose dark:prose-invert max-w-none text-xs"
+              v-html="targetRevision.contentHtml || targetRevision.contentText || '无正文'"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-center py-8 text-muted-foreground">
+        请选择两个版本进行对比
+      </div>
+
+      <div class="mt-4 flex justify-end">
+        <Button @click="diffVisible = false">关闭对比</Button>
       </div>
     </AntModal>
   </Modal>

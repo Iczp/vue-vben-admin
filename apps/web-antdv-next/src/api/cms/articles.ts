@@ -1,5 +1,9 @@
 import type { PagedResultDto } from '#/api/abp/types';
 import type {
+  AdminArticleBatchCategoriesInput,
+  AdminArticleBatchIdsInput,
+  AdminArticleBatchStatusInput,
+  AdminArticleBatchTagsInput,
   AdminArticleCreateInput,
   AdminArticleDetailDto,
   AdminArticleListItemDto,
@@ -57,6 +61,33 @@ export async function deleteArticleApi(id: string) {
 export async function getArticleRevisionsApi(id: string) {
   return requestClient.get<ArticleRevisionDto[]>(
     `/cms/admin/articles/${id}/revisions`,
+  );
+}
+
+/**
+ * 获取单个修订版本详情
+ */
+export async function getArticleRevisionApi(id: string, revisionId: string) {
+  return requestClient.get<ArticleRevisionDto>(
+    `/cms/admin/articles/${id}/revisions/${revisionId}`,
+  );
+}
+
+/**
+ * 回滚恢复至指定版本
+ */
+export async function rollbackArticleRevisionApi(id: string, revisionId: string) {
+  return requestClient.post<ArticleRevisionDto>(
+    `/cms/admin/articles/${id}/revisions/${revisionId}/rollback`,
+  );
+}
+
+/**
+ * 删除指定修订版本
+ */
+export async function deleteArticleRevisionApi(id: string, revisionId: string) {
+  return requestClient.delete<void>(
+    `/cms/admin/articles/${id}/revisions/${revisionId}`,
   );
 }
 
@@ -129,3 +160,46 @@ export async function offlineArticleApi(id: string) {
 export async function archiveArticleApi(id: string) {
   return requestClient.post<void>(`/cms/admin/articles/${id}/archive`);
 }
+
+/**
+ * 批量设置分类
+ */
+export async function batchSetArticleCategoriesApi(data: AdminArticleBatchCategoriesInput) {
+  return requestClient.post<void>('/cms/admin/articles/batch/categories', data);
+}
+
+/**
+ * 批量设置标签
+ */
+export async function batchSetArticleTagsApi(data: AdminArticleBatchTagsInput) {
+  return requestClient.post<void>('/cms/admin/articles/batch/tags', data);
+}
+
+/**
+ * 批量设置状态
+ */
+export async function batchSetArticleStatusApi(data: AdminArticleBatchStatusInput) {
+  return requestClient.post<void>('/cms/admin/articles/batch/status', data);
+}
+
+/**
+ * 批量发布文章
+ */
+export async function batchPublishArticlesApi(data: AdminArticleBatchIdsInput) {
+  return requestClient.post<void>('/cms/admin/articles/batch/publish', data);
+}
+
+/**
+ * 批量下架文章
+ */
+export async function batchOfflineArticlesApi(data: AdminArticleBatchIdsInput) {
+  return requestClient.post<void>('/cms/admin/articles/batch/offline', data);
+}
+
+/**
+ * 批量删除文章
+ */
+export async function batchDeleteArticlesApi(data: AdminArticleBatchIdsInput) {
+  return requestClient.post<void>('/cms/admin/articles/batch/delete', data);
+}
+

@@ -85,5 +85,5 @@ export interface ToolbarMenuItem {
   can?: (editor: Editor) => boolean;
   isActive?: (editor: Editor) => boolean;
   label: string;
-  shortLabel: string;
+  shortLabel?: string;
 }

@@ -6,9 +6,206 @@ export interface MediaUploadMetadata {
   thumbnailWidth?: number;
   width?: number;
 }
+
+/**
+ * 从图片文件生成适合作为封面缩略图的 File (JPEG, 最大 640px)
+ */
+export async function createThumbnailFromFile(file: File): Promise<{
+  file: File;
+  height: number;
+  width: number;
+}> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 640 / img.naturalWidth, 640 / img.naturalHeight);
+      const width = Math.max(1, Math.round(img.naturalWidth * scale));
+      const height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        reject(new Error('Canvas 2D context not available'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(url);
+          if (!blob) {
+            reject(new Error('Canvas blob generation failed'));
+            return;
+          }
+          resolve({
+            file: new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' }),
+            height,
+            width,
+          });
+        },
+        'image/jpeg',
+        0.85,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image loading failed'));
+    };
+    img.src = url;
+  });
+}
+
+/**
+ * 从视频文件或视频 URL 中提取指定时间点（默认0.1s或首帧）的画面作为封面缩略图，并准确读取时长
+ */
+export async function extractVideoFrame(
+  videoSource: File | string,
+  timeSeconds: number = 0.1,
+): Promise<{
+  dataUrl: string;
+  duration: number;
+  file: File;
+  height: number;
+  thumbnailHeight: number;
+  thumbnailWidth: number;
+  width: number;
+}> {
+  return new Promise((resolve, reject) => {
+    const isFile = videoSource instanceof File;
+    const url = isFile ? URL.createObjectURL(videoSource) : videoSource;
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = 'anonymous';
+
+    let cleaned = false;
+    let knownDuration = 0;
+
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      video.onloadedmetadata = null;
+      video.ondurationchange = null;
+      video.oncanplay = null;
+      video.onseeked = null;
+      video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
+      if (isFile) {
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('提取视频封面超时'));
+    }, 12000);
+
+    video.onerror = (e) => {
+      clearTimeout(timer);
+      cleanup();
+      reject(e);
+    };
+
+    const updateDuration = () => {
+      if (
+        Number.isFinite(video.duration) &&
+        video.duration > 0 &&
+        video.duration !== Infinity
+      ) {
+        knownDuration = video.duration;
+      }
+    };
+
+    video.ondurationchange = updateDuration;
+
+    video.onloadedmetadata = () => {
+      updateDuration();
+      seekToTarget();
+    };
+
+    video.oncanplay = () => {
+      updateDuration();
+      if (!video.currentTime && timeSeconds > 0) {
+        seekToTarget();
+      }
+    };
+
+    function seekToTarget() {
+      const targetTime = Math.min(
+        timeSeconds,
+        knownDuration > 0 ? Math.max(0.01, knownDuration / 2) : 0.1,
+      );
+      try {
+        video.currentTime = targetTime;
+      } catch {
+        // 部分浏览器若未就绪可能抛出，等待后续事件
+      }
+    }
+
+    video.onseeked = () => {
+      clearTimeout(timer);
+      updateDuration();
+
+      // 如果 duration 仍为 0/Infinity，尝试用 currentTime 兜底
+      const finalDuration =
+        knownDuration > 0
+          ? knownDuration
+          : Number.isFinite(video.duration) && video.duration > 0
+            ? video.duration
+            : 0;
+
+      const width = video.videoWidth || 640;
+      const height = video.videoHeight || 360;
+      const scale = Math.min(1, 640 / width, 640 / height);
+      const thumbnailWidth = Math.max(1, Math.round(width * scale));
+      const thumbnailHeight = Math.max(1, Math.round(height * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = thumbnailWidth;
+      canvas.height = thumbnailHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        cleanup();
+        reject(new Error('Canvas context error'));
+        return;
+      }
+      ctx.drawImage(video, 0, 0, thumbnailWidth, thumbnailHeight);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      canvas.toBlob(
+        (blob) => {
+          cleanup();
+          if (!blob) {
+            reject(new Error('生成视频截图 Blob 失败'));
+            return;
+          }
+          resolve({
+            dataUrl,
+            duration: finalDuration,
+            file: new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' }),
+            height,
+            thumbnailHeight,
+            thumbnailWidth,
+            width,
+          });
+        },
+        'image/jpeg',
+        0.85,
+      );
+    };
+
+    video.src = url;
+  });
+}
+
 /** Best effort only: unsupported browser codecs must not prevent a normal upload. */
 export async function readMediaUploadMetadata(
   file: File,
+  customThumbnail?: File,
 ): Promise<MediaUploadMetadata> {
   if (!/^(image|video|audio)\//.test(file.type)) return {};
   const url = URL.createObjectURL(file);
@@ -75,8 +272,22 @@ export async function readMediaUploadMetadata(
           Number.isFinite(frame.duration) ? frame.duration / 2 : 0,
         );
       };
-      const capture = () => {
+      const capture = async () => {
         if (finished || !video) return;
+        if (customThumbnail) {
+          try {
+            const thumb = await createThumbnailFromFile(customThumbnail);
+            result.thumbnail = thumb.file;
+            result.thumbnailWidth = thumb.width;
+            result.thumbnailHeight = thumb.height;
+          } catch (e) {
+            console.error('处理自定义封面失败，使用自动提取封面', e);
+          }
+          if (result.thumbnail) {
+            finish();
+            return;
+          }
+        }
         const frame = media as HTMLVideoElement;
         if (!frame.videoWidth || !frame.videoHeight) {
           finish();
