@@ -10,15 +10,18 @@ const APP_STATISTIC_CHANGE_EVENT = 'app-statistic:app-changed';
  * 格式化后的应用信息项
  */
 export interface FormattedAppItem {
+  id?: string;
   appId: string;
   name: string; // 最终显示的名称/别名
   rawName?: string; // 后端返回的原始名称
+  description?: string;
   customAlias?: string; // 用户自定义的别名
   autoAlias: string; // 系统自动生成的别名
   isCustom: boolean; // 是否应用了自定义别名
   timeZone: string;
   today: string;
 }
+
 
 /**
  * 智能自动生成 App 别名/名称
@@ -187,15 +190,18 @@ export async function loadApplicationsWithAliases(): Promise<FormattedAppItem[]>
     const displayName = custom || backendName || autoAlias;
 
     appMap.set(app.appId, {
+      id: app.id,
       appId: app.appId,
       name: displayName,
       rawName: app.name,
+      description: app.description,
       customAlias: custom,
       autoAlias,
       isCustom: Boolean(custom),
       timeZone: app.timeZone || 'UTC',
       today: app.today || new Date().toISOString().slice(0, 10),
     });
+
   }
 
   // 2. 处理前端手动登记的应用

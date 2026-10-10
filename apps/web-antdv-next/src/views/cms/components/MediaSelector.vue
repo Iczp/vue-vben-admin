@@ -516,17 +516,28 @@ defineExpose({
                   @click="handleSelectAsset(asset)"
                 >
                   <div
-                    class="relative flex h-24 items-center justify-center bg-muted/20"
+                    class="relative flex h-24 items-center justify-center overflow-hidden bg-muted/20 select-none"
                   >
-                    <img
+                    <template
                       v-if="
                         asset.thumbnailUrl || asset.type === AssetType.Image
                       "
-                      :src="asset.thumbnailUrl || asset.url"
-                      :alt="asset.fileName"
-                      loading="lazy"
-                      class="h-full w-full object-contain"
-                    />
+                    >
+                      <img
+                        :src="asset.thumbnailUrl || asset.url"
+                        aria-hidden="true"
+                        class="absolute inset-0 h-full w-full object-cover filter blur-md scale-125 opacity-60 pointer-events-none select-none"
+                      />
+                      <div
+                        class="absolute inset-0 bg-black/15 backdrop-blur-[2px] pointer-events-none"
+                      ></div>
+                      <img
+                        :src="asset.thumbnailUrl || asset.url"
+                        :alt="asset.fileName"
+                        loading="lazy"
+                        class="relative z-10 h-full w-full object-contain"
+                      />
+                    </template>
                     <span v-else class="text-2xl">{{
                       asset.type === AssetType.Video
                         ? '▶'

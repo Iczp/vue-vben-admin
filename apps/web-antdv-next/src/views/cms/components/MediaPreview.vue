@@ -58,15 +58,24 @@ function handleSetCover() {
   >
     <template v-if="asset && details">
       <div
-        class="mb-4 flex min-h-36 items-center justify-center overflow-hidden rounded bg-muted/20"
+        class="relative mb-4 flex min-h-36 items-center justify-center overflow-hidden rounded bg-muted/20 select-none"
       >
-        <Image
-          v-if="asset.type === AssetType.Image"
-          :src="asset.url"
-          :alt="asset.fileName"
-          :preview="false"
-          class="max-h-[460px] object-contain"
-        />
+        <template v-if="asset.type === AssetType.Image">
+          <img
+            :src="asset.url"
+            aria-hidden="true"
+            class="absolute inset-0 h-full w-full object-cover filter blur-lg scale-125 opacity-60 pointer-events-none select-none"
+          />
+          <div
+            class="absolute inset-0 bg-black/15 backdrop-blur-[2px] pointer-events-none"
+          ></div>
+          <Image
+            :src="asset.url"
+            :alt="asset.fileName"
+            :preview="false"
+            class="relative z-10 max-h-[460px] object-contain"
+          />
+        </template>
         <video
           v-else-if="asset.type === AssetType.Video"
           :key="`${asset.url}_${asset.thumbnailUrl || ''}`"

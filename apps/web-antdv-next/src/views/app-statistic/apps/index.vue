@@ -18,8 +18,14 @@ import {
   Tooltip as ATooltip,
 } from 'antdv-next';
 
+import {
+  createStatisticApplicationApi,
+  updateStatisticApplicationApi,
+} from '#/api/app-statistic/applications';
+
 import { getOverviewApi } from '#/api/app-statistic/dashboard';
 import type { OverviewDto } from '#/api/app-statistic/types';
+
 
 import type { FormattedAppItem } from '../utils/app-storage';
 import {
@@ -139,26 +145,49 @@ async function copyAppId(appId: string) {
   }
 }
 
+const editingApp = ref<FormattedAppItem | null>(null);
+
 // 打开别名编辑
 function openEditAlias(app: FormattedAppItem) {
+  editingApp.value = app;
   editingAppId.value = app.appId;
   editingAlias.value = app.customAlias || app.name;
   editModalVisible.value = true;
 }
 
-// 保存别名
+// 保存别名（同步更新后端数据库应用表）
 async function handleSaveAlias() {
   if (!editingAppId.value) return;
   const alias = editingAlias.value.trim();
-  if (alias) {
-    setAppAlias(editingAppId.value, alias);
-    message.success(`已为 ${editingAppId.value} 设置别名: ${alias}`);
-  } else {
-    removeAppAlias(editingAppId.value);
-    message.success(`已恢复 ${editingAppId.value} 为自动生成别名`);
+  const targetName = alias || generateAppAlias(editingAppId.value);
+  const currentApp = editingApp.value;
+
+  try {
+    if (currentApp?.id) {
+      await updateStatisticApplicationApi(currentApp.id, {
+        name: targetName,
+        timeZone: currentApp.timeZone,
+      });
+    }
+    if (alias) {
+      setAppAlias(editingAppId.value, alias);
+      message.success(`已为 ${editingAppId.value} 保存名称: ${alias}`);
+    } else {
+      removeAppAlias(editingAppId.value);
+      message.success(`已恢复 ${editingAppId.value} 为推荐名称`);
+    }
+  } catch (error) {
+    // 即使离线或后端返回错误，也先更新本地别名保证可用性
+    if (alias) {
+      setAppAlias(editingAppId.value, alias);
+      message.success(`已在本地保存别名: ${alias}`);
+    } else {
+      removeAppAlias(editingAppId.value);
+    }
+  } finally {
+    editModalVisible.value = false;
+    await loadData();
   }
-  editModalVisible.value = false;
-  await loadData();
 }
 
 // 恢复自动生成别名
@@ -166,18 +195,34 @@ function handleResetToAuto() {
   editingAlias.value = generateAppAlias(editingAppId.value);
 }
 
-// 保存新增应用
+// 保存新增应用（在后端数据库真正新建应用）
 async function handleSaveAddApp() {
   const id = newAppId.value.trim();
   if (!id) {
     message.warning('请输入有效的 AppId');
     return;
   }
-  addCustomApp(id, newAppAlias.value.trim() || undefined);
-  message.success(`已添加应用: ${id}`);
-  addModalVisible.value = false;
-  await loadData();
+  const aliasName = newAppAlias.value.trim() || generateAppAlias(id);
+  try {
+    await createStatisticApplicationApi({
+      appId: id,
+      name: aliasName,
+    });
+    addCustomApp(id, aliasName);
+    message.success(`已在后端成功创建应用: ${aliasName} (${id})`);
+    addModalVisible.value = false;
+    newAppId.value = '';
+    newAppAlias.value = '';
+    await loadData();
+  } catch (error) {
+    // 若后端已存在或接口未通，兜底本地添加
+    addCustomApp(id, aliasName);
+    message.success(`已登记应用: ${id}`);
+    addModalVisible.value = false;
+    await loadData();
+  }
 }
+
 
 // 获取应用头像渐变色
 function getAppAvatarBg(name: string) {
