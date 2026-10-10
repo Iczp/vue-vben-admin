@@ -21,20 +21,30 @@ import { SelectOption as ASelectOption } from 'antdv-next';
 import { DescriptionsItem as ADescriptionsItem } from 'antdv-next';
 import dayjs, { type Dayjs } from 'dayjs';
 
-import { getStatisticApplicationsApi, type StatisticApplicationDto } from '#/api/app-statistic/applications';
 import { getEventsApi } from '#/api/app-statistic/event';
 import { $t } from '#/locales';
 
+import {
+  AppHeaderSwitch,
+  DeviceDisplay,
+  UserDisplay,
+} from '../components';
 import StatisticError from '../components/StatisticError.vue';
 import ATable from '../components/StatisticTable.vue';
-import { getStoredAppId, setStoredAppId } from '../utils/app-storage';
+import type { FormattedAppItem } from '../utils/app-storage';
+import {
+  getStoredAppId,
+  loadApplicationsWithAliases,
+  onAppChange,
+  setStoredAppId,
+} from '../utils/app-storage';
 
 const router = useRouter();
 const route = useRoute();
 const loading = ref(false);
 const failed = ref(false);
 let requestId = 0;
-const applications = ref<StatisticApplicationDto[]>([]);
+const applications = ref<FormattedAppItem[]>([]);
 const appOptions = ref<{ label: string; value: string }[]>([]);
 const eventList = ref<EventDto[]>([]);
 const totalCount = ref(0);
@@ -221,18 +231,16 @@ const tableColumns = [
     ellipsis: true,
   },
   {
-    title: $t('appStatistic.text127'),
+    title: '用户 (名称 / ID)',
     dataIndex: 'userId',
     key: 'userId',
-    width: 140,
-    ellipsis: true,
+    width: 170,
   },
   {
-    title: $t('appStatistic.text128'),
+    title: '设备 (名称 / ID)',
     dataIndex: 'deviceId',
     key: 'deviceId',
-    width: 140,
-    ellipsis: true,
+    width: 180,
   },
   {
     title: $t('appStatistic.text071'),
@@ -244,11 +252,21 @@ const tableColumns = [
 
 onMounted(async () => {
   try {
-    applications.value = await getStatisticApplicationsApi();
-    appOptions.value = applications.value.map(app => ({ label: app.name, value: app.appId }));
+    applications.value = await loadApplicationsWithAliases();
+    appOptions.value = applications.value.map((app) => ({
+      label: `${app.name} (${app.appId})`,
+      value: app.appId,
+    }));
   } catch {
     // ignore
   }
+
+  onAppChange((appId) => {
+    if (appId && appId !== searchInput.value.appId) {
+      searchInput.value.appId = appId;
+      handleSearch();
+    }
+  });
 
   for (const key of searchFields) {
     const value = route.query[key];
@@ -293,9 +311,12 @@ const ARangePicker = DatePicker.RangePicker;
           {{ $t('appStatistic.text183') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">
-        {{ $t('appStatistic.text011') }}
-      </AButton>
+      <div class="flex flex-wrap items-center gap-2">
+        <AppHeaderSwitch v-model="searchInput.appId" @change="handleSearch" />
+        <AButton :loading="loading" size="small" @click="loadData">
+          {{ $t('appStatistic.text011') }}
+        </AButton>
+      </div>
     </div>
 
     <!-- Search Form Card -->
@@ -450,7 +471,15 @@ const ARangePicker = DatePicker.RangePicker;
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.dataIndex === 'eventName'">
+          <template v-if="column.key === 'userId'">
+            <UserDisplay :userId="record.userId" />
+          </template>
+
+          <template v-else-if="column.key === 'deviceId'">
+            <DeviceDisplay :deviceId="record.deviceId" />
+          </template>
+
+          <template v-else-if="column.dataIndex === 'eventName'">
             <ATag color="blue">{{ record.eventName }}</ATag>
           </template>
 
@@ -523,16 +552,12 @@ const ARangePicker = DatePicker.RangePicker;
             }}</span>
           </ADescriptionsItem>
 
-          <ADescriptionsItem label="User ID" :span="2">
-            <span class="font-mono text-xs">{{
-              selectedEvent.userId || '-'
-            }}</span>
+          <ADescriptionsItem label="用户 (User)" :span="2">
+            <UserDisplay :userId="selectedEvent.userId" />
           </ADescriptionsItem>
 
-          <ADescriptionsItem label="Device ID" :span="2">
-            <span class="font-mono text-xs">{{
-              selectedEvent.deviceId || '-'
-            }}</span>
+          <ADescriptionsItem label="设备 (Device)" :span="2">
+            <DeviceDisplay :deviceId="selectedEvent.deviceId" />
           </ADescriptionsItem>
         </ADescriptions>
 

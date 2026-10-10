@@ -20,6 +20,7 @@ import { getVersionAnalysisApi } from '#/api/app-statistic/version';
 import { $t } from '#/locales';
 
 import {
+  AppHeaderSwitch,
   DimensionPieChart,
   MetricCard,
   MetricCardGroup,
@@ -136,9 +137,12 @@ onMounted(() => {
           {{ $t('appStatistic.text186') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">
-        {{ $t('appStatistic.text011') }}
-      </AButton>
+      <div class="flex flex-wrap items-center gap-2">
+        <AppHeaderSwitch v-model="query.appId" @change="loadData" />
+        <AButton :loading="loading" size="small" @click="loadData">
+          {{ $t('appStatistic.text011') }}
+        </AButton>
+      </div>
     </div>
 
     <!-- Filter Bar -->

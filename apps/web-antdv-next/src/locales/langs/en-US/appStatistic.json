@@ -239,5 +239,6 @@
   "channelLaunches": "Launches",
   "channelNewDevices": "New devices",
   "applicationsFailed": "Cannot load applications. Enter an AppId.",
-  "statisticsTimeZone": "Statistics time zone: {zone} (selected dates use this zone)"
+  "statisticsTimeZone": "Statistics time zone: {zone} (selected dates use this zone)",
+  "home": "Apps Overview"
 }

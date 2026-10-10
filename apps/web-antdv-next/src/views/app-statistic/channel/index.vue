@@ -18,6 +18,7 @@ import { getChannelAnalysisApi } from '#/api/app-statistic/channel';
 import { $t } from '#/locales';
 
 import {
+  AppHeaderSwitch,
   DimensionBarChart,
   DimensionPieChart,
   StatisticFilterBar,
@@ -150,9 +151,12 @@ onMounted(() => {
           {{ $t('appStatistic.text181') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">
-        {{ $t('appStatistic.text011') }}
-      </AButton>
+      <div class="flex flex-wrap items-center gap-2">
+        <AppHeaderSwitch v-model="query.appId" @change="loadData" />
+        <AButton :loading="loading" size="small" @click="loadData">
+          {{ $t('appStatistic.text011') }}
+        </AButton>
+      </div>
     </div>
 
     <!-- Filter Bar -->

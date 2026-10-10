@@ -11,8 +11,18 @@ const routes: RouteRecordRaw[] = [
     },
     name: 'AppStatistic',
     path: '/app-statistic',
-    redirect: '/app-statistic/overview',
+    redirect: '/app-statistic/apps',
     children: [
+      {
+        component: () => import('#/views/app-statistic/apps/index.vue'),
+        meta: {
+          authority: ['AppStatistic.Admin.Default'],
+          icon: 'lucide:layout-grid',
+          title: $t('appStatistic.home'),
+        },
+        name: 'AppStatisticHome',
+        path: 'apps',
+      },
       {
         component: () => import('#/views/app-statistic/overview/index.vue'),
         meta: {

@@ -21,6 +21,7 @@ import { getDeviceAnalysisApi } from '#/api/app-statistic/device';
 import { $t } from '#/locales';
 
 import {
+  AppHeaderSwitch,
   DimensionBarChart,
   DimensionPieChart,
   MetricCard,
@@ -195,7 +196,8 @@ onMounted(() => {
           {{ $t('appStatistic.text180') }}
         </p>
       </div>
-      <div class="flex items-center space-x-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <AppHeaderSwitch v-model="query.appId" @change="loadData" />
         <AButton size="small" type="primary" @click="goToDeviceList">
           {{ $t('appStatistic.text088') }}
         </AButton>

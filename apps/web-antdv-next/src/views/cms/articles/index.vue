@@ -38,6 +38,7 @@ import {
 } from '#/api/cms';
 
 import { useColumns } from './data';
+import CategoryTreeSelect from '../components/CategoryTreeSelect.vue';
 import ArticleModal from './modules/article-modal.vue';
 import ReviewModal from './modules/review-modal.vue';
 import RevisionModal from './modules/revision-modal.vue';
@@ -522,12 +523,11 @@ function onFilterChange() {
               @change="onFilterChange"
             />
 
-            <Select
+            <CategoryTreeSelect
               v-model:value="filters.categoryId"
               placeholder="全部栏目分类"
               class="w-[170px]"
               allow-clear
-              :options="categoryOptions"
               @change="onFilterChange"
             />
 
@@ -608,12 +608,13 @@ function onFilterChange() {
       <div class="py-4 space-y-4">
         <div>
           <label class="block text-sm font-medium mb-1">选择目标栏目分类</label>
-          <Select
+          <CategoryTreeSelect
             v-model:value="batchCategoryIds"
-            mode="multiple"
-            placeholder="请选择要关联的分类（支持多选）"
+            multiple
+            tree-checkable
+            :tree-check-strictly="true"
+            placeholder="请选择要关联的分类（支持树型勾选与搜索）"
             class="w-full"
-            :options="categoryOptions"
           />
         </div>
         <div class="flex items-center justify-between p-3 bg-muted/20 rounded border">

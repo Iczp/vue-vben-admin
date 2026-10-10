@@ -24,6 +24,7 @@ import { getDashboardApi } from '#/api/app-statistic/dashboard';
 import { $t } from '#/locales';
 
 import {
+  AppHeaderSwitch,
   DimensionBarChart,
   DimensionPieChart,
   MetricCard,
@@ -126,7 +127,10 @@ onMounted(() => {
           {{ $t('appStatistic.text178') }}
         </p>
       </div>
-      <div class="flex items-center space-x-2 text-xs text-muted-foreground">
+      <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <!-- 页面右上角 App 切换器 -->
+        <AppHeaderSwitch v-model="query.appId" @change="loadData" />
+
         <Popconfirm
           v-if="hasAccessByCodes(['AppStatistic.Admin.Manage'])"
           :title="

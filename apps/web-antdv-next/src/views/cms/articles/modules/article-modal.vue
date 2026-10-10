@@ -40,6 +40,7 @@ import {
   updateArticleApi,
   uploadAssetApi,
 } from '#/api/cms';
+import CategoryTreeSelect from '#/views/cms/components/CategoryTreeSelect.vue';
 import MediaSelector from '#/views/cms/components/MediaSelector.vue';
 
 const emit = defineEmits(['success']);
@@ -389,21 +390,21 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
             <Row :gutter="16">
               <Col :span="12">
                 <FormItem label="文章分类">
-                  <Select
+                  <CategoryTreeSelect
                     v-model:value="categoryIds"
-                    mode="multiple"
+                    multiple
+                    tree-checkable
+                    :tree-check-strictly="true"
                     placeholder="选择所属分类（支持多选）"
-                    :options="categoryOptions"
                     allow-clear
                   />
                 </FormItem>
               </Col>
               <Col :span="12">
                 <FormItem label="主分类">
-                  <Select
+                  <CategoryTreeSelect
                     v-model:value="mainCategoryId"
                     placeholder="选择主分类"
-                    :options="categoryOptions"
                     allow-clear
                   />
                 </FormItem>

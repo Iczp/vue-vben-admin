@@ -17,18 +17,28 @@ import {
 import { SelectOption as ASelectOption } from 'antdv-next';
 import dayjs from 'dayjs';
 
-import { getStatisticApplicationsApi, type StatisticApplicationDto } from '#/api/app-statistic/applications';
 import { getDevicesApi } from '#/api/app-statistic/device';
 import { $t } from '#/locales';
 
+import {
+  AppHeaderSwitch,
+  DeviceDisplay,
+  UserDisplay,
+} from '../components';
 import StatisticError from '../components/StatisticError.vue';
 import ATable from '../components/StatisticTable.vue';
-import { getStoredAppId, setStoredAppId } from '../utils/app-storage';
+import type { FormattedAppItem } from '../utils/app-storage';
+import {
+  getStoredAppId,
+  loadApplicationsWithAliases,
+  onAppChange,
+  setStoredAppId,
+} from '../utils/app-storage';
 
 const router = useRouter();
 const route = useRoute();
 
-const applications = ref<StatisticApplicationDto[]>([]);
+const applications = ref<FormattedAppItem[]>([]);
 const appOptions = ref<{ label: string; value: string }[]>([]);
 const loading = ref(false);
 const failed = ref(false);
@@ -148,11 +158,10 @@ function viewDetail(record: DeviceDto) {
 
 const tableColumns = [
   {
-    title: $t('appStatistic.text119'),
+    title: '用户 (名称 / ID)',
     dataIndex: 'lastUserId',
     key: 'lastUserId',
-    width: 180,
-    ellipsis: true,
+    width: 200,
   },
   {
     title: $t('appStatistic.text115'),
@@ -163,11 +172,10 @@ const tableColumns = [
       text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
   },
   {
-    title: $t('appStatistic.text120'),
+    title: '设备 (名称 / 标识)',
     dataIndex: 'deviceKey',
     key: 'deviceKey',
-    width: 200,
-    ellipsis: true,
+    width: 220,
   },
   {
     title: $t('appStatistic.text015'),
@@ -233,11 +241,21 @@ const tableColumns = [
 
 onMounted(async () => {
   try {
-    applications.value = await getStatisticApplicationsApi();
-    appOptions.value = applications.value.map(app => ({ label: app.name, value: app.appId }));
+    applications.value = await loadApplicationsWithAliases();
+    appOptions.value = applications.value.map((app) => ({
+      label: `${app.name} (${app.appId})`,
+      value: app.appId,
+    }));
   } catch {
     // ignore
   }
+
+  onAppChange((appId) => {
+    if (appId && appId !== searchInput.value.appId) {
+      searchInput.value.appId = appId;
+      handleSearch();
+    }
+  });
 
   for (const key of searchFields) {
     const value = route.query[key];
@@ -289,9 +307,12 @@ onMounted(async () => {
           {{ $t('appStatistic.text182') }}
         </p>
       </div>
-      <AButton :loading="loading" size="small" @click="loadData">
-        {{ $t('appStatistic.text011') }}
-      </AButton>
+      <div class="flex flex-wrap items-center gap-2">
+        <AppHeaderSwitch v-model="searchInput.appId" @change="handleSearch" />
+        <AButton :loading="loading" size="small" @click="loadData">
+          {{ $t('appStatistic.text011') }}
+        </AButton>
+      </div>
     </div>
 
     <!-- Search Form Card -->
@@ -425,7 +446,19 @@ onMounted(async () => {
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.dataIndex === 'platform'">
+          <template v-if="column.key === 'lastUserId'">
+            <UserDisplay :userId="record.lastUserId" />
+          </template>
+
+          <template v-else-if="column.key === 'deviceKey'">
+            <DeviceDisplay
+              :device="record"
+              :deviceId="record.id"
+              :deviceKey="record.deviceKey"
+            />
+          </template>
+
+          <template v-else-if="column.dataIndex === 'platform'">
             <ATag :color="record.platform === 'ios' ? 'black' : 'green'">
               {{ record.platform }}
             </ATag>

@@ -17,7 +17,7 @@ import dayjs from 'dayjs';
 import { getDeviceDetailApi } from '#/api/app-statistic/device';
 import { $t } from '#/locales';
 
-import { TrendChart } from '../components';
+import { DeviceDisplay, TrendChart, UserDisplay } from '../components';
 import StatisticError from '../components/StatisticError.vue';
 import ATable from '../components/StatisticTable.vue';
 
@@ -126,6 +126,10 @@ watch(() => route.params.id, loadDetail, { immediate: true });
             bordered
             size="small"
           >
+            <ADescriptionsItem label="设备名称" :span="2">
+              <DeviceDisplay :device="deviceDetail.device" :clickable="false" />
+            </ADescriptionsItem>
+
             <ADescriptionsItem label="DeviceKey" :span="2">
               <span class="font-mono text-xs">{{
                 deviceDetail.device.deviceKey
@@ -171,10 +175,8 @@ watch(() => route.params.id, loadDetail, { immediate: true });
               {{ deviceDetail.device.timeZone || '-' }}
             </ADescriptionsItem>
 
-            <ADescriptionsItem :label="$t('appStatistic.text112')">
-              <span class="font-mono text-xs">{{
-                deviceDetail.device.lastUserId || '-'
-              }}</span>
+            <ADescriptionsItem :label="$t('appStatistic.text112')" :span="2">
+              <UserDisplay :userId="deviceDetail.device.lastUserId" />
             </ADescriptionsItem>
 
             <ADescriptionsItem :label="$t('appStatistic.text113')">
@@ -226,7 +228,7 @@ watch(() => route.params.id, loadDetail, { immediate: true });
             size="small"
             :columns="[
               { title: 'Session ID', dataIndex: 'sessionId' },
-              { title: $t('appStatistic.text127'), dataIndex: 'userId' },
+              { title: '用户 (名称 / ID)', dataIndex: 'userId', key: 'userId' },
               {
                 title: $t('appStatistic.text131'),
                 dataIndex: 'startTime',
@@ -238,7 +240,13 @@ watch(() => route.params.id, loadDetail, { immediate: true });
                 dataIndex: 'durationSeconds',
               },
             ]"
-          />
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'userId'">
+                <UserDisplay :userId="record.userId" />
+              </template>
+            </template>
+          </ATable>
         </ACard>
         <!-- Recent Events -->
         <ACard

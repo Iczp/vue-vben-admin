@@ -20,11 +20,15 @@ import { RadioButton as ARadioButton } from 'antdv-next';
 import { RadioGroup as ARadioGroup } from 'antdv-next';
 import dayjs from 'dayjs';
 
-import { getStatisticApplicationsApi } from '#/api/app-statistic/applications';
-import type { StatisticApplicationDto } from '#/api/app-statistic/applications';
 import { $t } from '#/locales';
 
-import { getStoredAppId, setStoredAppId } from '../utils/app-storage';
+import type { FormattedAppItem } from '../utils/app-storage';
+import {
+  getStoredAppId,
+  loadApplicationsWithAliases,
+  onAppChange as listenAppChange,
+  setStoredAppId,
+} from '../utils/app-storage';
 import StatisticDateRange from './StatisticDateRange.vue';
 
 interface Props {
@@ -53,39 +57,73 @@ const emit = defineEmits<{
 const route = useRoute();
 const router = useRouter();
 
-const applications = ref<StatisticApplicationDto[]>([]);
+const applications = ref<FormattedAppItem[]>([]);
 const applicationsFailed = ref(false);
-const appOptions = computed(() => applications.value.map(app => ({ label: app.name, value: app.appId })));
-const timeZone = computed(() => applications.value.find(app => app.appId === internalQuery.value.appId)?.timeZone || 'UTC');
+const appOptions = computed(() =>
+  applications.value.map((app) => ({
+    label: `${app.name} (${app.appId})`,
+    value: app.appId,
+  })),
+);
+const timeZone = computed(
+  () =>
+    applications.value.find((app) => app.appId === internalQuery.value.appId)
+      ?.timeZone || 'UTC',
+);
 function onAppChange(value: unknown) {
   if (typeof value !== 'string') return;
   internalQuery.value.appId = value;
   setStoredAppId(value);
-  const app = applications.value.find(item => item.appId === value);
+  const app = applications.value.find((item) => item.appId === value);
   if (app && currentShortcut.value !== 'custom') {
-    const span = Math.max(0, dayjs(internalQuery.value.endDate).diff(dayjs(internalQuery.value.startDate), 'day'));
+    const span = Math.max(
+      0,
+      dayjs(internalQuery.value.endDate).diff(
+        dayjs(internalQuery.value.startDate),
+        'day',
+      ),
+    );
     internalQuery.value.endDate = app.today;
-    internalQuery.value.startDate = dayjs(app.today).subtract(span, 'day').format('YYYY-MM-DD');
+    internalQuery.value.startDate = dayjs(app.today)
+      .subtract(span, 'day')
+      .format('YYYY-MM-DD');
   }
   handleSearch();
 }
+
 onMounted(async () => {
   try {
-    applications.value = await getStatisticApplicationsApi();
+    applications.value = await loadApplicationsWithAliases();
     const storedAppId = getStoredAppId();
-    const validStoredApp = storedAppId && applications.value.some(app => app.appId === storedAppId) ? storedAppId : undefined;
+    const validStoredApp =
+      storedAppId &&
+      applications.value.some((app) => app.appId === storedAppId)
+        ? storedAppId
+        : undefined;
     const initialAppId =
-      (typeof route.query.appId === 'string' && route.query.appId !== 'default' ? route.query.appId : undefined) ||
-      (props.modelValue.appId && props.modelValue.appId !== 'default' ? props.modelValue.appId : undefined) ||
+      (typeof route.query.appId === 'string' && route.query.appId !== 'default'
+        ? route.query.appId
+        : undefined) ||
+      (props.modelValue.appId && props.modelValue.appId !== 'default'
+        ? props.modelValue.appId
+        : undefined) ||
       validStoredApp ||
-      (applications.value[0]?.appId);
+      applications.value[0]?.appId;
 
     if (initialAppId && initialAppId !== internalQuery.value.appId) {
       onAppChange(initialAppId);
     } else if (initialAppId) {
       setStoredAppId(initialAppId);
     }
-  } catch { applicationsFailed.value = true; }
+  } catch {
+    applicationsFailed.value = true;
+  }
+
+  listenAppChange((appId) => {
+    if (appId && appId !== internalQuery.value.appId) {
+      onAppChange(appId);
+    }
+  });
 });
 const invalidRange = ref(false);
 const currentShortcut = ref<string>('7d');

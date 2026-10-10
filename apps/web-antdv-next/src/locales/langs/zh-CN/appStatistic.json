@@ -239,5 +239,6 @@
   "channelLaunches": "启动次数",
   "channelNewDevices": "新增设备",
   "applicationsFailed": "应用列表加载失败，请输入 AppId",
-  "statisticsTimeZone": "统计时区：{zone}（筛选日期按此时区计算）"
+  "statisticsTimeZone": "统计时区：{zone}（筛选日期按此时区计算）",
+  "home": "统计首页"
 }
