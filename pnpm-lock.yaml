@@ -801,6 +801,10 @@ importers:
       vue-router:
         specifier: 'catalog:'
         version: 5.2.0(@vue/compiler-sfc@3.5.41)(esbuild@0.28.1)(pinia@4.0.2(@vue/devtools-api@8.1.5)(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3)))(rolldown@1.2.4)(rollup@4.62.2)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(less@4.8.0(supports-color@10.2.2))(sass-embedded@1.100.0)(sass@1.101.6)(terser@5.49.0)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
+    devDependencies:
+      '@types/qrcode':
+        specifier: 'catalog:'
+        version: 1.5.6
 
   apps/web-ele:
     dependencies:
@@ -15099,13 +15103,13 @@ snapshots:
 
   '@types/qrcode@1.5.6':
     dependencies:
-      '@types/node': 26.1.1
+      '@types/node': 26.2.0
 
   '@types/qs@6.15.1': {}
 
   '@types/readdir-glob@1.1.5':
     dependencies:
-      '@types/node': 26.1.1
+      '@types/node': 26.2.0
 
   '@types/resolve@1.20.2': {}
 

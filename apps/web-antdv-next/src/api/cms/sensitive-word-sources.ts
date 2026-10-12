@@ -84,11 +84,15 @@ export async function checkSensitiveWordSourceApi(id: string) {
 }
 
 /**
- * 触发外部数据源同步，返回生成的批次 Id
+ * 触发外部数据源同步，返回生成的批次 Id（支持长超时）
  */
 export async function syncSensitiveWordSourceApi(id: string) {
   return requestClient.post<string>(
     `/cms/admin/sensitive-word-sources/${id}/sync`,
+    undefined,
+    {
+      timeout: 300_000, // 5 分钟超时，防止大词库抓取解析被浏览器端中断
+    },
   );
 }
 

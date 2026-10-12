@@ -7,8 +7,7 @@ import type {
 import { reactive, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { RotateCw } from '@vben/icons';
-import { Check, X } from 'lucide-vue-next';
+import { Check, RotateCw, X } from '@vben/icons';
 
 import {
   Alert,

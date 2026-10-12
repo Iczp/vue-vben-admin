@@ -45,11 +45,15 @@ export async function getSensitiveWordSyncBatchItemsApi(
 }
 
 /**
- * 整批应用同步批次到草稿管理态
+ * 整批应用同步批次到草稿管理态（大数据量支持长超时）
  */
 export async function applySensitiveWordSyncBatchApi(id: string) {
   return requestClient.post<SensitiveWordSyncBatchDto>(
     `/cms/admin/sensitive-word-sync-batches/${id}/apply`,
+    undefined,
+    {
+      timeout: 300_000, // 5 分钟超时，防止大词库应用批次被浏览器端中断
+    },
   );
 }
 
