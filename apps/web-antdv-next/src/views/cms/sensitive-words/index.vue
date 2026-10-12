@@ -1,12 +1,13 @@
 <script lang="ts" setup>
-import type { SensitiveWordDto } from '#/api/cms';
+import type { SensitiveWordDto, SensitiveWordRulePreviewDto } from '#/api/cms';
 
-import { reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { Download, Inbox, Plus, RotateCw } from '@vben/icons';
 
-import { Button, Card, Input, message, Modal, Select } from 'antdv-next';
+import { Alert, Button, Card, Input, message, Modal, Select } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -16,6 +17,7 @@ import {
   exportSensitiveWordsApi,
   getSensitiveWordsApi,
   type ModerationScene,
+  previewSensitiveWordRuleVersionApi,
   type SensitiveRiskLevel,
 } from '#/api/cms';
 
@@ -23,16 +25,21 @@ import { categoryOptions, riskLevelOptions, sceneOptions, useColumns } from './d
 import ImportModal from './modules/import-modal.vue';
 import WordModal from './modules/word-modal.vue';
 
+const router = useRouter();
+const preview = ref<SensitiveWordRulePreviewDto | null>(null);
+
 const filters = reactive<{
   category?: string;
   enabledFilter?: number;
   keyword: string;
+  lockedFilter?: number;
   riskLevel?: SensitiveRiskLevel;
   scene?: ModerationScene;
 }>({
   category: undefined,
   enabledFilter: undefined,
   keyword: '',
+  lockedFilter: undefined,
   riskLevel: undefined,
   scene: undefined,
 });
@@ -182,6 +189,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
               filters.enabledFilter === undefined
                 ? undefined
                 : filters.enabledFilter === 1,
+            isLocked:
+              filters.lockedFilter === undefined
+                ? undefined
+                : filters.lockedFilter === 1,
             keyword: filters.keyword.trim() || undefined,
             maxResultCount: page.pageSize,
             riskLevel: filters.riskLevel,
@@ -202,8 +213,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
 });
 
+async function loadPreview() {
+  try {
+    preview.value = await previewSensitiveWordRuleVersionApi();
+  } catch (error) {
+    console.error('获取草稿预览失败', error);
+  }
+}
+
+onMounted(() => {
+  loadPreview();
+});
+
 function refreshGrid() {
   gridApi.query();
+  loadPreview();
 }
 
 function onFilterChange() {
@@ -214,6 +238,25 @@ function onFilterChange() {
 <template>
   <Page auto-content-height>
     <div class="h-full flex flex-col gap-3">
+      <!-- 草稿状态未发布预警横幅 -->
+      <Alert
+        v-if="preview?.hasUnpublishedChanges"
+        type="warning"
+        show-icon
+        class="shrink-0"
+      >
+        <template #message>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-sm font-medium">
+              敏感词库当前存在未发布草稿修改（修订号 #{{ preview?.currentDraftRevision }}）。线上业务仍在使用版本 v{{ preview?.activeVersion || '1' }}。
+            </span>
+            <Button size="small" type="primary" @click="router.push('/cms/sensitive-word-rule-versions')">
+              前往版本发布中心
+            </Button>
+          </div>
+        </template>
+      </Alert>
+
       <!-- 过滤搜索栏 -->
       <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -261,6 +304,18 @@ function onFilterChange() {
               :options="[
                 { label: '启用', value: 1 },
                 { label: '禁用', value: 0 },
+              ]"
+              @change="onFilterChange"
+            />
+
+            <Select
+              v-model:value="filters.lockedFilter"
+              placeholder="锁定保护"
+              class="w-[120px]"
+              allow-clear
+              :options="[
+                { label: '已锁定', value: 1 },
+                { label: '未锁定', value: 0 },
               ]"
               @change="onFilterChange"
             />

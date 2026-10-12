@@ -107,6 +107,18 @@ export function useColumns(
       cellRender: {
         name: 'CellTag',
         options: [
+          { color: 'orange', label: '锁定保护', value: true },
+          { color: 'default', label: '未锁定', value: false },
+        ],
+      },
+      field: 'isLocked',
+      title: '锁定保护',
+      width: 95,
+    },
+    {
+      cellRender: {
+        name: 'CellTag',
+        options: [
           { color: 'success', label: '启用', value: true },
           { color: 'default', label: '禁用', value: false },
         ],

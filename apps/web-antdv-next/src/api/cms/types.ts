@@ -45,12 +45,44 @@ export const CmsPermissions = {
       Delete: 'Cms.Moderations.SensitiveWords.Delete',
       Import: 'Cms.Moderations.SensitiveWords.Import',
       Export: 'Cms.Moderations.SensitiveWords.Export',
+      OverrideLocked: 'Cms.Moderations.SensitiveWords.OverrideLocked',
     },
     Whitelists: {
       Default: 'Cms.Moderations.Whitelists',
       Create: 'Cms.Moderations.Whitelists.Create',
       Update: 'Cms.Moderations.Whitelists.Update',
       Delete: 'Cms.Moderations.Whitelists.Delete',
+    },
+    Sources: {
+      Default: 'Cms.Moderations.Sources',
+      Create: 'Cms.Moderations.Sources.Create',
+      Update: 'Cms.Moderations.Sources.Update',
+      Sync: 'Cms.Moderations.Sources.Sync',
+      SnapshotDownload: 'Cms.Moderations.Sources.SnapshotDownload',
+      Initialize: 'Cms.Moderations.Sources.Initialize',
+    },
+    SyncBatches: {
+      Default: 'Cms.Moderations.SyncBatches',
+      Apply: 'Cms.Moderations.SyncBatches.Apply',
+      Ignore: 'Cms.Moderations.SyncBatches.Ignore',
+      Retry: 'Cms.Moderations.SyncBatches.Retry',
+      Cancel: 'Cms.Moderations.SyncBatches.Cancel',
+    },
+    MappingProfiles: {
+      Default: 'Cms.Moderations.MappingProfiles',
+      Create: 'Cms.Moderations.MappingProfiles.Create',
+      Update: 'Cms.Moderations.MappingProfiles.Update',
+      Delete: 'Cms.Moderations.MappingProfiles.Delete',
+    },
+    RuleVersions: {
+      Default: 'Cms.Moderations.RuleVersions',
+      Publish: 'Cms.Moderations.RuleVersions.Publish',
+      PublishEmpty: 'Cms.Moderations.RuleVersions.PublishEmpty',
+      Rollback: 'Cms.Moderations.RuleVersions.Rollback',
+    },
+    Runtime: {
+      Default: 'Cms.Moderations.Runtime',
+      Manage: 'Cms.Moderations.Runtime.Manage',
     },
     Test: 'Cms.Moderations.Test',
   },
@@ -816,15 +848,88 @@ export const SensitiveWordCategories = {
   Custom: 'Custom',
 } as const;
 
+export enum SensitiveWordSourceType {
+  Git = 10,
+  Http = 20,
+  LocalFile = 30,
+}
+
+export enum SensitiveWordSyncMode {
+  Manual = 0,
+  ReviewBeforeApply = 10,
+  Automatic = 20,
+}
+
+export enum SensitiveWordSourceStatus {
+  Idle = 0,
+  Checking = 10,
+  Syncing = 20,
+  Error = 30,
+}
+
+export enum SensitiveWordBatchStatus {
+  Queued = 0,
+  Fetching = 10,
+  Parsing = 20,
+  Diffing = 30,
+  PendingReview = 40,
+  ReadyToApply = 50,
+  Applying = 60,
+  Applied = 70,
+  Ignored = 80,
+  Superseded = 90,
+  Failed = 100,
+  Cancelled = 110,
+}
+
+export enum SensitiveWordChangeType {
+  Unchanged = 0,
+  Added = 10,
+  Updated = 20,
+  Removed = 30,
+  Conflict = 40,
+}
+
+export enum SensitiveWordApplyStatus {
+  Pending = 0,
+  Applied = 10,
+  Skipped = 20,
+  Failed = 30,
+}
+
+export enum SensitiveWordRuleVersionStatus {
+  Draft = 0,
+  Ready = 10,
+  Active = 20,
+  Archived = 30,
+}
+
+export enum SensitiveWordActivationAction {
+  Initial = 0,
+  Publish = 10,
+  Rollback = 20,
+  Bootstrap = 30,
+}
+
+export enum ModerationTestTarget {
+  CurrentPublished = 0,
+  Draft = 1,
+  Version = 2,
+}
+
 export interface SensitiveWordDto {
   id: string;
   word: string;
+  normalizedWord?: string;
   category: string;
   riskLevel: SensitiveRiskLevel;
   action: SensitiveWordAction;
   scene?: ModerationScene;
   isEnabled: boolean;
   isRegex: boolean;
+  isManual?: boolean;
+  isLocked?: boolean;
+  sourceCount?: number;
   remark?: string;
   creationTime: string;
   creatorId?: string;
@@ -839,6 +944,7 @@ export interface CreateSensitiveWordInput {
   action?: SensitiveWordAction;
   scene?: ModerationScene;
   isRegex?: boolean;
+  isLocked?: boolean;
   remark?: string;
 }
 
@@ -848,6 +954,7 @@ export interface UpdateSensitiveWordInput {
   action: SensitiveWordAction;
   scene?: ModerationScene;
   isRegex: boolean;
+  isLocked?: boolean;
   remark?: string;
 }
 
@@ -857,6 +964,8 @@ export interface GetSensitiveWordsInput extends PagedAndSortedResultRequestDto {
   riskLevel?: SensitiveRiskLevel;
   scene?: ModerationScene;
   isEnabled?: boolean;
+  isLocked?: boolean;
+  isManual?: boolean;
 }
 
 export interface SensitiveWordBatchImportInput {
@@ -866,6 +975,7 @@ export interface SensitiveWordBatchImportInput {
   defaultAction?: SensitiveWordAction;
   defaultScene?: ModerationScene;
   conflictStrategy?: 'Skip' | 'Overwrite';
+  overrideLocked?: boolean;
 }
 
 export interface BatchImportResultDto {
@@ -890,6 +1000,7 @@ export interface SensitiveWordExportDto {
 export interface SensitiveWordWhitelistDto {
   id: string;
   text: string;
+  normalizedText?: string;
   scene?: ModerationScene;
   isEnabled: boolean;
   remark?: string;
@@ -916,9 +1027,304 @@ export interface GetSensitiveWordWhitelistsInput extends PagedAndSortedResultReq
   isEnabled?: boolean;
 }
 
+// ----------------- Source -----------------
+export interface SensitiveWordSourceGetListInput extends PagedAndSortedResultRequestDto {
+  filter?: string;
+  sourceType?: SensitiveWordSourceType;
+  isEnabled?: boolean;
+}
+
+export interface SensitiveWordSourceDto {
+  id: string;
+  code: string;
+  name: string;
+  sourceType: SensitiveWordSourceType;
+  sourceUri: string;
+  branch?: string;
+  priority: number;
+  isEnabled: boolean;
+  autoSync: boolean;
+  syncMode: SensitiveWordSyncMode;
+  status: SensitiveWordSourceStatus;
+  lastCheckedVersion?: string;
+  lastFetchedVersion?: string;
+  lastAppliedVersion?: string;
+  lastCheckTime?: string;
+  lastFetchTime?: string;
+  lastApplyTime?: string;
+  creationTime: string;
+}
+
+export interface SensitiveWordSourceDetailDto extends SensitiveWordSourceDto {
+  fileManifestJson?: string;
+  mappingProfileId?: string;
+  checkIntervalSeconds: number;
+  configurationRevision: number;
+  lastFetchedContentHash?: string;
+  lastAppliedSemanticHash?: string;
+  lastErrorCode?: string;
+  errorMessage?: string;
+  license?: string;
+  licenseUri?: string;
+  attribution?: string;
+  repositoryName?: string;
+}
+
+export interface SensitiveWordSourceCreateInput {
+  code: string;
+  name: string;
+  sourceType: SensitiveWordSourceType;
+  sourceUri: string;
+  branch?: string;
+  fileManifestJson?: string;
+  mappingProfileId?: string;
+  priority?: number;
+  isEnabled?: boolean;
+  autoSync?: boolean;
+  syncMode?: SensitiveWordSyncMode;
+  checkIntervalSeconds?: number;
+}
+
+export interface SensitiveWordSourceUpdateInput {
+  name: string;
+  sourceUri: string;
+  branch?: string;
+  fileManifestJson?: string;
+  mappingProfileId?: string;
+  priority?: number;
+  autoSync?: boolean;
+  syncMode?: SensitiveWordSyncMode;
+  checkIntervalSeconds?: number;
+  license?: string;
+  licenseUri?: string;
+  attribution?: string;
+  repositoryName?: string;
+}
+
+export interface SourceCheckResultDto {
+  hasChanges: boolean;
+  latestVersion?: string;
+  message?: string;
+}
+
+export interface SensitiveWordSourceSnapshotDto {
+  id: string;
+  sourceId: string;
+  sourceVersion: string;
+  contentHash: string;
+  manifestHash: string;
+  storageKey: string;
+  totalBytes: number;
+  fileCount: number;
+  fetchedTime: string;
+}
+
+// ----------------- Mapping Profiles -----------------
+export interface SensitiveWordMappingProfileGetListInput extends PagedAndSortedResultRequestDto {
+  filter?: string;
+}
+
+export interface SensitiveWordMappingProfileDto {
+  id: string;
+  code: string;
+  name: string;
+  revision: number;
+  defaultRiskLevel: SensitiveRiskLevel;
+  defaultAction: SensitiveWordAction;
+  defaultScene?: ModerationScene;
+  remark?: string;
+  creationTime: string;
+}
+
+export interface SensitiveWordMappingProfileDetailDto extends SensitiveWordMappingProfileDto {
+  categoryMappingsJson?: string;
+}
+
+export interface SensitiveWordMappingProfileCreateInput {
+  code: string;
+  name: string;
+  categoryMappingsJson?: string;
+  defaultRiskLevel?: SensitiveRiskLevel;
+  defaultAction?: SensitiveWordAction;
+  defaultScene?: ModerationScene;
+  remark?: string;
+}
+
+export interface SensitiveWordMappingProfileUpdateInput {
+  name: string;
+  categoryMappingsJson?: string;
+  defaultRiskLevel?: SensitiveRiskLevel;
+  defaultAction?: SensitiveWordAction;
+  defaultScene?: ModerationScene;
+  remark?: string;
+}
+
+export interface MappingProfileValidateResultDto {
+  isValid: boolean;
+  mappingCount: number;
+  errors: string[];
+}
+
+// ----------------- Sync Batches -----------------
+export interface SensitiveWordSyncBatchGetListInput extends PagedAndSortedResultRequestDto {
+  sourceId?: string;
+  status?: SensitiveWordBatchStatus;
+}
+
+export interface SensitiveWordSyncBatchDto {
+  id: string;
+  sourceId: string;
+  status: SensitiveWordBatchStatus;
+  sourceVersion: string;
+  contentHash: string;
+  semanticHash: string;
+  totalCount: number;
+  addedCount: number;
+  updatedCount: number;
+  removedCount: number;
+  conflictCount: number;
+  requiresReview: boolean;
+  creationTime: string;
+}
+
+export interface SensitiveWordSyncBatchDetailDto extends SensitiveWordSyncBatchDto {
+  snapshotId?: string;
+  sourceConfigurationRevision: number;
+  mappingRevision: number;
+  operationId?: string;
+  stage?: string;
+  reviewedUserId?: string;
+  reviewedTime?: string;
+  reviewRemark?: string;
+  appliedUserId?: string;
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+export interface SensitiveWordSyncItemGetListInput extends PagedAndSortedResultRequestDto {
+  changeType?: SensitiveWordChangeType;
+  hasConflict?: boolean;
+}
+
+export interface SensitiveWordSyncItemDto {
+  id: string;
+  batchId: string;
+  sourceKey: string;
+  word: string;
+  normalizedWord: string;
+  isRegex: boolean;
+  locationEvidence?: string;
+  oldSourceCategory?: string;
+  newSourceCategory?: string;
+  suggestedRiskLevel: SensitiveRiskLevel;
+  suggestedAction: SensitiveWordAction;
+  suggestedScene?: ModerationScene;
+  changeType: SensitiveWordChangeType;
+  hasConflict: boolean;
+  conflictReason?: string;
+  applyStatus: SensitiveWordApplyStatus;
+  sensitiveWordId?: string;
+}
+
+export interface SensitiveWordSyncBatchIgnoreInput {
+  remark?: string;
+}
+
+// ----------------- Rule Versions -----------------
+export interface SensitiveWordRuleVersionGetListInput extends PagedAndSortedResultRequestDto {
+  status?: SensitiveWordRuleVersionStatus;
+}
+
+export interface SensitiveWordRuleVersionDto {
+  id: string;
+  version: number;
+  contentHash: string;
+  status: SensitiveWordRuleVersionStatus;
+  wordCount: number;
+  whitelistCount: number;
+  isActive: boolean;
+  firstPublishedTime?: string;
+  remark?: string;
+  creationTime: string;
+}
+
+export interface SensitiveWordRuleVersionDetailDto extends SensitiveWordRuleVersionDto {
+  draftRevision: number;
+  normalizerVersion: string;
+  engineFormatVersion: string;
+  sourceVersionsJson?: string;
+  firstPublishedUserId?: string;
+  errorMessage?: string;
+}
+
+export interface SensitiveWordRulePreviewDto {
+  currentDraftRevision: number;
+  lastPublishedDraftRevision: number;
+  totalWords: number;
+  totalRegexWords: number;
+  totalWhitelists: number;
+  contentHash: string;
+  hasUnpublishedChanges: boolean;
+  activeVersion?: string;
+}
+
+export interface SensitiveWordRulePublishInput {
+  remark?: string;
+  operationId?: string;
+}
+
+export interface SensitiveWordRuleRollbackInput {
+  reason: string;
+  operationId?: string;
+}
+
+export interface SensitiveWordRuleActivationDto {
+  id: string;
+  toVersionId: string;
+  fromVersionId?: string;
+  activationSequence: number;
+  action: SensitiveWordActivationAction;
+  contentHash: string;
+  activatedTime: string;
+  reason?: string;
+  operationId?: string;
+  operatorUserId?: string;
+}
+
+// ----------------- Runtime & Rule Engine -----------------
+export interface SensitiveWordRuntimeNodeDto {
+  nodeName: string;
+  processId: number;
+  status: string;
+  lastReloadTime?: string;
+  isReady: boolean;
+}
+
+export interface SensitiveWordRuntimeDto {
+  scopeKey: string;
+  tenantId?: string;
+  currentRuleVersionId?: string;
+  version: string;
+  ruleVersionNumber: number;
+  activationSequence: number;
+  draftRevision: number;
+  wordCount: number;
+  whitelistCount: number;
+  loadedTime?: string;
+  isReady: boolean;
+  lastReloadSuccess: boolean;
+  lastErrorCode?: string;
+  lastErrorMessage?: string;
+  buildDurationMs: number;
+  nodes: SensitiveWordRuntimeNodeDto[];
+}
+
 export interface ModerationRuleTestInput {
   text: string;
   scene?: ModerationScene;
+  testTarget?: ModerationTestTarget;
+  versionId?: string;
+  expectedDraftRevision?: number;
 }
 
 export interface SensitiveWordHitDto {
@@ -938,14 +1344,25 @@ export interface ModerationRuleTestResultDto {
   ruleVersion: string;
   elapsedMilliseconds: number;
   hits: SensitiveWordHitDto[];
+  versionId?: string;
+  activationSequence?: number;
+  draftRevision?: number;
+  runtimeStatus?: string;
 }
 
 export interface SensitiveWordRuntimeStateDto {
   version: string;
   wordCount: number;
   whitelistCount: number;
-  lastReloadTime: string;
+  lastReloadTime?: string;
   lastReloadSuccess: boolean;
   lastErrorMessage?: string;
+  currentRuleVersionId?: string;
+  activationSequence?: number;
+  draftRevision?: number;
+  runtimeStatus?: string;
+  nodeName?: string;
+  processId?: number;
 }
+
 

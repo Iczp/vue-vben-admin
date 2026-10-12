@@ -112,6 +112,33 @@ const routes: RouteRecordRaw[] = [
         path: 'sensitive-word-whitelists',
       },
       {
+        component: () => import('#/views/cms/sensitive-word-sources/index.vue'),
+        meta: {
+          icon: 'lucide:database',
+          title: '词库数据源',
+        },
+        name: 'CmsSensitiveWordSources',
+        path: 'sensitive-word-sources',
+      },
+      {
+        component: () => import('#/views/cms/sensitive-word-sync-batches/index.vue'),
+        meta: {
+          icon: 'lucide:git-compare',
+          title: '词库同步批次',
+        },
+        name: 'CmsSensitiveWordSyncBatches',
+        path: 'sensitive-word-sync-batches',
+      },
+      {
+        component: () => import('#/views/cms/sensitive-word-rule-versions/index.vue'),
+        meta: {
+          icon: 'lucide:history',
+          title: '规则版本发布',
+        },
+        name: 'CmsSensitiveWordRuleVersions',
+        path: 'sensitive-word-rule-versions',
+      },
+      {
         component: () => import('#/views/cms/moderation-rules/index.vue'),
         meta: {
           icon: 'lucide:cpu',

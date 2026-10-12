@@ -23,6 +23,8 @@ import {
   Input,
   message,
   Modal,
+  RadioButton,
+  RadioGroup,
   Row,
   Select,
   Spin,
@@ -35,6 +37,7 @@ import {
   getModerationRuleRuntimeStateApi,
   ModerationDecision,
   ModerationScene,
+  ModerationTestTarget,
   reloadModerationRulesApi,
   SensitiveRiskLevel,
   SensitiveWordAction,
@@ -50,11 +53,17 @@ const reloading = ref(false);
 
 // 测试参数
 const testParams = reactive<{
+  expectedDraftRevision?: number;
   scene?: ModerationScene;
+  testTarget: ModerationTestTarget;
   text: string;
+  versionId?: string;
 }>({
+  expectedDraftRevision: undefined,
   scene: ModerationScene.General,
+  testTarget: ModerationTestTarget.CurrentPublished,
   text: '',
+  versionId: undefined,
 });
 
 // 测试结果
@@ -100,8 +109,14 @@ async function onRunTest() {
   testing.value = true;
   try {
     testResult.value = await testModerationRuleApi({
+      expectedDraftRevision: testParams.expectedDraftRevision,
       scene: testParams.scene,
+      testTarget: testParams.testTarget,
       text: testParams.text,
+      versionId:
+        testParams.testTarget === ModerationTestTarget.Version
+          ? testParams.versionId?.trim() || undefined
+          : undefined,
     });
   } catch (error) {
     console.error('规则检测失败', error);
@@ -219,17 +234,17 @@ onMounted(() => {
 
         <Spin :spinning="runtimeLoading">
           <div v-if="runtimeState" class="space-y-3">
-            <Descriptions :column="{ xxl: 4, xl: 4, lg: 2, md: 2, sm: 1, xs: 1 }" bordered size="small">
-              <DescriptionsItem label="当前快照版本">
+            <Descriptions :column="4" bordered size="small">
+              <DescriptionsItem label="当前快照版本" :span="1">
                 <span class="font-mono text-xs font-semibold">{{ runtimeState.version || '未加载' }}</span>
               </DescriptionsItem>
-              <DescriptionsItem label="内存敏感词条数">
+              <DescriptionsItem label="内存敏感词条数" :span="1">
                 <span class="font-bold text-primary">{{ runtimeState.wordCount }}</span> 条
               </DescriptionsItem>
-              <DescriptionsItem label="内存白名单数">
+              <DescriptionsItem label="内存白名单数" :span="1">
                 <span class="font-bold text-success">{{ runtimeState.whitelistCount }}</span> 条
               </DescriptionsItem>
-              <DescriptionsItem label="最后重载时间">
+              <DescriptionsItem label="最后重载时间" :span="1">
                 <span class="text-xs">{{ runtimeState.lastReloadTime || '-' }}</span>
               </DescriptionsItem>
               <DescriptionsItem label="重载状态" :span="4">
@@ -253,6 +268,26 @@ onMounted(() => {
         <Col :span="12" class="h-full flex flex-col">
           <Card title="规则调试沙箱 · 输入待测文本" variant="borderless" class="shadow-sm h-full flex flex-col" :body-style="{ flex: 1, display: 'flex', flexDirection: 'column' }">
             <div class="space-y-4 flex-1 flex flex-col">
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-medium shrink-0">测试规则目标：</span>
+                  <RadioGroup v-model:value="testParams.testTarget" button-style="solid" size="small">
+                    <RadioButton :value="ModerationTestTarget.CurrentPublished">当前生效版本</RadioButton>
+                    <RadioButton :value="ModerationTestTarget.Draft">未发布草稿态</RadioButton>
+                    <RadioButton :value="ModerationTestTarget.Version">指定历史版本</RadioButton>
+                  </RadioGroup>
+                </div>
+                <div v-if="testParams.testTarget === ModerationTestTarget.Version" class="flex items-center gap-3 mt-1">
+                  <span class="text-xs text-muted-foreground shrink-0">指定版本标识：</span>
+                  <Input
+                    v-model:value="testParams.versionId"
+                    placeholder="输入历史规则版本 GUID..."
+                    class="w-[280px]"
+                    size="small"
+                  />
+                </div>
+              </div>
+
               <div class="flex items-center gap-3">
                 <span class="text-sm font-medium shrink-0">模拟审核场景：</span>
                 <Select
@@ -330,7 +365,12 @@ onMounted(() => {
                 <div>
                   <div class="font-medium text-sm mb-2 flex items-center justify-between">
                     <span>命中敏感词明细</span>
-                    <span class="text-xs text-muted-foreground">生效规则版本: {{ testResult.ruleVersion }}</span>
+                    <div class="text-xs text-muted-foreground flex items-center gap-3">
+                      <span>生效规则版本: <strong>{{ testResult.ruleVersion || '-' }}</strong></span>
+                      <span v-if="testResult.draftRevision">草稿修订: <strong>#{{ testResult.draftRevision }}</strong></span>
+                      <span v-if="testResult.activationSequence">激活流水: <strong>#{{ testResult.activationSequence }}</strong></span>
+                      <Tag v-if="testResult.runtimeStatus" color="blue">{{ testResult.runtimeStatus }}</Tag>
+                    </div>
                   </div>
 
                   <Table

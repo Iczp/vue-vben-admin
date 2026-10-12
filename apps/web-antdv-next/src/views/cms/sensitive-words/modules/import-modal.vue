@@ -7,6 +7,7 @@ import { useVbenModal } from '@vben/common-ui';
 
 import {
   Alert,
+  Checkbox,
   Form,
   FormItem,
   Input,
@@ -38,6 +39,7 @@ const formState = reactive<SensitiveWordBatchImportInput>({
   defaultCategory: SensitiveWordCategories.Custom,
   defaultRiskLevel: SensitiveRiskLevel.Medium,
   defaultScene: undefined,
+  overrideLocked: false,
 });
 
 function resetState() {
@@ -47,6 +49,7 @@ function resetState() {
   formState.defaultAction = SensitiveWordAction.Review;
   formState.defaultScene = undefined;
   formState.conflictStrategy = 'Skip';
+  formState.overrideLocked = false;
   importResult.value = null;
 }
 
@@ -69,6 +72,7 @@ const [Modal, modalApi] = useVbenModal({
         defaultCategory: formState.defaultCategory,
         defaultRiskLevel: formState.defaultRiskLevel,
         defaultScene: formState.defaultScene,
+        overrideLocked: formState.overrideLocked,
       });
       importResult.value = res;
       message.success(`导入完成：新增 ${res.createdCount} 条，更新 ${res.updatedCount} 条，跳过 ${res.skippedCount} 条`);
@@ -158,6 +162,11 @@ const [Modal, modalApi] = useVbenModal({
               <Radio value="Skip">跳过不处理 (保留原记录)</Radio>
               <Radio value="Overwrite">覆盖更新 (更新为当前分类与处置规则)</Radio>
             </RadioGroup>
+            <div v-if="formState.conflictStrategy === 'Overwrite'" class="mt-2 pl-1">
+              <Checkbox v-model:checked="formState.overrideLocked">
+                强制覆盖已锁定的受保护词条 (Override Locked)
+              </Checkbox>
+            </div>
           </FormItem>
         </Form>
       </div>
