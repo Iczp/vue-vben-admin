@@ -5,7 +5,7 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Form, message, Spin, TreeSelect } from 'antdv-next';
+import { Form, FormItem, message, Spin, TreeSelect } from 'antdv-next';
 
 import { batchMoveAssetsApi, getAssetFolderTreeApi } from '#/api/cms';
 
@@ -112,7 +112,7 @@ const [Modal, modalApi] = useVbenModal({
         </p>
 
         <Form layout="vertical">
-          <Form.Item label="目标文件夹" required>
+          <FormItem label="目标文件夹" required>
             <TreeSelect
               v-model:value="targetFolderId"
               placeholder="请选择目标文件夹（选择根目录则取消归档）"
@@ -120,7 +120,7 @@ const [Modal, modalApi] = useVbenModal({
               :tree-data="folderTreeData"
               tree-default-expand-all
             />
-          </Form.Item>
+          </FormItem>
         </Form>
       </div>
     </Spin>

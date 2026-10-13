@@ -4,7 +4,14 @@ import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 
-import { readMediaUploadMetadata } from './media-metadata';
+import {
+  createThumbnailFromImageUrl,
+  readMediaUploadMetadata,
+} from './media-metadata';
+import { AssetType } from './types';
+
+const memoryThumbnailCache = new Map<string, string>();
+const generatingAssetIds = new Set<string>();
 
 /**
  * 确保素材地址为相对路径（去除协议与 Host，避免数据库存储具体域名/端口）
@@ -25,17 +32,59 @@ export function resolveAssetAccessUrl(url: null | string | undefined): string {
 }
 
 function withAssetUrls(asset: AssetDto): AssetDto {
+  const thumb = asset.thumbnailUrl
+    ? toRelativeAssetUrl(asset.thumbnailUrl)
+    : memoryThumbnailCache.get(asset.id) || null;
   return {
     ...asset,
     url: toRelativeAssetUrl(asset.url),
-    thumbnailUrl: asset.thumbnailUrl
-      ? toRelativeAssetUrl(asset.thumbnailUrl)
-      : null,
+    thumbnailUrl: thumb,
     variants: asset.variants?.map((variant) => ({
       ...variant,
       url: toRelativeAssetUrl(variant.url),
     })),
   };
+}
+
+/**
+ * 针对历史未生成缩略图的图片素材，后台低并发生成轻量缩略图并自动回写服务端，避免列表直接渲染大图卡顿
+ */
+export function ensureImageAssetThumbnails(
+  assets: AssetDto[],
+  onThumbReady?: (assetId: string, thumbnailUrl: string) => void,
+) {
+  const missing = assets.filter(
+    (a) =>
+      a.type === AssetType.Image &&
+      !a.thumbnailUrl &&
+      Boolean(a.url) &&
+      !generatingAssetIds.has(a.id),
+  );
+  if (missing.length === 0) return;
+
+  void (async () => {
+    for (const asset of missing) {
+      if (generatingAssetIds.has(asset.id)) continue;
+      generatingAssetIds.add(asset.id);
+      try {
+        const thumb = await createThumbnailFromImageUrl(asset.url, 360);
+        memoryThumbnailCache.set(asset.id, thumb.blobUrl);
+        asset.thumbnailUrl = thumb.blobUrl;
+        onThumbReady?.(asset.id, thumb.blobUrl);
+        // 异步持久化到后端，下次直接返回服务端 thumbnailUrl
+        void setAssetThumbnailApi(
+          asset.id,
+          thumb.file,
+          thumb.width,
+          thumb.height,
+        ).catch(() => {});
+      } catch {
+        // 若跨域或图片异常无法 canvas 转换，才兜底用原图链接
+        asset.thumbnailUrl = asset.url;
+        onThumbReady?.(asset.id, asset.url);
+      }
+    }
+  })();
 }
 
 /**
@@ -96,6 +145,10 @@ export async function uploadAssetApi(
     await requestClient.post<AssetDto>('/cms/admin/assets/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      params: {
+        folderId: folderId || undefined,
+        scope,
       },
     }),
   );
@@ -159,11 +212,35 @@ export async function updateAssetStatusApi(
 }
 
 /**
+ * 重命名素材显示名
+ */
+export async function renameAssetApi(
+  id: string,
+  data: import('./types').AssetRenameDto,
+) {
+  return withAssetUrls(
+    await requestClient.put<AssetDto>(`/cms/admin/assets/${id}/rename`, data),
+  );
+}
+
+/**
  * 批量移动素材至目标文件夹
  */
 export async function batchMoveAssetsApi(
   data: import('./types').AssetBatchMoveDto,
 ) {
   return requestClient.post<number>('/cms/admin/assets/batch-move', data);
+}
+
+/**
+ * 批量删除素材（自动跳过已被引用的素材）
+ */
+export async function batchDeleteAssetsApi(
+  data: import('./types').AssetBatchDeleteInput,
+) {
+  return requestClient.post<import('./types').AssetBatchDeleteResultDto>(
+    '/cms/admin/assets/batch-delete',
+    data,
+  );
 }
 

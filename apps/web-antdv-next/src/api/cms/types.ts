@@ -468,6 +468,7 @@ export interface AssetFolderDto {
   ownerId?: string;
   ownerName?: string;
   fileCount: number;
+  totalFileCount?: number;
   sorting: number;
   description?: string;
   fullPath: string;
@@ -577,11 +578,26 @@ export interface AssetGetListInput extends PagedAndSortedResultRequestDto {
   scope?: AssetScope;
   actorType?: string;
   actorId?: string;
+  includeReferenceCount?: boolean;
 }
 
 export interface AssetBatchMoveDto {
   assetIds: string[];
   targetFolderId?: string;
+}
+
+export interface AssetRenameDto {
+  fileName: string;
+}
+
+export interface AssetBatchDeleteInput {
+  assetIds: string[];
+}
+
+export interface AssetBatchDeleteResultDto {
+  deletedCount: number;
+  skippedCount: number;
+  skippedFileNames: string[];
 }
 
 export interface AssetStatusUpdateDto {

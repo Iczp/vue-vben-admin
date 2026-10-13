@@ -8,9 +8,12 @@ export interface MediaUploadMetadata {
 }
 
 /**
- * 从图片文件生成适合作为封面缩略图的 File (JPEG, 最大 640px)
+ * 从图片文件生成适合作为封面缩略图的 File (JPEG, 默认最大 640px)
  */
-export async function createThumbnailFromFile(file: File): Promise<{
+export async function createThumbnailFromFile(
+  file: File,
+  maxSize: number = 640,
+): Promise<{
   file: File;
   height: number;
   width: number;
@@ -18,8 +21,13 @@ export async function createThumbnailFromFile(file: File): Promise<{
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
+    img.decoding = 'async';
     img.onload = () => {
-      const scale = Math.min(1, 640 / img.naturalWidth, 640 / img.naturalHeight);
+      const scale = Math.min(
+        1,
+        maxSize / img.naturalWidth,
+        maxSize / img.naturalHeight,
+      );
       const width = Math.max(1, Math.round(img.naturalWidth * scale));
       const height = Math.max(1, Math.round(img.naturalHeight * scale));
       const canvas = document.createElement('canvas');
@@ -46,7 +54,7 @@ export async function createThumbnailFromFile(file: File): Promise<{
           });
         },
         'image/jpeg',
-        0.85,
+        0.82,
       );
     };
     img.onerror = () => {
@@ -54,6 +62,67 @@ export async function createThumbnailFromFile(file: File): Promise<{
       reject(new Error('Image loading failed'));
     };
     img.src = url;
+  });
+}
+
+/**
+ * 从远程图片 URL 生成轻量级缩略图 (用于历史无缩略图图片的自动生成与回填)
+ */
+export async function createThumbnailFromImageUrl(
+  imageUrl: string,
+  maxSize: number = 360,
+): Promise<{
+  blobUrl: string;
+  file: File;
+  height: number;
+  width: number;
+}> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+    img.onload = () => {
+      const scale = Math.min(
+        1,
+        maxSize / img.naturalWidth,
+        maxSize / img.naturalHeight,
+      );
+      const width = Math.max(1, Math.round(img.naturalWidth * scale));
+      const height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas 2D context not available'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Canvas blob generation failed'));
+            return;
+          }
+          const file = new File([blob], 'thumbnail.jpg', {
+            type: 'image/jpeg',
+          });
+          const blobUrl = URL.createObjectURL(blob);
+          resolve({
+            blobUrl,
+            file,
+            height,
+            width,
+          });
+        },
+        'image/jpeg',
+        0.8,
+      );
+    };
+    img.onerror = () => {
+      reject(new Error('Image URL loading failed'));
+    };
+    img.src = imageUrl;
   });
 }
 
@@ -229,9 +298,44 @@ export async function readMediaUploadMetadata(
           image.onerror = null;
           image.src = '';
         };
-        image.onload = () => {
+        image.onload = async () => {
           result.width = image.naturalWidth;
           result.height = image.naturalHeight;
+          try {
+            if (customThumbnail) {
+              const thumb = await createThumbnailFromFile(customThumbnail);
+              result.thumbnail = thumb.file;
+              result.thumbnailWidth = thumb.width;
+              result.thumbnailHeight = thumb.height;
+            } else {
+              const scale = Math.min(
+                1,
+                360 / image.naturalWidth,
+                360 / image.naturalHeight,
+              );
+              const thumbW = Math.max(1, Math.round(image.naturalWidth * scale));
+              const thumbH = Math.max(1, Math.round(image.naturalHeight * scale));
+              const canvas = document.createElement('canvas');
+              canvas.width = thumbW;
+              canvas.height = thumbH;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(image, 0, 0, thumbW, thumbH);
+                const blob = await new Promise<Blob | null>((r) =>
+                  canvas.toBlob(r, 'image/jpeg', 0.8),
+                );
+                if (blob) {
+                  result.thumbnail = new File([blob], 'thumbnail.jpg', {
+                    type: 'image/jpeg',
+                  });
+                  result.thumbnailWidth = thumbW;
+                  result.thumbnailHeight = thumbH;
+                }
+              }
+            }
+          } catch (e) {
+            console.error('图片缩略图生成失败', e);
+          }
           finish();
         };
         image.onerror = finish;

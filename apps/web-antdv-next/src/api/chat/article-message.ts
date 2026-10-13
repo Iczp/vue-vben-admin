@@ -84,6 +84,15 @@ export function parseArticleResponse(raw: unknown): unknown {
 }
 const responseOptions = { transformResponse: [parseArticleResponse] };
 
+export function findArticleSenderSessionApi(
+  ownerId: number | string,
+  destinactionId: number | string,
+) {
+  return requestClient.get<string>('/chat/session-unit/find-id', {
+    params: { ownerId, destinactionId },
+  });
+}
+
 export function getArticleSenderSessionsApi(
   ownerId: number | string,
   skipCount = 0,

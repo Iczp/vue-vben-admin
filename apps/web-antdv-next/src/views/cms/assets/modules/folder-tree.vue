@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { AssetFolderDto } from '#/api/cms';
 
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { Plus, RotateCw } from '@vben/icons';
 
@@ -10,10 +10,13 @@ import {
   Card,
   Dropdown,
   Menu,
+  MenuDivider,
+  MenuItem,
   message,
   Modal,
   Spin,
   Tabs,
+  Tooltip,
   Tree,
 } from 'antdv-next';
 
@@ -22,12 +25,23 @@ import {
   deleteAssetFolderAndMoveAssetsToParentApi,
   deleteAssetFolderApi,
   getAssetFolderTreeApi,
+  getAssetsApi,
 } from '#/api/cms';
+
+const props = withDefaults(
+  defineProps<{
+    isSelector?: boolean;
+  }>(),
+  {
+    isSelector: false,
+  },
+);
 
 interface TreeItem {
   children?: TreeItem[];
   depth: number;
   fileCount: number;
+  fullPathText: string;
   id: string;
   isCustom?: boolean;
   key: string;
@@ -35,34 +49,69 @@ interface TreeItem {
   parentId?: string;
   raw?: AssetFolderDto;
   title: string;
+  totalFileCount: number;
 }
 
 const emit = defineEmits<{
   createFolder: [scope: AssetScope, parentId?: string];
   editFolder: [folder: AssetFolderDto];
-  select: [folderId: string | undefined, scope: AssetScope];
+  select: [
+    folderId: string | undefined,
+    scope: AssetScope,
+    folder?: AssetFolderDto,
+    fullPathText?: string,
+  ];
 }>();
 
 const loading = ref(false);
 const activeScope = ref<AssetScope>(AssetScope.Private);
+const activeScopeKey = computed({
+  get: () => String(activeScope.value),
+  set: (val: string) => {
+    activeScope.value = Number(val) as AssetScope;
+  },
+});
 const selectedKeys = ref<string[]>(['__all__']);
 const treeData = ref<TreeItem[]>([]);
 const folderList = ref<AssetFolderDto[]>([]);
 
+function computeFullPathText(
+  item: AssetFolderDto,
+  mapById: Map<string, AssetFolderDto>,
+): string {
+  const parts: string[] = [];
+  let cur: AssetFolderDto | undefined = item;
+  let guard = 0;
+  while (cur && guard < 20) {
+    parts.unshift(cur.name);
+    cur = cur.parentId ? mapById.get(cur.parentId) : undefined;
+    guard++;
+  }
+  return `/root/${parts.join('/')}`;
+}
+
 function buildTree(list: AssetFolderDto[]): TreeItem[] {
+  const dtoMap = new Map<string, AssetFolderDto>();
+  list.forEach((item) => dtoMap.set(item.id, item));
+
   const map = new Map<string, TreeItem>();
   const roots: TreeItem[] = [];
 
   list.forEach((item) => {
+    const directCount = item.fileCount ?? 0;
+    const totalCount = item.totalFileCount ?? directCount;
     map.set(item.id, {
       depth: item.depth,
-      fileCount: item.fileCount,
+      fileCount: directCount,
+      fullPathText: computeFullPathText(item, dtoMap),
       id: item.id,
+      isCustom: true,
       key: item.id,
       name: item.name,
       parentId: item.parentId,
       raw: item,
-      title: item.name,
+      title: `📁 ${item.name}`,
+      totalFileCount: totalCount,
       children: [],
     });
   });
@@ -76,40 +125,97 @@ function buildTree(list: AssetFolderDto[]): TreeItem[] {
     }
   });
 
+  // 如果后端未返回 totalFileCount，前端兜底自底向上递归汇总一次
+  function sumDescendants(node: TreeItem): number {
+    if (!node.children || node.children.length === 0) {
+      node.totalFileCount = node.fileCount;
+      return node.totalFileCount;
+    }
+    const childrenSum = node.children.reduce(
+      (acc, child) => acc + sumDescendants(child),
+      0,
+    );
+    node.totalFileCount = node.fileCount + childrenSum;
+    return node.totalFileCount;
+  }
+  roots.forEach(sumDescendants);
+
   return roots;
+}
+
+function emitCurrentSelection() {
+  const key = selectedKeys.value[0] || '__all__';
+  if (key === '__all__') {
+    emit('select', undefined, activeScope.value, undefined, '/ (全部素材)');
+  } else if (key === '__root__') {
+    emit('select', '', activeScope.value, undefined, '/root (未归档根目录)');
+  } else {
+    const dtoMap = new Map<string, AssetFolderDto>();
+    folderList.value.forEach((f) => dtoMap.set(f.id, f));
+    const found = dtoMap.get(key);
+    if (found) {
+      const pathText = computeFullPathText(found, dtoMap);
+      emit('select', key, activeScope.value, found, pathText);
+    } else {
+      selectedKeys.value = ['__all__'];
+      emit('select', undefined, activeScope.value, undefined, '/ (全部素材)');
+    }
+  }
 }
 
 async function loadTree() {
   loading.value = true;
   try {
-    const list = await getAssetFolderTreeApi({ scope: activeScope.value });
+    const [list, allRes, rootRes] = await Promise.all([
+      getAssetFolderTreeApi({ scope: activeScope.value }),
+      getAssetsApi({
+        includeReferenceCount: false,
+        maxResultCount: 1,
+        scope: activeScope.value,
+      }),
+      getAssetsApi({
+        folderId: '00000000-0000-0000-0000-000000000000',
+        includeReferenceCount: false,
+        maxResultCount: 1,
+        scope: activeScope.value,
+      }),
+    ]);
     folderList.value = list;
 
     const customTree = buildTree(list);
 
     // 顶部固定虚拟项：全部素材、未归档素材
-    const totalFiles = list.reduce((sum, f) => sum + (f.fileCount || 0), 0);
+    const totalFiles =
+      allRes?.totalCount ??
+      list.reduce((sum, f) => sum + (f.fileCount || 0), 0);
+    const rootFiles = rootRes?.totalCount ?? 0;
+
     treeData.value = [
       {
         depth: 0,
         fileCount: totalFiles,
+        fullPathText: '/ (全部素材)',
         id: '__all__',
         isCustom: false,
         key: '__all__',
         name: '全部素材',
         title: '📂 全部素材',
+        totalFileCount: totalFiles,
       },
       {
         depth: 0,
-        fileCount: 0,
+        fileCount: rootFiles,
+        fullPathText: '/root (未归档根目录)',
         id: '__root__',
         isCustom: false,
         key: '__root__',
         name: '根目录 (未归档)',
         title: '📁 未归档素材',
+        totalFileCount: rootFiles,
       },
       ...customTree,
     ];
+    emitCurrentSelection();
   } catch (error) {
     console.error(error);
   } finally {
@@ -119,7 +225,6 @@ async function loadTree() {
 
 watch(activeScope, () => {
   selectedKeys.value = ['__all__'];
-  emit('select', undefined, activeScope.value);
   loadTree();
 });
 
@@ -127,66 +232,61 @@ function onSelectNode(keys: any[]) {
   if (keys.length === 0) return;
   const key = keys[0] as string;
   selectedKeys.value = [key];
-
-  if (key === '__all__') {
-    emit('select', undefined, activeScope.value);
-  } else if (key === '__root__') {
-    emit('select', '', activeScope.value); // 空串代表 FolderId is null
-  } else {
-    emit('select', key, activeScope.value);
-  }
+  emitCurrentSelection();
 }
 
 function handleAddRoot() {
   emit('createFolder', activeScope.value, undefined);
 }
 
-function handleAddChild(node: TreeItem) {
-  emit('createFolder', activeScope.value, node.id);
+function handleAddChild(folder: AssetFolderDto, e?: Event) {
+  e?.stopPropagation();
+  emit('createFolder', activeScope.value, folder.id);
 }
 
-function handleEdit(node: TreeItem) {
-  if (node.raw) {
-    emit('editFolder', node.raw);
-  }
+function handleEdit(folder: AssetFolderDto, e?: Event) {
+  e?.stopPropagation();
+  emit('editFolder', folder);
 }
 
-function handleDeleteDirect(node: TreeItem) {
+function handleDeleteDirect(folder: AssetFolderDto, e?: Event) {
+  e?.stopPropagation();
   Modal.confirm({
-    content: `确定删除文件夹【${node.name}】吗？删除前请确保该文件夹下无子文件夹且无素材。`,
+    content: `确定删除文件夹【${folder.name}】吗？删除前请确保该文件夹下无子文件夹且无素材。`,
     okText: '确认删除',
     okType: 'danger',
     title: '删除文件夹',
     async onOk() {
       try {
-        await deleteAssetFolderApi(node.id);
+        await deleteAssetFolderApi(folder.id);
         message.success('文件夹删除成功');
-        await loadTree();
         selectedKeys.value = ['__all__'];
-        emit('select', undefined, activeScope.value);
+        await loadTree();
       } catch (err: any) {
-        const msg = err?.response?.data?.error?.message || err?.message || '删除失败';
+        const msg =
+          err?.response?.data?.error?.message || err?.message || '删除失败';
         message.error(msg);
       }
     },
   });
 }
 
-function handleDeleteAndMoveToParent(node: TreeItem) {
+function handleDeleteAndMoveToParent(folder: AssetFolderDto, e?: Event) {
+  e?.stopPropagation();
   Modal.confirm({
-    content: `确定删除文件夹【${node.name}】并将其中素材自动移到上一级目录吗？（有子文件夹时仍无法删除）`,
+    content: `确定删除文件夹【${folder.name}】并将其中素材自动移到上一级目录吗？（有子文件夹时仍无法删除）`,
     okText: '移出并删除',
     okType: 'danger',
     title: '安全删除文件夹',
     async onOk() {
       try {
-        await deleteAssetFolderAndMoveAssetsToParentApi(node.id);
+        await deleteAssetFolderAndMoveAssetsToParentApi(folder.id);
         message.success('已清空并删除该文件夹');
-        await loadTree();
         selectedKeys.value = ['__all__'];
-        emit('select', undefined, activeScope.value);
+        await loadTree();
       } catch (err: any) {
-        const msg = err?.response?.data?.error?.message || err?.message || '操作失败';
+        const msg =
+          err?.response?.data?.error?.message || err?.message || '操作失败';
         message.error(msg);
       }
     },
@@ -194,6 +294,8 @@ function handleDeleteAndMoveToParent(node: TreeItem) {
 }
 
 defineExpose({
+  deleteFolder: handleDeleteDirect,
+  deleteFolderAndMove: handleDeleteAndMoveToParent,
   reload: loadTree,
 });
 
@@ -206,32 +308,45 @@ onMounted(() => {
   <Card
     variant="borderless"
     class="h-full flex flex-col shadow-sm select-none"
-    :styles="{ body: { padding: '12px', height: '100%', display: 'flex', flexDirection: 'column' } }"
+    :styles="{
+      body: {
+        padding: '12px',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      },
+    }"
   >
     <!-- Scope 切换选项卡 -->
     <div class="shrink-0 mb-3">
       <Tabs
-        v-model:activeKey="activeScope"
+        v-model:activeKey="activeScopeKey"
         size="small"
         class="w-full"
         :items="[
-          { key: AssetScope.Private, label: '我的私有' },
-          { key: AssetScope.Tenant, label: '租户公共' },
+          { key: String(AssetScope.Private), label: '我的私有' },
+          { key: String(AssetScope.Tenant), label: '租户公共' },
         ]"
       />
 
       <div class="flex items-center justify-between mt-2">
-        <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <span
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+        >
           目录导航
         </span>
         <div class="flex items-center gap-1">
           <Button
-            type="text"
+            v-if="!props.isSelector"
+            type="primary"
+            ghost
             size="small"
+            class="!text-xs !px-2"
             title="新建根目录"
             @click="handleAddRoot"
           >
-            <template #icon><Plus class="size-3.5" /></template>
+            <template #icon><Plus class="size-3.5 mr-0.5" /></template>
+            新建目录
           </Button>
           <Button
             type="text"
@@ -256,36 +371,118 @@ onMounted(() => {
           default-expand-all
           @select="onSelectNode"
         >
-          <template #title="node">
-            <Dropdown :trigger="['contextmenu']">
-              <div class="flex items-center justify-between group py-0.5 pr-1">
-                <span class="truncate text-sm" :title="node.title">
+          <template #titleRender="node">
+            <Dropdown :trigger="props.isSelector ? [] : ['contextmenu']">
+              <div
+                class="flex items-center justify-between group py-0.5 pr-1 w-full"
+              >
+                <span class="truncate text-sm" :title="node.fullPathText || node.title">
                   {{ node.title }}
                 </span>
-                <span
-                  v-if="node.raw"
-                  class="text-xs text-muted-foreground px-1.5 py-0.2 rounded-full bg-muted shrink-0 ml-1 font-mono"
-                >
-                  {{ node.fileCount || 0 }}
-                </span>
+
+                <div class="flex items-center gap-1 shrink-0 ml-1">
+                  <!-- 鼠标悬停快捷操作按钮（非选择器管理模式显示：新建子级 / 编辑 / 删除） -->
+                  <div
+                    v-if="node.raw && !props.isSelector"
+                    class="hidden group-hover:flex items-center gap-0.5 bg-background/90 rounded px-0.5 shadow-xs"
+                    @click.stop
+                  >
+                    <span
+                      class="px-1 py-0.5 text-xs hover:text-primary cursor-pointer rounded hover:bg-muted"
+                      title="新建子文件夹"
+                      @click.stop="handleAddChild(node.raw, $event)"
+                    >
+                      ➕
+                    </span>
+                    <span
+                      class="px-1 py-0.5 text-xs hover:text-primary cursor-pointer rounded hover:bg-muted"
+                      title="编辑/重命名文件夹"
+                      @click.stop="handleEdit(node.raw, $event)"
+                    >
+                      ✏️
+                    </span>
+                    <Dropdown :trigger="['click']">
+                      <span
+                        class="px-1 py-0.5 text-xs hover:text-destructive cursor-pointer rounded hover:bg-muted"
+                        title="删除文件夹"
+                        @click.stop
+                      >
+                        🗑️
+                      </span>
+                      <template #overlay>
+                        <Menu>
+                          <MenuItem
+                            key="del"
+                            danger
+                            @click="handleDeleteDirect(node.raw)"
+                          >
+                            🗑️ 直接删除空文件夹
+                          </MenuItem>
+                          <MenuItem
+                            key="del_move"
+                            danger
+                            @click="handleDeleteAndMoveToParent(node.raw)"
+                          >
+                            📦 删除并移出素材到父级
+                          </MenuItem>
+                        </Menu>
+                      </template>
+                    </Dropdown>
+                  </div>
+
+                  <!-- 文件数量徽标：区分直属文件数与含子目录汇总数 -->
+                  <Tooltip
+                    v-if="node.raw"
+                    :title="
+                      node.totalFileCount > node.fileCount
+                        ? `当前目录直属: ${node.fileCount} 个 | 含子文件夹共: ${node.totalFileCount} 个`
+                        : `当前目录文件: ${node.fileCount} 个`
+                    "
+                  >
+                    <span
+                      class="text-xs px-1.5 py-0.2 rounded-full font-mono"
+                      :class="
+                        node.totalFileCount > 0
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'bg-muted text-muted-foreground'
+                      "
+                    >
+                      {{
+                        node.totalFileCount > node.fileCount
+                          ? `${node.fileCount} / ${node.totalFileCount}`
+                          : node.fileCount || 0
+                      }}
+                    </span>
+                  </Tooltip>
+                  <span
+                    v-else
+                    class="text-xs text-muted-foreground px-1.5 py-0.2 rounded-full bg-muted font-mono"
+                  >
+                    {{ node.totalFileCount || 0 }}
+                  </span>
+                </div>
               </div>
 
               <!-- 右键菜单仅对自定义文件夹生效 -->
               <template #overlay>
-                <Menu v-if="node.raw">
-                  <Menu.Item key="add" @click="handleAddChild(node)">
+                <Menu v-if="node.raw && !props.isSelector">
+                  <MenuItem key="add" @click="handleAddChild(node.raw)">
                     ➕ 新建子文件夹
-                  </Menu.Item>
-                  <Menu.Item key="edit" @click="handleEdit(node)">
+                  </MenuItem>
+                  <MenuItem key="edit" @click="handleEdit(node.raw)">
                     ✏️ 重命名 / 编辑
-                  </Menu.Item>
-                  <Menu.Divider />
-                  <Menu.Item key="del" danger @click="handleDeleteDirect(node)">
+                  </MenuItem>
+                  <MenuDivider />
+                  <MenuItem key="del" danger @click="handleDeleteDirect(node.raw)">
                     🗑️ 删除空文件夹
-                  </Menu.Item>
-                  <Menu.Item key="del_move" danger @click="handleDeleteAndMoveToParent(node)">
+                  </MenuItem>
+                  <MenuItem
+                    key="del_move"
+                    danger
+                    @click="handleDeleteAndMoveToParent(node.raw)"
+                  >
                     📦 删除并移出素材到父级
-                  </Menu.Item>
+                  </MenuItem>
                 </Menu>
                 <div v-else class="hidden" />
               </template>

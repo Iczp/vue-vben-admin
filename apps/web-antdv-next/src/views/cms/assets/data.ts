@@ -46,6 +46,7 @@ export function useColumns(
         name: 'CellImage',
         props: {
           height: 42,
+          previewField: 'url',
           width: 64,
         },
       },
@@ -156,6 +157,7 @@ export function useColumns(
         name: 'CellOperation',
         options: [
           { code: 'preview', text: '预览详情' },
+          { code: 'rename', text: '重命名' },
           { code: 'references', text: '引用关系' },
           { code: 'move', text: '移动目录' },
           {
@@ -178,7 +180,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 290,
+      width: 330,
     },
   ];
 }

@@ -26,7 +26,9 @@ import {
   getDeviceId,
   getDeviceType,
 } from '#/utils/device';
+import { getRequestErrorMessage } from '#/utils/request-error';
 
+import { createAbpAntiforgery } from './abp/antiforgery';
 import { refreshTokenApi } from './core';
 
 /**
@@ -53,7 +55,7 @@ function renderErrorMessageNode(title: string, detail?: string) {
             'div',
             {
               class:
-                'font-medium text-[13px] text-foreground truncate max-w-[440px]',
+                'font-medium text-[13px] text-foreground whitespace-pre-wrap break-words max-w-[440px]',
               title,
             },
             title,
@@ -63,7 +65,7 @@ function renderErrorMessageNode(title: string, detail?: string) {
                 'div',
                 {
                   class:
-                    'text-[12px] text-muted-foreground truncate max-w-[440px] opacity-85 mt-0.5 font-normal',
+                    'text-[12px] text-muted-foreground whitespace-pre-wrap break-words max-w-[440px] opacity-85 mt-0.5 font-normal',
                   title: detail,
                 },
                 detail,
@@ -142,34 +144,14 @@ function formatToken(token: null | string) {
 /**
  * 统一 ABP 与 OAuth2 错误弹窗提示
  */
-function handleUnifiedError(msg: string, error: any) {
-  const responseData = error?.response?.data ?? {};
-  const abpError = responseData?.error;
-  let title = msg || '请求失败';
-  let detail = '';
-
-  if (typeof abpError === 'object' && abpError !== null) {
-    if (abpError.message) {
-      title = abpError.message;
+function handleUnifiedError(msg: string, error: unknown) {
+  const { message: title, details: detail } = getRequestErrorMessage(error, msg || '请求失败');
+  // RequestClient throws response.data. Preserve status information for empty HTTP errors.
+  if (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object') {
+    const response = error.response as { data?: unknown; status?: number };
+    if (typeof response.status === 'number' && (response.data === undefined || response.data === null || response.data === '')) {
+      response.data = { error: { message: title, details: detail } };
     }
-    if (
-      Array.isArray(abpError.validationErrors) &&
-      abpError.validationErrors.length > 0
-    ) {
-      detail = abpError.validationErrors
-        .map((v: { message?: string }) => v.message)
-        .filter(Boolean)
-        .join('; ');
-    } else if (abpError.details && abpError.details !== abpError.message) {
-      detail = abpError.details;
-    }
-  } else if (responseData?.error_description) {
-    title = typeof abpError === 'string' ? abpError : '认证失败';
-    detail = responseData.error_description;
-  } else if (typeof abpError === 'string') {
-    title = abpError;
-  } else if (responseData?.message) {
-    title = responseData.message;
   }
 
   message.error({
@@ -191,7 +173,15 @@ function getCookie(name: string): string | undefined {
  * 为请求客户端统一注入公共 Header
  * 包含：App-Id、App-Device-Id (浏览器指纹)、App-Device-Type、App-Version、Accept-Language、__tenant、RequestVerificationToken
  */
-function applyCommonHeadersInterceptor(client: RequestClient) {
+const getAntiforgeryToken = createAbpAntiforgery({
+  loadConfiguration: (service) => requestClient.get(service.configurationPath, {
+    params: { includeLocalizationResources: false },
+    withCredentials: true,
+  }),
+  readCookie: getCookie,
+});
+
+function applyCommonHeadersInterceptor(client: RequestClient, business = false) {
   client.addRequestInterceptor({
     fulfilled: async (config) => {
       config.headers = config.headers || {};
@@ -206,13 +196,6 @@ function applyCommonHeadersInterceptor(client: RequestClient) {
       config.headers['App-Device-Type'] = deviceType;
       config.headers['App-Version'] = version;
 
-      // 注入 ABP AntiForgery 防伪验证头
-      const xsrfToken = getCookie('XSRF-TOKEN');
-      if (xsrfToken && !config.headers.RequestVerificationToken) {
-        config.headers.RequestVerificationToken = xsrfToken;
-        config.headers['X-XSRF-TOKEN'] = xsrfToken;
-      }
-
       if (preferences.app?.locale) {
         config.headers['Accept-Language'] = preferences.app.locale;
       }
@@ -224,6 +207,17 @@ function applyCommonHeadersInterceptor(client: RequestClient) {
       if (tenantId && tenantId !== 'undefined' && tenantId !== 'null') {
         config.headers.__tenant = tenantId;
       }
+
+      // Each independent API owns a distinct cookie/token pair.
+      const xsrfToken = business
+        ? await getAntiforgeryToken(config.url || '', config.method || 'GET', `${useAccessStore().accessToken || ''}:${tenantId || ''}`)
+        : getCookie('XSRF-TOKEN');
+      const token = xsrfToken || (/^\/(?:api\/)?chat\/scan-login(?:\/|$)/.test(config.url || '') ? getCookie('XSRF-TOKEN') : undefined);
+      if (token) {
+        config.headers.RequestVerificationToken = token;
+        config.headers['X-XSRF-TOKEN'] = token;
+      }
+      if (business) config.withCredentials = true;
 
       return config;
     },
@@ -243,7 +237,7 @@ function createBusinessRequestClient(
   });
 
   // 1. 注入公共设备指纹与租户等 Headers
-  applyCommonHeadersInterceptor(client);
+  applyCommonHeadersInterceptor(client, true);
 
   // 2. 自动注入 Authorization Bearer Token
   client.addRequestInterceptor({

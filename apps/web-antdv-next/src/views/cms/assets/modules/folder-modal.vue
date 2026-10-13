@@ -5,7 +5,7 @@ import { reactive, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Form, Input, InputNumber, message, Spin, TreeSelect } from 'antdv-next';
+import { Form, FormItem, Input, InputNumber, message, Spin, TreeSelect } from 'antdv-next';
 
 import {
   createAssetFolderApi,
@@ -43,12 +43,23 @@ function buildTreeSelectData(
 ): any[] {
   const map = new Map<string, any>();
   const roots: any[] = [];
+  const disabledFolder = disabledId
+    ? list.find((item) => item.id === disabledId)
+    : undefined;
 
   list.forEach((item) => {
+    const isSelfOrDescendant =
+      item.id === disabledId ||
+      Boolean(
+        disabledFolder?.fullPath &&
+          item.fullPath?.startsWith(disabledFolder.fullPath),
+      );
     map.set(item.id, {
-      disabled: item.id === disabledId,
+      disabled: isSelfOrDescendant,
       key: item.id,
-      title: item.name,
+      title: isSelfOrDescendant
+        ? `${item.name} (当前目录或子目录)`
+        : item.name,
       value: item.id,
       children: [],
     });
@@ -159,40 +170,41 @@ const [Modal, modalApi] = useVbenModal({
   <Modal class="w-[520px]">
     <Spin :spinning="loading">
       <Form layout="vertical" class="pt-2">
-        <Form.Item label="文件夹名称" required>
+        <FormItem label="文件夹名称" required>
           <Input
             v-model:value="formData.name"
             placeholder="请输入文件夹名称（如：封面图、产品海报）"
             :maxlength="64"
           />
-        </Form.Item>
+        </FormItem>
 
-        <Form.Item label="上级文件夹">
+        <FormItem label="上级文件夹">
           <TreeSelect
             v-model:value="formData.parentId"
             placeholder="请选择上级文件夹（留空为根目录）"
             allow-clear
+            class="w-full"
             :tree-data="folderTreeData"
             tree-default-expand-all
           />
-        </Form.Item>
+        </FormItem>
 
-        <Form.Item label="排序值">
+        <FormItem label="排序值">
           <InputNumber
             v-model:value="formData.sorting"
             class="w-full"
             placeholder="数值越大越靠前"
           />
-        </Form.Item>
+        </FormItem>
 
-        <Form.Item label="描述说明">
+        <FormItem label="描述说明">
           <Input.TextArea
             v-model:value="formData.description"
-            rows="3"
+            :rows="3"
             placeholder="请输入文件夹备注或说明（可选）"
             :maxlength="255"
           />
-        </Form.Item>
+        </FormItem>
       </Form>
     </Spin>
   </Modal>

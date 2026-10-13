@@ -161,7 +161,7 @@ setupVbenVxeTable({
     // 2. 自定义单元格渲染器 (DevExpress 风格 Renderers)
     // ==========================================
 
-    // 图片渲染 (自适应居中显示全、不变形，未铺满空白处带毛玻璃效果)
+    // 图片渲染 (缩略图轻量渲染，点击可预览高清原图)
     vxeUI.renderer.add('CellImage', {
       renderTableDefault(renderOpts, params) {
         const { props } = renderOpts;
@@ -169,8 +169,11 @@ setupVbenVxeTable({
         const src = row[column.field];
         const width = props?.width ?? 55;
         const height = props?.height ?? 40;
+        const previewSrc =
+          (props?.previewField ? row[props.previewField] : undefined) || src;
         if (!src) {
-          // 无图片时显示占位框，不显示裂图
+          // 无缩略图时显示轻量占位框，不直接加载大图
+          const isGeneratingImg = row?.type === 1 && row?.url;
           return h(
             'div',
             {
@@ -188,7 +191,7 @@ setupVbenVxeTable({
                 width: `${width}px`,
               },
             },
-            '无图',
+            isGeneratingImg ? '缩略图...' : '无图',
           );
         }
         return h(
@@ -196,6 +199,8 @@ setupVbenVxeTable({
           {
             style: {
               alignItems: 'center',
+              background: '#f5f5f5',
+              border: '1px solid #f0f0f0',
               borderRadius: '4px',
               display: 'flex',
               height: `${height}px`,
@@ -207,42 +212,16 @@ setupVbenVxeTable({
             },
           },
           [
-            // 1. 毛玻璃背景层：原图铺满放大 + 高斯模糊，填补未充满的空白区域
-            h('img', {
-              'aria-hidden': 'true',
-              src,
-              style: {
-                filter: 'blur(8px)',
-                height: '100%',
-                left: 0,
-                objectFit: 'cover',
-                opacity: 0.65,
-                pointerEvents: 'none',
-                position: 'absolute',
-                top: 0,
-                transform: 'scale(1.3)',
-                userSelect: 'none',
-                width: '100%',
-              },
-            }),
-            // 2. 半透明遮罩层：提供细腻的明暗过渡
-            h('div', {
-              style: {
-                backdropFilter: 'blur(2px)',
-                background: 'rgba(0, 0, 0, 0.15)',
-                height: '100%',
-                left: 0,
-                pointerEvents: 'none',
-                position: 'absolute',
-                top: 0,
-                width: '100%',
-              },
-            }),
-            // 3. 前景真实图片：object-fit: contain 完整呈现不变形
             h(Image, {
               ...props,
               height: '100%',
-              preview: props?.preview ?? true,
+              loading: 'lazy',
+              preview:
+                props?.preview === false
+                  ? false
+                  : {
+                      src: previewSrc,
+                    },
               src,
               style: {
                 maxHeight: '100%',

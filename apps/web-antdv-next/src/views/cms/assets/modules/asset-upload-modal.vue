@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import type { AssetDto } from '#/api/cms';
+import type { AssetDto, AssetScope } from '#/api/cms';
 
-import { markRaw, ref } from 'vue';
+import { computed, markRaw, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { createIconifyIcon } from '@vben/icons';
@@ -10,6 +10,7 @@ import {
   Button,
   Divider,
   message,
+  Progress,
   RadioButton,
   RadioGroup,
   Slider,
@@ -29,310 +30,541 @@ const UploadIcon = markRaw(createIconifyIcon('lucide:upload-cloud'));
 const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
 const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
 
+interface QueueItem {
+  captureTime: number;
+  coverMode: 'auto' | 'custom';
+  errorMsg?: string;
+  extracting: boolean;
+  file: File;
+  id: string;
+  isVideo: boolean;
+  result?: AssetDto;
+  status: 'error' | 'extracting' | 'pending' | 'success' | 'uploading';
+  thumbnailFile: File | null;
+  thumbnailUrl: string;
+  videoDuration: number;
+}
+
 const emit = defineEmits<{
   success: [asset?: AssetDto];
 }>();
 
-const loading = ref(false);
-const extracting = ref(false);
+const queue = ref<QueueItem[]>([]);
+const isRunningQueue = ref(false);
+const activeVideoItemId = ref<string | null>(null);
 
-// 待上传文件
-const selectedFile = ref<File | null>(null);
-const isVideo = ref(false);
-const videoDuration = ref(0);
-const videoDimensions = ref({ height: 0, width: 0 });
+const currentFolderId = ref<string | undefined>(undefined);
+const currentScope = ref<AssetScope | undefined>(undefined);
 
-// 封面模式: 'auto' (提取视频帧), 'custom' (用户自定义上传图片)
-const coverMode = ref<'auto' | 'custom'>('auto');
+const activeVideoItem = computed(() =>
+  queue.value.find((item) => item.id === activeVideoItemId.value),
+);
 
-// 视频时间进度提取
-const captureTime = ref(0.1);
+const stats = computed(() => {
+  const total = queue.value.length;
+  const success = queue.value.filter((i) => i.status === 'success').length;
+  const error = queue.value.filter((i) => i.status === 'error').length;
+  const pending = queue.value.filter(
+    (i) => i.status === 'pending' || i.status === 'extracting',
+  ).length;
+  const uploading = queue.value.filter((i) => i.status === 'uploading').length;
+  const percent = total > 0 ? Math.round((success / total) * 100) : 0;
+  return { error, pending, percent, success, total, uploading };
+});
 
-// 当前选定的封面 File 与预览 DataURL
-const currentThumbnailFile = ref<File | null>(null);
-const currentThumbnailUrl = ref<string>('');
-
-// 重置状态
 function resetState() {
-  selectedFile.value = null;
-  isVideo.value = false;
-  videoDuration.value = 0;
-  videoDimensions.value = { height: 0, width: 0 };
-  coverMode.value = 'auto';
-  captureTime.value = 0.1;
-  currentThumbnailFile.value = null;
-  currentThumbnailUrl.value = '';
+  queue.value = [];
+  isRunningQueue.value = false;
+  activeVideoItemId.value = null;
 }
 
-// 当用户选择/拖入视频或常规文件
-async function onFileSelected(file: File) {
-  selectedFile.value = file;
-  const isVid =
+function isVideoFile(file: File): boolean {
+  return (
     file.type.startsWith('video/') ||
-    /\.(mp4|mov|avi|mkv|webm|m4v)$/i.test(file.name);
-  isVideo.value = isVid;
+    /\.(mp4|mov|avi|mkv|webm|m4v)$/i.test(file.name)
+  );
+}
+
+// 多选/拖拽加入上传队列
+function onBeforeUpload(file: File) {
+  const id = `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const isVid = isVideoFile(file);
+
+  const newItem: QueueItem = {
+    captureTime: 0.1,
+    coverMode: 'auto',
+    extracting: isVid,
+    file,
+    id,
+    isVideo: isVid,
+    status: isVid ? 'extracting' : 'pending',
+    thumbnailFile: null,
+    thumbnailUrl: '',
+    videoDuration: 0,
+  };
+
+  queue.value.push(newItem);
 
   if (isVid) {
-    coverMode.value = 'auto';
-    captureTime.value = 0.1;
-    await doExtractVideoFrame(0.1);
-  } else {
-    currentThumbnailFile.value = null;
-    currentThumbnailUrl.value = '';
+    if (!activeVideoItemId.value) {
+      activeVideoItemId.value = id;
+    }
+    void extractItemVideoFrame(newItem, 0.1);
+  } else if (file.type.startsWith('image/')) {
+    void generateQueueImageThumbnail(newItem);
   }
-  return false; // 阻止 antdv 自动上传，交由我们的确认流程或自定义上传
+
+  return false; // 阻止自动上传，放入队列统一按序上传
 }
 
-// 提取视频帧
-async function doExtractVideoFrame(timeSec: number) {
-  if (!selectedFile.value || !isVideo.value) return;
-  extracting.value = true;
+async function generateQueueImageThumbnail(item: QueueItem) {
+  const target = queue.value.find((i) => i.id === item.id);
+  if (!target) return;
   try {
-    const res = await extractVideoFrame(selectedFile.value, timeSec);
-    videoDuration.value = res.duration;
-    videoDimensions.value = { height: res.height, width: res.width };
-    currentThumbnailFile.value = res.file;
-    currentThumbnailUrl.value = res.dataUrl;
+    const thumb = await createThumbnailFromFile(target.file, 360);
+    target.thumbnailFile = thumb.file;
+    target.thumbnailUrl = URL.createObjectURL(thumb.file);
+  } catch {
+    // 忽略非标准图片缩略图异常
+  }
+}
+
+async function extractItemVideoFrame(item: QueueItem, timeSec: number) {
+  const target = queue.value.find((i) => i.id === item.id);
+  if (!target || !target.isVideo) return;
+
+  target.extracting = true;
+  if (target.status !== 'success' && target.status !== 'uploading') {
+    target.status = 'extracting';
+  }
+  try {
+    const res = await extractVideoFrame(target.file, timeSec);
+    target.videoDuration = res.duration;
+    target.thumbnailFile = res.file;
+    target.thumbnailUrl = res.dataUrl;
   } catch (error) {
     console.error('视频帧提取失败', error);
-    message.warning('未能从视频提取帧画面，支持手动上传自定义封面');
   } finally {
-    extracting.value = false;
+    target.extracting = false;
+    if (target.status === 'extracting') {
+      target.status = 'pending';
+    }
   }
 }
 
-// 视频滑块松开/改变提取时间
 function onSliderChange(value: number) {
-  captureTime.value = value;
-  void doExtractVideoFrame(value);
+  const item = activeVideoItem.value;
+  if (!item) return;
+  item.captureTime = value;
+  void extractItemVideoFrame(item, value);
 }
 
-// 自定义上传封面图片
 async function onCustomCoverSelected(file: File) {
+  const item = activeVideoItem.value;
+  if (!item) return false;
   if (!file.type.startsWith('image/')) {
     message.error('封面必须为图片格式 (JPG/PNG/WebP等)');
     return false;
   }
-  extracting.value = true;
+  item.extracting = true;
   try {
     const thumb = await createThumbnailFromFile(file);
-    currentThumbnailFile.value = thumb.file;
-    currentThumbnailUrl.value = URL.createObjectURL(thumb.file);
-    message.success('已应用自定义封面图片');
-  } catch (e) {
+    item.thumbnailFile = thumb.file;
+    item.thumbnailUrl = URL.createObjectURL(thumb.file);
+    message.success(`已为【${item.file.name}】设置自定义封面`);
+  } catch {
     message.error('封面图片处理失败');
   } finally {
-    extracting.value = false;
+    item.extracting = false;
   }
   return false;
 }
 
-const currentFolderId = ref<string | undefined>(undefined);
-const currentScope = ref<import('#/api/cms').AssetScope | undefined>(undefined);
+function removeQueueItem(id: string) {
+  if (isRunningQueue.value) return;
+  queue.value = queue.value.filter((i) => i.id !== id);
+  if (activeVideoItemId.value === id) {
+    activeVideoItemId.value =
+      queue.value.find((i) => i.isVideo)?.id || null;
+  }
+}
 
-// 执行最终上传
-async function handleConfirmUpload() {
-  if (!selectedFile.value) {
-    message.warning('请先选择要上传的文件');
+function clearCompleted() {
+  queue.value = queue.value.filter((i) => i.status !== 'success');
+}
+
+// 顺序执行队列上传
+async function startQueueUpload() {
+  const pendingItems = queue.value.filter(
+    (i) => i.status === 'pending' || i.status === 'error',
+  );
+  if (pendingItems.length === 0) {
+    if (queue.value.some((i) => i.status === 'extracting')) {
+      message.warning('正在提取视频封面帧，请稍候...');
+      return;
+    }
+    message.warning('请先选择待上传的文件');
     return;
   }
-  loading.value = true;
-  try {
-    const res = await uploadAssetApi(
-      selectedFile.value,
-      currentThumbnailFile.value || undefined,
-      currentFolderId.value,
-      currentScope.value,
-    );
-    message.success(`素材【${selectedFile.value.name}】上传成功`);
-    emit('success', res);
+
+  isRunningQueue.value = true;
+  let successCount = 0;
+  let lastUploaded: AssetDto | undefined;
+
+  for (const item of queue.value) {
+    if (item.status !== 'pending' && item.status !== 'error') {
+      continue;
+    }
+
+    // 如果视频还在截取帧，等待完成
+    if (item.extracting) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+
+    item.status = 'uploading';
+    item.errorMsg = undefined;
+
+    try {
+      const res = await uploadAssetApi(
+        item.file,
+        item.thumbnailFile || undefined,
+        currentFolderId.value,
+        currentScope.value,
+      );
+      item.status = 'success';
+      item.result = res;
+      lastUploaded = res;
+      successCount++;
+    } catch (err: any) {
+      item.status = 'error';
+      item.errorMsg =
+        err?.response?.data?.error?.message || err?.message || '上传失败';
+    }
+  }
+
+  isRunningQueue.value = false;
+
+  if (successCount > 0) {
+    emit('success', lastUploaded);
+  }
+
+  const failedCount = queue.value.filter((i) => i.status === 'error').length;
+  if (failedCount === 0 && successCount > 0) {
+    message.success(`全部 ${successCount} 个文件队列上传成功`);
     modalApi.close();
-  } catch (error) {
-    message.error('上传失败，请稍后重试');
-    console.error(error);
-  } finally {
-    loading.value = false;
+  } else if (successCount > 0 && failedCount > 0) {
+    message.warning(
+      `成功上传 ${successCount} 个文件，${failedCount} 个失败（可点击重试）`,
+    );
+  } else if (failedCount > 0) {
+    message.error('文件上传失败，请检查后重试');
   }
 }
 
 const [Modal, modalApi] = useVbenModal({
   destroyOnClose: true,
   fullscreenButton: false,
+  footer: false,
   onOpenChange(isOpen) {
     if (isOpen) {
       resetState();
-      const data = modalApi.getData<{ folderId?: string; scope?: import('#/api/cms').AssetScope }>();
+      const data = modalApi.getData<{
+        folderId?: string;
+        scope?: AssetScope;
+      }>();
       currentFolderId.value = data?.folderId;
       currentScope.value = data?.scope;
     }
   },
-  title: '上传素材文件',
+  title: '批量队列上传素材',
 });
 </script>
 
 <template>
-  <Modal class="w-[640px]">
-    <Spin :spinning="loading">
-      <div class="py-2 space-y-4">
-        <!-- 未选择文件时的拖拽区 -->
-        <div v-if="!selectedFile">
-          <UploadDragger
-            :multiple="false"
-            :show-upload-list="false"
-            :before-upload="onFileSelected"
-          >
-            <p class="ant-upload-drag-icon flex justify-center py-4">
-              <UploadIcon class="size-12 text-primary" />
-            </p>
-            <p class="ant-upload-text font-medium text-base">
-              点击或将文件拖拽至此区域
-            </p>
-            <p class="ant-upload-hint text-xs text-muted-foreground px-4">
-              支持视频 (MP4/WebM)、图片 (PNG/JPG/GIF/WebP)、音频与常用文档。上传视频支持自定义封面设置或自动提取帧画面。
-            </p>
-          </UploadDragger>
-        </div>
+  <Modal class="w-[720px]">
+    <div class="py-1 space-y-4">
+      <!-- 顶部多文件拖拽区 -->
+      <UploadDragger
+        :multiple="true"
+        :disabled="isRunningQueue"
+        :show-upload-list="false"
+        :before-upload="onBeforeUpload"
+      >
+        <p class="ant-upload-drag-icon flex justify-center py-2">
+          <UploadIcon class="size-10 text-primary" />
+        </p>
+        <p class="ant-upload-text font-medium text-sm">
+          点击或将多个文件拖拽至此区域加入上传队列
+        </p>
+        <p class="ant-upload-hint text-xs text-muted-foreground px-4">
+          支持多选批量添加视频 (MP4/WebM)、图片 (PNG/JPG/GIF/WebP)、音频与常用文档；视频文件自动提取封面帧，也可点击队列中的视频单独定制封面。
+        </p>
+      </UploadDragger>
 
-        <!-- 已选文件展示与设置区 -->
-        <div v-else class="space-y-4">
-          <!-- 文件基本信息条 -->
-          <div class="flex items-center justify-between p-3 border rounded bg-muted/20">
-            <div class="flex items-center gap-3 overflow-hidden">
-              <div class="p-2 rounded bg-primary/10 text-primary shrink-0">
-                <VideoIcon v-if="isVideo" class="size-6" />
-                <ImageIcon v-else class="size-6" />
-              </div>
-              <div class="overflow-hidden">
-                <div class="font-medium text-sm truncate" :title="selectedFile.name">
-                  {{ selectedFile.name }}
-                </div>
-                <div class="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                  <span>{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</span>
-                  <Tag v-if="isVideo" color="blue">视频媒体</Tag>
-                  <Tag v-else color="cyan">素材文件</Tag>
-                </div>
-              </div>
-            </div>
-
-            <Button size="small" @click="resetState">重新选择</Button>
+      <!-- 上传队列列表 -->
+      <div v-if="queue.length > 0" class="space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-sm">
+              待上传队列 ({{ stats.success }} / {{ stats.total }})
+            </span>
+            <Tag v-if="stats.uploading > 0" color="processing">
+              正在队列上传中...
+            </Tag>
+            <Tag v-else-if="stats.error > 0" color="error">
+              失败 {{ stats.error }} 项
+            </Tag>
           </div>
-
-          <!-- 视频专属：封面设置与提取区 -->
-          <div v-if="isVideo" class="border rounded p-4 bg-background space-y-3">
-            <div class="flex items-center justify-between border-b pb-2">
-              <span class="font-medium text-sm flex items-center gap-2">
-                <span>视频封面设置</span>
-                <span class="text-xs text-muted-foreground font-normal">
-                  (可自定义上传或从视频画面截取)
-                </span>
-              </span>
-
-              <RadioGroup v-model:value="coverMode" size="small" button-style="solid">
-                <RadioButton value="auto">从视频截取</RadioButton>
-                <RadioButton value="custom">自定义上传</RadioButton>
-              </RadioGroup>
-            </div>
-
-            <Spin :spinning="extracting" tip="正在截取画面...">
-              <div class="flex gap-4 items-start">
-                <!-- 封面预览图（完整显示不剪裁） -->
-                <div class="w-[200px] h-[120px] border rounded bg-black/90 overflow-hidden flex items-center justify-center shrink-0 relative group shadow-inner">
-                  <img
-                    v-if="currentThumbnailUrl"
-                    :src="currentThumbnailUrl"
-                    class="max-w-full max-h-full object-contain"
-                    alt="视频封面预览"
-                  />
-                  <div v-else class="text-xs text-white/60 text-center p-2">
-                    暂无封面预览
-                  </div>
-
-                  <span
-                    v-if="currentThumbnailUrl"
-                    class="absolute bottom-1 right-1 text-[10px] bg-black/70 text-white px-1.5 py-0.5 rounded backdrop-blur"
-                  >
-                    完整封面预览
-                  </span>
-                </div>
-
-                <!-- 模式 A：从视频进度提取 -->
-                <div v-if="coverMode === 'auto'" class="flex-1 space-y-2 min-w-0">
-                  <div class="text-xs text-muted-foreground">
-                    拖动滑块截取视频中不同秒数的画面作为封面：
-                  </div>
-                  <Slider
-                    v-model:value="captureTime"
-                    :min="0"
-                    :max="videoDuration > 0 ? Number(videoDuration.toFixed(1)) : 10"
-                    :step="0.5"
-                    @after-change="onSliderChange"
-                  />
-                  <div class="flex justify-between items-center text-xs text-muted-foreground">
-                    <span>当前截取点: {{ captureTime }} 秒</span>
-                    <span>总时长: {{ videoDuration > 0 ? `${videoDuration.toFixed(1)} 秒` : '获取中...' }}</span>
-                  </div>
-                  <div class="flex gap-2 pt-1">
-                    <Button
-                      size="small"
-                      @click="onSliderChange(0.1)"
-                    >
-                      首帧
-                    </Button>
-                    <Button
-                      v-if="videoDuration > 1"
-                      size="small"
-                      @click="onSliderChange(Number((videoDuration * 0.25).toFixed(1)))"
-                    >
-                      1/4 处
-                    </Button>
-                    <Button
-                      v-if="videoDuration > 2"
-                      size="small"
-                      @click="onSliderChange(Number((videoDuration * 0.5).toFixed(1)))"
-                    >
-                      居中帧
-                    </Button>
-                  </div>
-                </div>
-
-                <!-- 模式 B：自定义上传图片封面 -->
-                <div v-else class="flex-1 space-y-2">
-                  <div class="text-xs text-muted-foreground">
-                    从本地选择一张图片作为此视频的专属封面：
-                  </div>
-                  <Upload
-                    :show-upload-list="false"
-                    accept="image/*"
-                    :before-upload="onCustomCoverSelected"
-                  >
-                    <Button size="small">
-                      <template #icon><ImageIcon class="size-3.5" /></template>
-                      选择本地图片作为封面
-                    </Button>
-                  </Upload>
-                  <p class="text-[11px] text-muted-foreground">
-                    推荐上传 16:9 比例 (如 1280x720) 的高清图片，系统将自动优化并缩放存储。
-                  </p>
-                </div>
-              </div>
-            </Spin>
-          </div>
-
-          <Divider class="my-2" />
-
-          <!-- 操作按钮栏 -->
-          <div class="flex justify-end gap-2 pt-2">
-            <Button @click="resetState">取消</Button>
+          <div class="flex items-center gap-2">
             <Button
-              type="primary"
-              :loading="loading || extracting"
-              @click="handleConfirmUpload"
+              v-if="stats.success > 0 && !isRunningQueue"
+              size="small"
+              type="link"
+              @click="clearCompleted"
             >
-              确认上传
+              清理已完成
+            </Button>
+            <Button
+              v-if="!isRunningQueue"
+              size="small"
+              type="text"
+              danger
+              @click="resetState"
+            >
+              清空队列
             </Button>
           </div>
         </div>
+
+        <Progress
+          v-if="isRunningQueue || stats.success > 0"
+          :percent="stats.percent"
+          :status="stats.error > 0 ? 'exception' : stats.percent === 100 ? 'success' : 'active'"
+          size="small"
+        />
+
+        <!-- 队列滚动列表 -->
+        <div class="max-h-[240px] overflow-y-auto border rounded divide-y bg-muted/10">
+          <div
+            v-for="(item, idx) in queue"
+            :key="item.id"
+            class="flex items-center justify-between px-3 py-2 text-xs hover:bg-muted/30 transition-colors"
+            :class="{
+              'bg-primary/5': activeVideoItemId === item.id,
+            }"
+          >
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+              <span class="text-muted-foreground font-mono w-5 shrink-0">
+                #{{ idx + 1 }}
+              </span>
+
+              <!-- 缩略预览 -->
+              <div
+                class="w-10 h-8 rounded border bg-black/80 overflow-hidden flex items-center justify-center shrink-0"
+              >
+                <img
+                  v-if="item.thumbnailUrl"
+                  :src="item.thumbnailUrl"
+                  class="w-full h-full object-cover"
+                  alt=""
+                />
+                <VideoIcon v-else-if="item.isVideo" class="size-4 text-white" />
+                <ImageIcon v-else class="size-4 text-white/70" />
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="font-medium truncate" :title="item.file.name">
+                  {{ item.file.name }}
+                </div>
+                <div class="text-muted-foreground flex items-center gap-2 mt-0.5">
+                  <span>{{ (item.file.size / 1024 / 1024).toFixed(2) }} MB</span>
+                  <span v-if="item.errorMsg" class="text-destructive truncate">
+                    {{ item.errorMsg }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 状态与操作 -->
+            <div class="flex items-center gap-2 shrink-0 ml-2">
+              <Button
+                v-if="item.isVideo && item.status !== 'success'"
+                size="small"
+                :type="activeVideoItemId === item.id ? 'primary' : 'dashed'"
+                ghost
+                class="!text-xs !px-2 !h-6"
+                @click="
+                  activeVideoItemId =
+                    activeVideoItemId === item.id ? null : item.id
+                "
+              >
+                🎞️ 定制封面
+              </Button>
+
+              <Tag v-if="item.status === 'extracting'" color="orange" class="!m-0">
+                提取帧中
+              </Tag>
+              <Tag v-else-if="item.status === 'pending'" color="default" class="!m-0">
+                排队中
+              </Tag>
+              <Tag v-else-if="item.status === 'uploading'" color="processing" class="!m-0">
+                上传中...
+              </Tag>
+              <Tag v-else-if="item.status === 'success'" color="success" class="!m-0">
+                ✓ 已完成
+              </Tag>
+              <Tag v-else-if="item.status === 'error'" color="error" class="!m-0">
+                失败
+              </Tag>
+
+              <Button
+                v-if="!isRunningQueue && item.status !== 'success'"
+                type="text"
+                danger
+                size="small"
+                class="!px-1.5 !h-6"
+                title="移出队列"
+                @click="removeQueueItem(item.id)"
+              >
+                ✕
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 选中的视频专属封面定制面板 -->
+        <div
+          v-if="activeVideoItem"
+          class="border rounded p-3 bg-background space-y-2.5 shadow-xs"
+        >
+          <div class="flex items-center justify-between border-b pb-2">
+            <span class="font-medium text-xs flex items-center gap-1.5 truncate">
+              <span>🎬 视频封面定制：</span>
+              <span class="text-primary truncate max-w-[260px]">
+                {{ activeVideoItem.file.name }}
+              </span>
+            </span>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <RadioGroup
+                v-model:value="activeVideoItem.coverMode"
+                size="small"
+                button-style="solid"
+              >
+                <RadioButton value="auto">截取视频帧</RadioButton>
+                <RadioButton value="custom">上传封面图</RadioButton>
+              </RadioGroup>
+              <Button
+                size="small"
+                type="text"
+                @click="activeVideoItemId = null"
+              >
+                收起
+              </Button>
+            </div>
+          </div>
+
+          <Spin :spinning="activeVideoItem.extracting" tip="正在截取画面...">
+            <div class="flex gap-4 items-start">
+              <div
+                class="w-[160px] h-[96px] border rounded bg-black/90 overflow-hidden flex items-center justify-center shrink-0 relative"
+              >
+                <img
+                  v-if="activeVideoItem.thumbnailUrl"
+                  :src="activeVideoItem.thumbnailUrl"
+                  class="max-w-full max-h-full object-contain"
+                  alt="视频封面预览"
+                />
+                <div v-else class="text-xs text-white/60 text-center p-2">
+                  暂无封面预览
+                </div>
+              </div>
+
+              <div
+                v-if="activeVideoItem.coverMode === 'auto'"
+                class="flex-1 space-y-1.5 min-w-0"
+              >
+                <div class="text-xs text-muted-foreground">
+                  拖动滑块截取视频不同秒数画面作为封面：
+                </div>
+                <Slider
+                  v-model:value="activeVideoItem.captureTime"
+                  :min="0"
+                  :max="
+                    activeVideoItem.videoDuration > 0
+                      ? Number(activeVideoItem.videoDuration.toFixed(1))
+                      : 10
+                  "
+                  :step="0.5"
+                  @after-change="onSliderChange"
+                />
+                <div
+                  class="flex justify-between items-center text-xs text-muted-foreground"
+                >
+                  <span>当前截取点: {{ activeVideoItem.captureTime }} 秒</span>
+                  <span>
+                    总时长:
+                    {{
+                      activeVideoItem.videoDuration > 0
+                        ? `${activeVideoItem.videoDuration.toFixed(1)} 秒`
+                        : '获取中...'
+                    }}
+                  </span>
+                </div>
+              </div>
+
+              <div v-else class="flex-1 space-y-2">
+                <div class="text-xs text-muted-foreground">
+                  选择本地图片作为该视频的专属封面：
+                </div>
+                <Upload
+                  :show-upload-list="false"
+                  accept="image/*"
+                  :before-upload="onCustomCoverSelected"
+                >
+                  <Button size="small">
+                    <template #icon><ImageIcon class="size-3.5" /></template>
+                    选择本地图片作为封面
+                  </Button>
+                </Upload>
+              </div>
+            </div>
+          </Spin>
+        </div>
       </div>
-    </Spin>
+
+      <Divider class="my-2" />
+
+      <!-- 底部操作栏 -->
+      <div class="flex items-center justify-between pt-1">
+        <span class="text-xs text-muted-foreground">
+          {{
+            queue.length > 0
+              ? `共 ${stats.total} 个文件，待上传 ${stats.pending + stats.error} 个`
+              : '支持一次框选或拖入多个文件'
+          }}
+        </span>
+        <div class="flex items-center gap-2">
+          <Button :disabled="isRunningQueue" @click="modalApi.close()">
+            关闭
+          </Button>
+          <Button
+            type="primary"
+            :loading="isRunningQueue"
+            :disabled="
+              queue.length === 0 ||
+              (stats.pending === 0 && stats.error === 0)
+            "
+            @click="startQueueUpload"
+          >
+            {{
+              stats.error > 0 && stats.pending === 0
+                ? `重试失败项 (${stats.error})`
+                : `开始队列上传 (${stats.pending + stats.error})`
+            }}
+          </Button>
+        </div>
+      </div>
+    </div>
   </Modal>
 </template>

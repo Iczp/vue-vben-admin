@@ -29,6 +29,7 @@ import {
   articleManagementPermission,
   changeArticleScheduleApi,
   createArticleScheduleApi,
+  findArticleSenderSessionApi,
   getArticleChatHistoryApi,
   getArticleSchedulesApi,
   getArticleSenderSessionsApi,
@@ -36,11 +37,16 @@ import {
   sendArticleMessageApi,
 } from '#/api/chat/article-message';
 import { ChatObjectTypeEnums, getChatObjectsApi } from '#/api/chat/chat-object';
-import { getArticlesApi, getArticleWebUrl } from '#/api/cms/articles';
-import { ArticleStatus } from '#/api/cms/types';
+import { getArticleWebUrl } from '#/api/cms/articles';
+import { ArticleStatus, AssetType } from '#/api/cms/types';
+import { getRequestErrorMessage } from '#/utils/request-error';
+import ArticleSelector from '#/views/cms/components/ArticleSelector.vue';
+import MediaSelector from '#/views/cms/components/MediaSelector.vue';
 
 import {
+  articleClientMessageId,
   articleItems,
+  createArticleMessageId,
   emptyArticle,
   validateArticles,
   webUrl,
@@ -55,6 +61,9 @@ const busy = ref(false);
 const error = ref('');
 const tab = ref('editor');
 const accountType = ref(ChatObjectTypeEnums.Subscription);
+const isSubscription = computed(
+  () => accountType.value === ChatObjectTypeEnums.Subscription,
+);
 const accounts = ref<ChatObjectDto[]>([]);
 const accountId = ref<string>();
 const accountKeyword = ref('');
@@ -63,9 +72,9 @@ const sessions = ref<ArticleSenderSession[]>([]);
 const sessionId = ref<string>();
 const sessionsTotal = ref(0);
 const sessionKeyword = ref('');
-const items = ref<ArticleMessageItem[]>([emptyArticle()]);
-const selectedIndex = ref(0);
-const selected = computed(() => items.value[selectedIndex.value]);
+const items = ref<ArticleMessageItem[]>([]);
+const articleKeys = new WeakMap<ArticleMessageItem, number>();
+let nextArticleKey = 0;
 const history = ref<ArticleChatMessage[]>([]);
 const historyCursor = ref<number | string>();
 const historyMore = ref(false);
@@ -75,10 +84,6 @@ const schedulesTotal = ref(0);
 const scheduleAt = ref('');
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const cmsOpen = ref(false);
-const cmsKeyword = ref('');
-const cmsRows = ref<AdminArticleListItemDto[]>([]);
-const cmsPage = ref(1);
-const cmsTotal = ref(0);
 const previewItems = ref<ArticleMessageItem[]>([]);
 const previewOpen = ref(false);
 const changeTask = ref<ArticleSchedule>();
@@ -94,10 +99,8 @@ async function run(action: () => Promise<void>) {
   try {
     await action();
   } catch (cause) {
-    error.value =
-      cause instanceof Error
-        ? cause.message
-        : '操作失败，请检查服务端返回信息。';
+    const failure = getRequestErrorMessage(cause, '操作失败，请检查服务端返回信息。');
+    error.value = [failure.message, failure.details].filter(Boolean).join('\n');
   } finally {
     busy.value = false;
   }
@@ -123,25 +126,31 @@ function addArticle(item = emptyArticle()) {
     return;
   }
   items.value.push(item);
-  selectedIndex.value = items.value.length - 1;
+}
+function articleKey(item: ArticleMessageItem) {
+  let key = articleKeys.get(item);
+  if (key === undefined) {
+    key = nextArticleKey++;
+    articleKeys.set(item, key);
+  }
+  return key;
+}
+function updateCover(item: ArticleMessageItem, value: string) {
+  item.coverImageUrl = value.startsWith('/')
+    ? new URL(value, window.location.origin).href
+    : value;
 }
 function removeArticle(index: number) {
   items.value.splice(index, 1);
-  selectedIndex.value = Math.max(
-    0,
-    Math.min(selectedIndex.value, items.value.length - 1),
-  );
 }
 function moveArticle(index: number, direction: number) {
   const destination = index + direction;
   if (destination < 0 || destination >= items.value.length) return;
   const [item] = items.value.splice(index, 1);
   if (item) items.value.splice(destination, 0, item);
-  selectedIndex.value = destination;
 }
 function copyDraft(content: unknown) {
   items.value = articleItems(content).map((item) => ({ ...item }));
-  selectedIndex.value = 0;
   tab.value = 'editor';
   submitKey = '';
   submitId = '';
@@ -168,6 +177,15 @@ async function loadAccounts(more = false) {
 async function loadSessions(more = false) {
   if (!accountId.value) return;
   const version = generation;
+  if (isSubscription.value) {
+    const ownerId = accountId.value;
+    const id = await findArticleSenderSessionApi(ownerId, ownerId);
+    if (version !== generation || ownerId !== accountId.value) return;
+    if (!id || id === '00000000-0000-0000-0000-000000000000')
+      throw new Error('未找到该公众号的会话单元，请检查账号会话配置。');
+    sessionId.value = id;
+    return;
+  }
   const result = await getArticleSenderSessionsApi(
     accountId.value,
     more ? sessions.value.length : 0,
@@ -176,14 +194,6 @@ async function loadSessions(more = false) {
   if (version !== generation) return;
   sessions.value = more ? [...sessions.value, ...result.items] : result.items;
   sessionsTotal.value = result.totalCount;
-  if (
-    !sessionId.value &&
-    accountType.value === ChatObjectTypeEnums.Subscription
-  ) {
-    sessionId.value = sessions.value.find(
-      (unit) => String(unit.destination?.id) === accountId.value,
-    )?.id;
-  }
 }
 async function loadHistory(more = false) {
   if (!sessionId.value) return;
@@ -219,7 +229,11 @@ async function loadSchedules() {
 }
 async function submit(scheduled: boolean) {
   if (!canManage.value || !sessionId.value)
-    throw new Error('请选择发送主体及会话，并确认拥有文章管理权限。');
+    throw new Error(
+      isSubscription.value
+        ? '请选择发送主体，等待会话查询成功，并确认拥有文章管理权限。'
+        : '请选择发送主体及目标会话，并确认拥有文章管理权限。',
+    );
   const validation = validateArticles(items.value);
   if (validation) throw new Error(validation);
   const plannedTime = scheduled ? futureTime(scheduleAt.value) : '';
@@ -233,9 +247,9 @@ async function submit(scheduled: boolean) {
   });
   if (signature !== submitKey) {
     submitKey = signature;
-    submitId = crypto.randomUUID();
+    submitId = createArticleMessageId();
   }
-  const input = { clientMessageId: `article:${submitId}`, content };
+  const input = { clientMessageId: articleClientMessageId(submitId), content };
   if (scheduled) {
     await createArticleScheduleApi({
       id: submitId,
@@ -287,30 +301,29 @@ async function changeTime() {
   changeTask.value = undefined;
   await loadSchedules();
 }
-async function loadCms() {
-  const result = await getArticlesApi({
-    keyword: cmsKeyword.value,
-    status: ArticleStatus.Published,
-    isVisible: true,
-    maxResultCount: 20,
-    skipCount: (cmsPage.value - 1) * 20,
-  });
-  cmsRows.value = result.items;
-  cmsTotal.value = result.totalCount;
+function cmsCoverUrl(row: AdminArticleListItemDto): string {
+  if (!row.coverUrl) return '';
+  try {
+    return webUrl(new URL(row.coverUrl, window.location.origin).href);
+  } catch {
+    return '';
+  }
 }
-function selectCms(row: AdminArticleListItemDto) {
-  if (row.status !== ArticleStatus.Published || !row.isVisible) return;
-  const cover = row.coverUrl
-    ? new URL(row.coverUrl, window.location.origin).href
-    : '';
-  addArticle({
-    title: row.title,
-    description: row.summary ?? '',
-    coverImageUrl: cover,
-    author: '',
-    originalUrl: new URL(getArticleWebUrl(row), window.location.origin).href,
-  });
-  cmsOpen.value = false;
+function selectCms(rows: AdminArticleListItemDto[]) {
+  if (rows.length + items.value.length > 8) {
+    message.warning('每组文章最多8篇。');
+    return;
+  }
+  for (const row of rows) {
+    if (row.status !== ArticleStatus.Published || !row.isVisible) continue;
+    addArticle({
+      title: row.title,
+      description: row.summary ?? '',
+      coverImageUrl: cmsCoverUrl(row),
+      author: '',
+      originalUrl: new URL(getArticleWebUrl(row), window.location.origin).href,
+    });
+  }
 }
 watch(accountType, () => {
   accountId.value = undefined;
@@ -357,7 +370,7 @@ onMounted(() => {
     />
     <Alert
       v-if="error"
-      class="mb-4"
+      class="mb-4 whitespace-pre-wrap break-words"
       type="error"
       show-icon
       :message="error"
@@ -404,6 +417,12 @@ onMounted(() => {
           >
 更多主体
 </Button>
+        <template v-if="isSubscription">
+          <span v-if="sessionId" class="text-muted-foreground">
+            已自动选定会话，可直接发送。
+          </span>
+        </template>
+        <template v-else>
         <Select
           v-model:value="sessionId"
           :disabled="busy || !accountId"
@@ -437,9 +456,10 @@ onMounted(() => {
           >
 更多会话
 </Button>
+        </template>
       </div>
       <p class="mt-3 text-muted-foreground">
-        订阅号使用对应共享会话；服务号按所选目标会话投递。当前页面一次向一个会话发送。
+        公众号／订阅号选定账号后即可发送，无需另选会话；服务号按所选目标会话投递。
       </p>
     </Card>
     <Tabs v-model:active-key="tab">
@@ -456,27 +476,21 @@ onMounted(() => {
 </Button>
                 <Button
                   :disabled="items.length >= 8 || busy"
-                  @click="
-                    cmsOpen = true;
-                    cmsPage = 1;
-                    run(loadCms);
-                  "
+                  @click="cmsOpen = true"
                   >
 从 CMS 选择
 </Button>
               </div>
               <div
                 v-for="(item, index) in items"
-                :key="index"
-                class="mb-2 flex items-center gap-2 rounded border p-2"
+                :key="articleKey(item)"
+                class="mb-4 rounded border p-4"
+                data-testid="article-editor"
               >
-                <Button
-                  type="link"
-                  class="min-w-0 flex-1 text-left"
-                  @click="selectedIndex = index"
-                  >
-{{ index + 1 }} · {{ item.title || '未填写标题' }}
-</Button>
+                <div class="mb-3 flex items-center gap-2">
+                  <strong class="min-w-0 flex-1">
+                    第 {{ index + 1 }} 篇{{ index === 0 ? ' · 头条' : '' }}
+                  </strong>
                 <Button
                   size="small"
                   :disabled="index === 0 || busy"
@@ -499,49 +513,58 @@ onMounted(() => {
                   >
 移除
 </Button>
-              </div>
-              <div v-if="selected" class="mt-4 grid gap-3">
+                </div>
+              <div class="grid gap-3">
                 <label>标题<Input
-                    v-model:value="selected.title"
+                    v-model:value="item.title"
                     :maxlength="256"
                     :disabled="busy"
                     placeholder="文章标题"
                 /></label>
                 <label>阅读地址<Input
-                    v-model:value="selected.originalUrl"
+                    v-model:value="item.originalUrl"
                     :maxlength="500"
                     :disabled="busy"
                     placeholder="https://…"
                 /></label>
                 <label>摘要<Input.TextArea
-                    v-model:value="selected.description"
+                    v-model:value="item.description"
                     :maxlength="256"
                     :disabled="busy"
                     :rows="3"
                 /></label>
-                <label>封面地址<Input
-                    v-model:value="selected.coverImageUrl"
-                    :maxlength="500"
+                <div>
+                  <span>封面地址</span>
+                  <MediaSelector
+                    :value="item.coverImageUrl"
+                    :asset-types="[AssetType.Image]"
+                    :max-count="1"
                     :disabled="busy"
-                    placeholder="公开可访问的 HTTP/HTTPS 图片地址"
-                /></label>
+                    placeholder="输入图片地址或从 CMS 素材库选择封面"
+                    @update:value="updateCover(item, $event)"
+                  />
+                </div>
                 <label>作者<Input
-                    v-model:value="selected.author"
+                    v-model:value="item.author"
                     :maxlength="50"
                     :disabled="busy"
                 /></label>
                 <a
-                  v-if="webUrl(selected.originalUrl)"
-                  :href="webUrl(selected.originalUrl)"
+                  v-if="webUrl(item.originalUrl)"
+                  :href="webUrl(item.originalUrl)"
                   target="_blank"
                   rel="noopener noreferrer"
                   >打开原文预览</a>
               </div>
+              </div>
+              <p v-if="items.length === 0" class="py-6 text-muted-foreground">
+                点击“添加外部文章”或“从 CMS 选择”开始组合文章，最多 8 篇。
+              </p>
               <div class="mt-6 flex flex-wrap items-center gap-3">
                 <Button
                   type="primary"
                   :loading="busy"
-                  :disabled="!sessionId || !canManage"
+                  :disabled="!sessionId || !canManage || busy || items.length === 0"
                   @click="run(() => submit(false))"
                   >
 立即发送
@@ -553,7 +576,7 @@ onMounted(() => {
                     :disabled="busy"
                 /></label>
                 <Button
-                  :disabled="!sessionId || !canManage || busy"
+                  :disabled="!sessionId || !canManage || busy || items.length === 0"
                   @click="run(() => submit(true))"
                   >
 定时发送
@@ -578,7 +601,9 @@ onMounted(() => {
             >
 刷新历史
 </Button>
-          <p v-if="!sessionId" class="py-6">请先选择发送主体和会话。</p>
+          <p v-if="!sessionId" class="py-6">
+            {{ isSubscription ? '请先选择发送主体，等待会话查询完成。' : '请先选择发送主体和目标会话。' }}
+          </p>
           <p v-else-if="history.length === 0" class="py-6">暂无消息。</p>
           <div
             v-for="row in history"
@@ -732,69 +757,15 @@ onMounted(() => {
         </Card>
       </Tabs.TabPane>
     </Tabs>
-    <Modal
+    <ArticleSelector
       v-model:open="cmsOpen"
-      title="选择已发布且可见的 CMS 文章"
-      :footer="null"
-      width="720px"
-    >
-      <div class="mb-4 flex gap-2">
-        <Input
-          v-model:value="cmsKeyword"
-          placeholder="搜索文章"
-          @press-enter="
-            cmsPage = 1;
-            run(loadCms);
-          "
-        /><Button
-          :loading="busy"
-          @click="
-            cmsPage = 1;
-            run(loadCms);
-          "
-          >
-搜索
-</Button>
-      </div>
-      <div
-        v-for="row in cmsRows"
-        :key="row.id"
-        class="flex items-center justify-between gap-3 border-b py-3"
-      >
-        <div>
-          <strong>{{ row.title }}</strong>
-          <p class="text-muted-foreground">{{ row.summary }}</p>
-        </div>
-        <Button
-          :disabled="
-            busy || !row.isVisible || row.status !== ArticleStatus.Published
-          "
-          @click="selectCms(row)"
-          >
-选择
-</Button>
-      </div>
-      <p v-if="cmsRows.length === 0" class="py-4">暂无可选的已发布文章。</p>
-      <div class="mt-4 flex items-center gap-3">
-        <Button
-          :disabled="busy || cmsPage <= 1"
-          @click="
-            cmsPage--;
-            run(loadCms);
-          "
-          >
-上一页
-</Button><span>{{ cmsPage }} · 共 {{ cmsTotal }} 篇</span><Button
-          :disabled="busy || cmsPage * 20 >= cmsTotal"
-          @click="
-            cmsPage++;
-            run(loadCms);
-          "
-          >
-下一页
-</Button>
-      </div>
-    </Modal>
+      title="选择文章"
+      multiple
+      :max-count="8 - items.length"
+      :status="ArticleStatus.Published"
+      :is-visible="true"
+      @confirm="selectCms"
+    />
     <Modal v-model:open="previewOpen" title="文章组预览" :footer="null">
 <ArticlePreview :items="previewItems" />
 </Modal>
