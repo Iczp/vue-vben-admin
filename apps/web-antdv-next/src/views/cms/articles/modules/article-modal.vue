@@ -14,6 +14,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { VbenTiptap } from '@vben/plugins/tiptap';
 
 import {
+  Button,
   Col,
   DatePicker,
   Form,
@@ -33,6 +34,7 @@ import {
   AssetType,
   createArticleApi,
   getArticleApi,
+  getArticleWebUrl,
   getCategoriesApi,
   getTagsApi,
   SourceType,
@@ -56,6 +58,7 @@ const tagOptions = ref<{ label: string; value: string }[]>([]);
 
 // 表单字段
 const title = ref('');
+const code = ref('');
 const contentType = ref('Article');
 const subTitle = ref('');
 const summary = ref('');
@@ -76,6 +79,7 @@ const isRecommend = ref(false);
 const allowComment = ref(true);
 const sorting = ref<number>(0);
 const password = ref('');
+const baseViewCount = ref<number>(0);
 
 const contentTypeSelectOptions = [
   { label: '标准图文文章', value: 'Article' },
@@ -102,6 +106,7 @@ function resetState() {
   recordId.value = null;
   activeTab.value = 'basic';
   title.value = '';
+  code.value = '';
   contentType.value = 'Article';
   subTitle.value = '';
   summary.value = '';
@@ -122,6 +127,7 @@ function resetState() {
   allowComment.value = true;
   sorting.value = 0;
   password.value = '';
+  baseViewCount.value = 0;
 }
 
 async function loadOptions() {
@@ -143,6 +149,17 @@ async function loadOptions() {
   }
 }
 
+function openFrontWebArticle() {
+  const url = getArticleWebUrl({
+    code: code.value,
+    id: recordId.value,
+    slug: slug.value,
+  });
+  if (url) {
+    window.open(url, '_blank');
+  }
+}
+
 async function initData(id?: string) {
   resetState();
   loading.value = true;
@@ -155,6 +172,7 @@ async function initData(id?: string) {
       recordId.value = id;
       const detail: AdminArticleDetailDto = await getArticleApi(id);
       title.value = detail.title || '';
+      code.value = detail.code || '';
       contentType.value = detail.contentType || 'Article';
       subTitle.value = detail.subTitle || '';
       summary.value = detail.summary || '';
@@ -175,6 +193,7 @@ async function initData(id?: string) {
       allowComment.value = detail.allowComment ?? true;
       sorting.value = detail.sorting || 0;
       password.value = detail.password || '';
+      baseViewCount.value = detail.baseViewCount || 0;
     }
   } catch (error) {
     console.error('加载文章详情失败', error);
@@ -280,6 +299,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
           summary: summary.value || undefined,
           tagNames: tagNames.value,
           title: title.value,
+          baseViewCount: baseViewCount.value,
           topExpireTime: topExpireTime.value
             ? topExpireTime.value.toISOString()
             : undefined,
@@ -308,6 +328,7 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
           summary: summary.value || undefined,
           tagNames: tagNames.value,
           title: title.value,
+          baseViewCount: baseViewCount.value,
           topExpireTime: topExpireTime.value
             ? topExpireTime.value.toISOString()
             : undefined,
@@ -338,6 +359,17 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
     <Spin :spinning="loading" tip="正在加载文章数据，请稍候...">
       <div class="min-h-[420px]">
         <Tabs v-model:active-key="activeTab" class="px-2">
+          <template #rightExtra>
+            <Button
+              v-if="isEdit"
+              type="link"
+              size="small"
+              class="text-xs text-primary"
+              @click="openFrontWebArticle"
+            >
+              在前台网站查看此文章 ↗
+            </Button>
+          </template>
         <!-- Tab 1: 基本信息 -->
         <Tabs.TabPane key="basic" tab="基本信息">
           <Form layout="vertical" class="mt-2">
@@ -528,12 +560,27 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
               />
             </FormItem>
 
-            <FormItem label="访问密码 (可选)">
-              <Input.Password
-                v-model:value="password"
-                placeholder="留空表示公开无密码"
-              />
-            </FormItem>
+            <Row :gutter="16">
+              <Col :span="12">
+                <FormItem label="基础浏览量" help="前台/公开展示浏览量 = 基础流量 + 真实流量">
+                  <InputNumber
+                    v-model:value="baseViewCount"
+                    :min="0"
+                    :precision="0"
+                    class="w-full"
+                    placeholder="请输入基础浏览量底数，默认 0"
+                  />
+                </FormItem>
+              </Col>
+              <Col :span="12">
+                <FormItem label="访问密码 (可选)">
+                  <Input.Password
+                    v-model:value="password"
+                    placeholder="留空表示公开无密码"
+                  />
+                </FormItem>
+              </Col>
+            </Row>
           </Form>
         </Tabs.TabPane>
 

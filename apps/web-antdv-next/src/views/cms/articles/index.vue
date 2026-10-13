@@ -31,6 +31,7 @@ import {
   batchSetArticleTagsApi,
   deleteArticleApi,
   getArticlesApi,
+  getArticleWebUrl,
   getCategoriesApi,
   getTagsApi,
   offlineArticleApi,
@@ -224,6 +225,13 @@ function onDelete(row: AdminArticleListItemDto) {
   });
 }
 
+function onView(row: AdminArticleListItemDto) {
+  const url = getArticleWebUrl(row);
+  if (url) {
+    window.open(url, '_blank');
+  }
+}
+
 function onActionClick({
   code,
   row,
@@ -232,6 +240,10 @@ function onActionClick({
   row: AdminArticleListItemDto;
 }) {
   switch (code) {
+    case 'view': {
+      onView(row);
+      break;
+    }
     case 'archive': {
       onArchive(row);
       break;

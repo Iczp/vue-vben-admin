@@ -32,9 +32,13 @@ export function useColumns(
 ): VxeTableGridColumns<AssetDto> {
   return [
     {
+      type: 'checkbox',
+      width: 45,
+    },
+    {
       title: '#',
       type: 'seq',
-      width: 55,
+      width: 50,
     },
     {
       align: 'center',
@@ -52,9 +56,16 @@ export function useColumns(
     {
       align: 'left',
       field: 'fileName',
-      minWidth: 200,
+      minWidth: 180,
       showOverflow: 'ellipsis',
       title: '素材文件名',
+    },
+    {
+      field: 'folderName',
+      formatter: ({ cellValue }) => cellValue || '未归档',
+      minWidth: 110,
+      showOverflow: 'ellipsis',
+      title: '所属文件夹',
     },
     {
       cellRender: {
@@ -146,6 +157,7 @@ export function useColumns(
         options: [
           { code: 'preview', text: '预览详情' },
           { code: 'references', text: '引用关系' },
+          { code: 'move', text: '移动目录' },
           {
             code: 'set_thumbnail',
             show: (rowOrParams: any) => {

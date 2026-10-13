@@ -203,3 +203,32 @@ export async function batchDeleteArticlesApi(data: AdminArticleBatchIdsInput) {
   return requestClient.post<void>('/cms/admin/articles/batch/delete', data);
 }
 
+/**
+ * 获取文章在前台门户网站的完整访问地址
+ * 主机名优先从环境变量 VITE_CMS_WEB_URL 读取，开发/未配置环境下自适应回退到当前主机名 + 3000 端口
+ *
+ * @example
+ * // 返回: http://10.0.5.20:3000/articles/IbdcpSfpZX
+ * getArticleWebUrl({ code: 'IbdcpSfpZX' })
+ */
+export function getArticleWebUrl(article: {
+  code?: null | string;
+  id?: null | string;
+  slug?: null | string;
+}): string {
+  const envUrl =
+    (import.meta.env.VITE_CMS_WEB_URL as string)?.trim() ||
+    (import.meta.env.VITE_GLOB_CMS_WEB_URL as string)?.trim();
+
+  let baseUrl = '';
+  if (envUrl) {
+    baseUrl = envUrl.replace(/\/+$/, '');
+  } else if (typeof window !== 'undefined' && window.location) {
+    const { hostname, protocol } = window.location;
+    baseUrl = `${protocol}//${hostname}:3000`;
+  }
+
+  const key = article.code || article.slug || article.id || '';
+  return key ? `${baseUrl}/articles/${key}` : `${baseUrl}/articles`;
+}
+

@@ -11,6 +11,12 @@ const routes: RouteRecordRaw[] = [
     path: '/chat',
     children: [
       {
+        component: () => import('#/views/chat/article-message/index.vue'),
+        meta: { icon: 'lucide:newspaper', title: '文章消息' },
+        name: 'ChatArticleMessage',
+        path: 'article-message',
+      },
+      {
         component: () => import('#/views/chat/chat-object/index.vue'),
         meta: {
           icon: 'lucide:contact-2',

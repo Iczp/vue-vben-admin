@@ -127,6 +127,9 @@ async function onCustomCoverSelected(file: File) {
   return false;
 }
 
+const currentFolderId = ref<string | undefined>(undefined);
+const currentScope = ref<import('#/api/cms').AssetScope | undefined>(undefined);
+
 // 执行最终上传
 async function handleConfirmUpload() {
   if (!selectedFile.value) {
@@ -138,6 +141,8 @@ async function handleConfirmUpload() {
     const res = await uploadAssetApi(
       selectedFile.value,
       currentThumbnailFile.value || undefined,
+      currentFolderId.value,
+      currentScope.value,
     );
     message.success(`素材【${selectedFile.value.name}】上传成功`);
     emit('success', res);
@@ -156,6 +161,9 @@ const [Modal, modalApi] = useVbenModal({
   onOpenChange(isOpen) {
     if (isOpen) {
       resetState();
+      const data = modalApi.getData<{ folderId?: string; scope?: import('#/api/cms').AssetScope }>();
+      currentFolderId.value = data?.folderId;
+      currentScope.value = data?.scope;
     }
   },
   title: '上传素材文件',

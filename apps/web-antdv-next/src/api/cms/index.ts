@@ -1,5 +1,6 @@
 export * from './articles';
 export * from './assets';
+export * from './asset-folders';
 export * from './categories';
 export * from './comments';
 export * from './daily-stats';

@@ -70,9 +70,17 @@ export async function createAssetApi(data: AssetCreateDto) {
 /**
  * 上传文件素材 (Multipart Form)
  */
-export async function uploadAssetApi(file: File, customThumbnail?: File) {
+export async function uploadAssetApi(
+  file: File,
+  customThumbnail?: File,
+  folderId?: string,
+  scope?: import('./types').AssetScope,
+) {
   const formData = new FormData();
   formData.append('streamContent', file);
+  if (folderId) formData.append('folderId', folderId);
+  if (scope !== undefined) formData.append('scope', String(scope));
+
   const metadata = await readMediaUploadMetadata(file, customThumbnail);
   for (const key of [
     'width',
@@ -148,5 +156,14 @@ export async function updateAssetStatusApi(
   return withAssetUrls(
     await requestClient.put<AssetDto>(`/cms/admin/assets/${id}/status`, data),
   );
+}
+
+/**
+ * 批量移动素材至目标文件夹
+ */
+export async function batchMoveAssetsApi(
+  data: import('./types').AssetBatchMoveDto,
+) {
+  return requestClient.post<number>('/cms/admin/assets/batch-move', data);
 }
 

@@ -139,6 +139,12 @@ export enum AssetStatus {
   Disabled = 3,
 }
 
+export enum AssetScope {
+  Tenant = 0,
+  Owner = 1,
+  Private = 2,
+}
+
 export enum CommentStatus {
   PendingReview = 0,
   Approved = 1,
@@ -198,6 +204,7 @@ export interface AdminArticleListItemDto extends ArticleListItemBaseDto {
   activeSnapshotId?: string;
   viewCount: number;
   actualViewCount: number;
+  baseViewCount?: number;
   likeCount: number;
   commentCount: number;
   favoriteCount: number;
@@ -299,6 +306,7 @@ export interface AdminArticleCreateInput {
   isRecommend?: boolean;
   sorting?: number;
   password?: string;
+  baseViewCount?: number;
 }
 
 export interface AdminArticleUpdateInput {
@@ -323,6 +331,7 @@ export interface AdminArticleUpdateInput {
   isRecommend?: boolean;
   sorting?: number;
   password?: string;
+  baseViewCount?: number;
 }
 
 export interface AdminArticleBatchIdsInput {
@@ -449,6 +458,56 @@ export interface TagGetListInput extends PagedAndSortedResultRequestDto {
   isEnabled?: boolean;
 }
 
+// ==================== Asset Folders ====================
+export interface AssetFolderDto {
+  id: string;
+  parentId?: string;
+  name: string;
+  scope: AssetScope;
+  ownerType?: string;
+  ownerId?: string;
+  ownerName?: string;
+  fileCount: number;
+  sorting: number;
+  description?: string;
+  fullPath: string;
+  fullPathName: string;
+  depth: number;
+  childrenCount: number;
+  creationTime?: string;
+  children?: AssetFolderDto[];
+}
+
+export interface AssetFolderCreateDto {
+  parentId?: string;
+  name: string;
+  scope?: AssetScope;
+  ownerType?: string;
+  ownerId?: string;
+  ownerName?: string;
+  sorting?: number;
+  description?: string;
+}
+
+export interface AssetFolderUpdateDto {
+  parentId?: string;
+  name: string;
+  sorting?: number;
+  description?: string;
+}
+
+export interface AssetFolderMoveDto {
+  targetParentId?: string;
+}
+
+export interface AssetFolderGetListInput extends PagedAndSortedResultRequestDto {
+  keyword?: string;
+  parentId?: string;
+  scope?: AssetScope;
+  ownerType?: string;
+  ownerId?: string;
+}
+
 // ==================== Assets ====================
 export interface AssetVariantDto {
   url: string;
@@ -468,6 +527,9 @@ export interface AssetDto {
   fileName: string;
   type: AssetType;
   status: AssetStatus;
+  folderId?: string;
+  folderName?: string;
+  scope: AssetScope;
   containerName: string;
   blobName: string;
   mimeType: string;
@@ -478,6 +540,7 @@ export interface AssetDto {
   height?: number;
   duration?: number;
   sourceUrl?: string;
+  ownerUserId: string;
   actorType?: string;
   actorId?: string;
   actorName?: string;
@@ -489,6 +552,8 @@ export interface AssetDto {
 export interface AssetCreateDto {
   fileName: string;
   type: AssetType;
+  folderId?: string;
+  scope?: AssetScope;
   containerName: string;
   blobName: string;
   mimeType: string;
@@ -507,6 +572,16 @@ export interface AssetGetListInput extends PagedAndSortedResultRequestDto {
   keyword?: string;
   type?: AssetType;
   status?: AssetStatus;
+  folderId?: string;
+  includeSubFolders?: boolean;
+  scope?: AssetScope;
+  actorType?: string;
+  actorId?: string;
+}
+
+export interface AssetBatchMoveDto {
+  assetIds: string[];
+  targetFolderId?: string;
 }
 
 export interface AssetStatusUpdateDto {

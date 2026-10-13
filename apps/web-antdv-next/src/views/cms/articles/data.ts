@@ -134,8 +134,16 @@ export function useColumns(
     },
     {
       field: 'viewCount',
+      slots: {
+        default: ({ row }: { row: AdminArticleListItemDto }) => {
+          if (row.baseViewCount) {
+            return `${row.viewCount} (基础:${row.baseViewCount})`;
+          }
+          return `${row.viewCount}`;
+        },
+      },
       title: '阅读量',
-      width: 85,
+      width: 120,
     },
     {
       field: 'likeCount',
@@ -173,6 +181,7 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
+          { code: 'view', props: { type: 'link' }, text: '查看' },
           { code: 'edit', text: '编辑' },
           { code: 'revisions', text: '版本' },
           {
@@ -222,7 +231,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 320,
+      width: 360,
     },
   ];
 }
