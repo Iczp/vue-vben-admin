@@ -97,6 +97,24 @@ const routes: RouteRecordRaw[] = [
         name: 'ChatAiRun',
         path: 'ai-run',
       },
+      {
+        component: () => import('#/views/chat/url-security-rule/index.vue'),
+        meta: {
+          icon: 'lucide:shield-alert',
+          title: 'URL 风控规则',
+        },
+        name: 'ChatUrlSecurityRule',
+        path: 'url-security-rule',
+      },
+      {
+        component: () => import('#/views/chat/security-report/index.vue'),
+        meta: {
+          icon: 'lucide:flag',
+          title: '违规举报工单',
+        },
+        name: 'ChatSecurityReport',
+        path: 'security-report',
+      },
     ],
   },
 ];
