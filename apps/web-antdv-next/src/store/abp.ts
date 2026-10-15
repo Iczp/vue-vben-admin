@@ -14,7 +14,9 @@ export const useAbpStore = defineStore('abp', () => {
   const applicationConfig = ref<ApplicationConfigurationDto | null>(null);
   const loading = ref(false);
   const appDeviceConfigurationError = ref(false);
+  const appDeviceConfigurationLoaded = ref(false);
   let fetchVersion = 0;
+  let deviceFetchVersion = 0;
 
   const currentUser = computed(() => applicationConfig.value?.currentUser);
   const currentTenant = computed(() => applicationConfig.value?.currentTenant);
@@ -47,6 +49,7 @@ export const useAbpStore = defineStore('abp', () => {
    */
   async function fetchApplicationConfiguration() {
     const version = ++fetchVersion;
+    const deviceVersion = ++deviceFetchVersion;
     try {
       loading.value = true;
       const config = await getApplicationConfigurationApi();
@@ -60,7 +63,16 @@ export const useAbpStore = defineStore('abp', () => {
         deviceFailed = true;
       }
       if (version !== fetchVersion) return config;
-      appDeviceConfigurationError.value = deviceFailed;
+      if (deviceVersion === deviceFetchVersion) {
+        appDeviceConfigurationError.value = deviceFailed;
+        appDeviceConfigurationLoaded.value = !deviceFailed;
+      } else {
+        devicePolicies = Object.fromEntries(
+          Object.entries(
+            applicationConfig.value?.auth?.grantedPolicies ?? {},
+          ).filter(([key]) => key.startsWith('AppDevice.')),
+        );
+      }
       config.auth = {
         ...config.auth,
         grantedPolicies: mergeAppDevicePolicies(
@@ -100,10 +112,43 @@ export const useAbpStore = defineStore('abp', () => {
     }
   }
 
+  async function refreshAppDeviceConfiguration() {
+    const version = ++deviceFetchVersion;
+    try {
+      const config = await getAppDeviceConfiguration();
+      if (version !== deviceFetchVersion) return;
+      applyDevicePolicies(config.auth?.grantedPolicies ?? {});
+      appDeviceConfigurationLoaded.value = true;
+      appDeviceConfigurationError.value = false;
+    } catch {
+      if (version !== deviceFetchVersion) return;
+      applyDevicePolicies({});
+      appDeviceConfigurationLoaded.value = false;
+      appDeviceConfigurationError.value = true;
+    }
+  }
+
+  function applyDevicePolicies(policies: Record<string, boolean>) {
+    const config = applicationConfig.value ?? {};
+    const merged = mergeAppDevicePolicies(
+      config.auth?.grantedPolicies ?? {},
+      policies,
+    );
+    applicationConfig.value = {
+      ...config,
+      auth: { ...config.auth, grantedPolicies: merged },
+    };
+    useAccessStore().setAccessCodes(
+      Object.keys(merged).filter((key) => merged[key] === true),
+    );
+  }
+
   function $reset() {
     fetchVersion++;
+    deviceFetchVersion++;
     applicationConfig.value = null;
     appDeviceConfigurationError.value = false;
+    appDeviceConfigurationLoaded.value = false;
     loading.value = false;
   }
 
@@ -111,12 +156,14 @@ export const useAbpStore = defineStore('abp', () => {
     $reset,
     applicationConfig,
     appDeviceConfigurationError,
+    appDeviceConfigurationLoaded,
     currentTenant,
     currentUser,
     fetchApplicationConfiguration,
     getSetting,
     grantedPolicies,
     hasPermission,
+    refreshAppDeviceConfiguration,
     loading,
     localization,
     settings,

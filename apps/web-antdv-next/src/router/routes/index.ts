@@ -2,6 +2,8 @@ import type { RouteRecordRaw } from 'vue-router';
 
 import { mergeRouteModules, traverseTreeValues } from '@vben/utils';
 
+import { withAppDeviceEntryRoutes } from '../app-device-access';
+
 import { coreRoutes, fallbackNotFoundRoute } from './core';
 
 const dynamicRouteFiles = import.meta.glob('./modules/**/*.ts', {
@@ -24,7 +26,7 @@ const externalRoutes: RouteRecordRaw[] = [];
 /** 路由列表，由基本路由、外部路由和404兜底路由组成
  *  无需走权限验证（会一直显示在菜单中） */
 const routes: RouteRecordRaw[] = [
-  ...coreRoutes,
+  ...withAppDeviceEntryRoutes(coreRoutes, dynamicRoutes),
   ...dynamicRoutes.filter((route) => route.path !== '/app-device'),
   ...externalRoutes,
   fallbackNotFoundRoute,
