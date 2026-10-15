@@ -32,12 +32,20 @@ export default defineConfig(async (configEnv) => {
   const chatTarget = env.VITE_CHAT_API_BASE_URL || apiTarget;
   const cmsTarget = env.VITE_CMS_API_BASE_URL || 'http://10.0.5.20:51611';
   const statisticTarget = env.VITE_APP_STATISTIC_API_BASE_URL || 'http://10.0.5.20:51621';
+  const deviceTarget = env.VITE_APP_DEVICE_API_BASE_URL;
 
   return {
     application: {},
     vite: {
       server: {
         proxy: {
+          ...(deviceTarget ? {
+            '/api/app-device/abp/application-configuration': {
+              ...serviceProxy(deviceTarget, 'AppDevice'),
+              rewrite: (path: string) => path.replace('/api/app-device/abp/', '/api/abp/'),
+            },
+            '/api/app-device': serviceProxy(deviceTarget, 'AppDevice'),
+          } : {}),
           '/api/chat/abp/application-configuration': {
             ...serviceProxy(chatTarget, 'Chat'),
             rewrite: (path) => path.replace('/api/chat/abp/', '/api/abp/'),

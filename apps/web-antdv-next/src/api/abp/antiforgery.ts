@@ -1,4 +1,5 @@
 export const antiforgeryServices = {
+  appDevice: { cookieName: 'AppDevice.XSRF-TOKEN', configurationPath: '/app-device/abp/application-configuration' },
   im: { cookieName: 'IM.XSRF-TOKEN', configurationPath: '/abp/application-configuration' },
   chat: { cookieName: 'Chat.XSRF-TOKEN', configurationPath: '/chat/abp/application-configuration' },
   cms: { cookieName: 'Cms.XSRF-TOKEN', configurationPath: '/cms/abp/application-configuration' },
@@ -13,6 +14,7 @@ function serviceFor(url: string): Service | undefined {
   if (/^\/chat(?:\/|$)/.test(pathname)) return antiforgeryServices.chat;
   if (/^\/cms(?:\/|$)/.test(pathname)) return antiforgeryServices.cms;
   if (/^\/app-statistic(?:\/|$)/.test(pathname)) return antiforgeryServices.statistics;
+  if (/^\/app-device(?:\/|$)/.test(pathname)) return antiforgeryServices.appDevice;
   return antiforgeryServices.im;
 }
 

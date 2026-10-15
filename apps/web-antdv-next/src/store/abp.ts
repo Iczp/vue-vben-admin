@@ -7,10 +7,13 @@ import { useAccessStore, useUserStore } from '@vben/stores';
 import { defineStore } from 'pinia';
 
 import { getApplicationConfigurationApi } from '#/api/abp';
+import { getAppDeviceConfiguration } from '#/api/modules/app-device';
+import { mergeAppDevicePolicies } from '#/api/modules/app-device/permissions';
 
 export const useAbpStore = defineStore('abp', () => {
   const applicationConfig = ref<ApplicationConfigurationDto | null>(null);
   const loading = ref(false);
+  const appDeviceConfigurationError = ref(false);
 
   const currentUser = computed(() => applicationConfig.value?.currentUser);
   const currentTenant = computed(() => applicationConfig.value?.currentTenant);
@@ -45,6 +48,16 @@ export const useAbpStore = defineStore('abp', () => {
     try {
       loading.value = true;
       const config = await getApplicationConfigurationApi();
+      let devicePolicies: Record<string, boolean> = {};
+      try {
+        const deviceConfig = await getAppDeviceConfiguration();
+        devicePolicies = deviceConfig.auth?.grantedPolicies ?? {};
+        appDeviceConfigurationError.value = false;
+      } catch {
+        // A separate device host must not prevent existing modules from signing in.
+        appDeviceConfigurationError.value = true;
+      }
+      config.auth = { ...config.auth, grantedPolicies: mergeAppDevicePolicies(config.auth?.grantedPolicies ?? {}, devicePolicies) };
       applicationConfig.value = config;
 
       // 同步权限码列表到 Vben accessStore
@@ -79,12 +92,14 @@ export const useAbpStore = defineStore('abp', () => {
 
   function $reset() {
     applicationConfig.value = null;
+    appDeviceConfigurationError.value = false;
     loading.value = false;
   }
 
   return {
     $reset,
     applicationConfig,
+    appDeviceConfigurationError,
     currentTenant,
     currentUser,
     fetchApplicationConfiguration,

@@ -8,6 +8,7 @@ import { startProgress, stopProgress } from '@vben/utils';
 import { useAbpStore, useAuthStore } from '#/store';
 
 import { generateAccess } from './access';
+import { filterAppDeviceRoutes } from './app-device-access';
 import { accessRoutes, coreRouteNames } from './routes';
 
 /**
@@ -126,7 +127,7 @@ function setupAccessGuard(router: Router) {
       roles: combinedRoles,
       router,
       // 则会在菜单中显示，但是访问会被重定向到403
-      routes: accessRoutes,
+      routes: filterAppDeviceRoutes(accessRoutes, abpStore.grantedPolicies),
     });
 
     // 保存菜单信息和路由信息
