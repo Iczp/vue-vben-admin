@@ -14,6 +14,7 @@ export const useAbpStore = defineStore('abp', () => {
   const applicationConfig = ref<ApplicationConfigurationDto | null>(null);
   const loading = ref(false);
   const appDeviceConfigurationError = ref(false);
+  let fetchVersion = 0;
 
   const currentUser = computed(() => applicationConfig.value?.currentUser);
   const currentTenant = computed(() => applicationConfig.value?.currentTenant);
@@ -45,19 +46,28 @@ export const useAbpStore = defineStore('abp', () => {
    * 加载 ABP 全局应用配置并同步权限到 Vben AccessStore
    */
   async function fetchApplicationConfiguration() {
+    const version = ++fetchVersion;
     try {
       loading.value = true;
       const config = await getApplicationConfigurationApi();
       let devicePolicies: Record<string, boolean> = {};
+      let deviceFailed = false;
       try {
         const deviceConfig = await getAppDeviceConfiguration();
         devicePolicies = deviceConfig.auth?.grantedPolicies ?? {};
-        appDeviceConfigurationError.value = false;
       } catch {
         // A separate device host must not prevent existing modules from signing in.
-        appDeviceConfigurationError.value = true;
+        deviceFailed = true;
       }
-      config.auth = { ...config.auth, grantedPolicies: mergeAppDevicePolicies(config.auth?.grantedPolicies ?? {}, devicePolicies) };
+      if (version !== fetchVersion) return config;
+      appDeviceConfigurationError.value = deviceFailed;
+      config.auth = {
+        ...config.auth,
+        grantedPolicies: mergeAppDevicePolicies(
+          config.auth?.grantedPolicies ?? {},
+          devicePolicies,
+        ),
+      };
       applicationConfig.value = config;
 
       // 同步权限码列表到 Vben accessStore
@@ -86,11 +96,12 @@ export const useAbpStore = defineStore('abp', () => {
 
       return config;
     } finally {
-      loading.value = false;
+      if (version === fetchVersion) loading.value = false;
     }
   }
 
   function $reset() {
+    fetchVersion++;
     applicationConfig.value = null;
     appDeviceConfigurationError.value = false;
     loading.value = false;

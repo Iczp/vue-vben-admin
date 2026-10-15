@@ -1,7 +1,10 @@
 import type { CursorPage } from '#/api/modules/app-device';
+
 import { computed, onScopeDispose, ref, shallowRef } from 'vue';
 
-export function useCursorPage<T>(loader: (afterId: string | undefined, take: number) => Promise<CursorPage<T>>) {
+export function useCursorPage<T>(
+  loader: (afterId: string | undefined, take: number) => Promise<CursorPage<T>>,
+) {
   const items = shallowRef<T[]>([]);
   const loading = ref(false);
   const failed = ref(false);
@@ -52,6 +55,21 @@ export function useCursorPage<T>(loader: (afterId: string | undefined, take: num
     loading.value = false;
     failed.value = false;
   }
-  onScopeDispose(() => { generation++; });
-  return { items, loading, failed, take, page: computed(() => index.value + 1), hasPrevious: computed(() => index.value > 0), hasNext: computed(() => Boolean(nextId.value)), load, reset, next, previous, clear };
+  onScopeDispose(() => {
+    generation++;
+  });
+  return {
+    items,
+    loading,
+    failed,
+    take,
+    page: computed(() => index.value + 1),
+    hasPrevious: computed(() => index.value > 0),
+    hasNext: computed(() => Boolean(nextId.value)),
+    load,
+    reset,
+    next,
+    previous,
+    clear,
+  };
 }

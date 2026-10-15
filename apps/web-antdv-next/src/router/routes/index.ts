@@ -25,7 +25,7 @@ const externalRoutes: RouteRecordRaw[] = [];
  *  无需走权限验证（会一直显示在菜单中） */
 const routes: RouteRecordRaw[] = [
   ...coreRoutes,
-  ...dynamicRoutes,
+  ...dynamicRoutes.filter((route) => route.path !== '/app-device'),
   ...externalRoutes,
   fallbackNotFoundRoute,
 ];

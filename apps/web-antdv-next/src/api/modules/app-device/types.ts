@@ -22,8 +22,14 @@ export interface AppDevice {
   lastSeenTime?: null | string;
 }
 
-export interface CursorPage<T> { items: T[]; nextId?: null | string }
-export interface CursorInput { afterId?: string; take?: number }
+export interface CursorPage<T> {
+  items: T[];
+  nextId?: null | string;
+}
+export interface CursorInput {
+  afterId?: string;
+  take?: number;
+}
 export interface DeviceQuery extends CursorInput {
   appId: string;
   keyword?: string;

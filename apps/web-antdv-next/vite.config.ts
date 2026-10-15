@@ -16,10 +16,17 @@ function serviceProxy(target: string, serviceName: string): ProxyOptions {
       proxy.on('proxyRes', (response, request) => {
         if (/^\/api\/chat\/scan-login(?:\/|$)/.test(request.url || '')) return;
         const cookies = response.headers['set-cookie'];
-        if (cookies) response.headers['set-cookie'] = cookies.map((cookie) => {
-          if (!cookie.startsWith('XSRF-TOKEN=') && !cookie.startsWith(`${serviceName}.XSRF-TOKEN=`)) return cookie;
-          return cookie.replace(/^XSRF-TOKEN=/, `${serviceName}.XSRF-TOKEN=`).replace(/;\s*samesite=none/gi, '; SameSite=Strict');
-        });
+        if (cookies)
+          response.headers['set-cookie'] = cookies.map((cookie) => {
+            if (
+              !cookie.startsWith('XSRF-TOKEN=') &&
+              !cookie.startsWith(`${serviceName}.XSRF-TOKEN=`)
+            )
+              return cookie;
+            return cookie
+              .replace(/^XSRF-TOKEN=/, `${serviceName}.XSRF-TOKEN=`)
+              .replace(/;\s*samesite=none/gi, '; SameSite=Strict');
+          });
       });
     },
   };
@@ -31,7 +38,8 @@ export default defineConfig(async (configEnv) => {
   const authTarget = env.VITE_AUTH_BASE_URL || 'http://10.0.5.20:8043';
   const chatTarget = env.VITE_CHAT_API_BASE_URL || apiTarget;
   const cmsTarget = env.VITE_CMS_API_BASE_URL || 'http://10.0.5.20:51611';
-  const statisticTarget = env.VITE_APP_STATISTIC_API_BASE_URL || 'http://10.0.5.20:51621';
+  const statisticTarget =
+    env.VITE_APP_STATISTIC_API_BASE_URL || 'http://10.0.5.20:51621';
   const deviceTarget = env.VITE_APP_DEVICE_API_BASE_URL;
 
   return {
@@ -39,13 +47,16 @@ export default defineConfig(async (configEnv) => {
     vite: {
       server: {
         proxy: {
-          ...(deviceTarget ? {
-            '/api/app-device/abp/application-configuration': {
-              ...serviceProxy(deviceTarget, 'AppDevice'),
-              rewrite: (path: string) => path.replace('/api/app-device/abp/', '/api/abp/'),
-            },
-            '/api/app-device': serviceProxy(deviceTarget, 'AppDevice'),
-          } : {}),
+          ...(deviceTarget
+            ? {
+                '/api/app-device/abp/application-configuration': {
+                  ...serviceProxy(deviceTarget, 'AppDevice'),
+                  rewrite: (path: string) =>
+                    path.replace('/api/app-device/abp/', '/api/abp/'),
+                },
+                '/api/app-device': serviceProxy(deviceTarget, 'AppDevice'),
+              }
+            : {}),
           '/api/chat/abp/application-configuration': {
             ...serviceProxy(chatTarget, 'Chat'),
             rewrite: (path) => path.replace('/api/chat/abp/', '/api/abp/'),
@@ -56,7 +67,8 @@ export default defineConfig(async (configEnv) => {
           },
           '/api/app-statistic/abp/application-configuration': {
             ...serviceProxy(statisticTarget, 'AppStatistic'),
-            rewrite: (path) => path.replace('/api/app-statistic/abp/', '/api/abp/'),
+            rewrite: (path) =>
+              path.replace('/api/app-statistic/abp/', '/api/abp/'),
           },
           '/api/chat': serviceProxy(apiTarget, 'Chat'),
           '/api/cms': serviceProxy(cmsTarget, 'Cms'),
