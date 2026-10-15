@@ -1,10 +1,10 @@
 import type { RouteRecordRaw } from 'vue-router';
 
+import { createMemoryHistory, createRouter } from 'vue-router';
+
 import { describe, expect, it } from 'vitest';
 
 import { mergeAppDevicePolicies } from '#/api/modules/app-device/permissions';
-
-import { createMemoryHistory, createRouter } from 'vue-router';
 
 import {
   filterAppDeviceRoutes,

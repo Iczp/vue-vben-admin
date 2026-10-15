@@ -56,11 +56,11 @@ onMounted(() => {
             : `当前账号未获得 ${permission}，请使用已授权的管理员账号。`
         "
       >
-        <template #extra
-          ><Button type="primary" :loading="loading" @click="refresh"
-            >重新加载权限</Button
-          ></template
-        >
+        <template #extra>
+          <Button type="primary" :loading="loading" @click="refresh">
+            重新加载权限
+          </Button>
+        </template>
       </Result>
     </Spin>
   </Page>

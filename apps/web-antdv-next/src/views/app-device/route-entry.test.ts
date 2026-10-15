@@ -2,6 +2,7 @@
 import type { App } from 'vue';
 
 import { createApp, defineComponent, h, nextTick, reactive } from 'vue';
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import RouteEntry from './route-entry.vue';
@@ -13,8 +14,8 @@ const calls = vi.hoisted(() => ({
   mounted: vi.fn(),
 }));
 let state: {
-  appDeviceConfigurationLoaded: boolean;
   appDeviceConfigurationError: boolean;
+  appDeviceConfigurationLoaded: boolean;
   hasPermission: (policy: string) => boolean;
   policies: Record<string, boolean>;
   refreshAppDeviceConfiguration: () => Promise<void>;
@@ -61,6 +62,7 @@ vi.mock('antdv-next', () => ({
   }),
 }));
 vi.mock('./devices/index.vue', () => ({
+  __esModule: true,
   default: defineComponent({
     setup: () => {
       calls.mounted();
@@ -69,6 +71,7 @@ vi.mock('./devices/index.vue', () => ({
   }),
 }));
 vi.mock('./groups/index.vue', () => ({
+  __esModule: true,
   default: defineComponent({ setup: () => () => h('div', '分组列表') }),
 }));
 let app: App | undefined;
@@ -131,6 +134,6 @@ describe('known device page access', () => {
     expect(calls.refresh).toHaveBeenCalledOnce();
     expect(calls.resetAccess).toHaveBeenCalledWith(false);
     expect(calls.replace).toHaveBeenCalledWith('/app-device/devices');
-    expect(host.textContent).toContain('设备列表');
+    await vi.waitFor(() => expect(host.textContent).toContain('设备列表'));
   });
 });

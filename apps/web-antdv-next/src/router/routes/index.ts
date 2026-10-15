@@ -3,7 +3,6 @@ import type { RouteRecordRaw } from 'vue-router';
 import { mergeRouteModules, traverseTreeValues } from '@vben/utils';
 
 import { withAppDeviceEntryRoutes } from '../app-device-access';
-
 import { coreRoutes, fallbackNotFoundRoute } from './core';
 
 const dynamicRouteFiles = import.meta.glob('./modules/**/*.ts', {

@@ -7,27 +7,34 @@ export function filterAppDeviceRoutes(
   policies: Record<string, boolean>,
 ): RouteRecordRaw[] {
   return routes.map((route) => {
-    if (route.path !== '/app-device') return route;
-    const children = (route.children ?? []).map((child) => {
+    if (route.path !== '/app-device' || !route.children) return route;
+    const children: RouteRecordRaw[] = route.children.map((child) => {
       const allowed =
         (child.meta?.authority as string[] | undefined)?.some(
           (key) => policies[key] === true,
         ) ?? false;
       return {
         ...child,
-        meta: { ...child.meta, authority: undefined, hideInMenu: !allowed },
+        meta: {
+          ...child.meta,
+          title: child.meta?.title ?? '',
+          authority: undefined,
+          hideInMenu: !allowed,
+        },
       };
     });
     const first =
-      children.find((child) => !child.meta.hideInMenu) ?? children[0];
+      children.find((child) => !child.meta?.hideInMenu) ?? children[0];
+    if (!first) return route;
     return {
       ...route,
       children,
       meta: {
         ...route.meta,
-        hideInMenu: children.every((child) => child.meta.hideInMenu),
+        title: route.meta?.title ?? '应用设备',
+        hideInMenu: children.every((child) => child.meta?.hideInMenu),
       },
-      redirect: first ? `/app-device/${first.path}` : undefined,
+      redirect: `/app-device/${first.path}`,
     };
   });
 }
