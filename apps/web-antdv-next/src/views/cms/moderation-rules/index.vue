@@ -308,14 +308,14 @@ onMounted(() => {
                     size="small"
                   >
                     <RadioButton :value="ModerationTestTarget.CurrentPublished">
-当前生效版本
-</RadioButton>
+                      当前生效版本
+                    </RadioButton>
                     <RadioButton :value="ModerationTestTarget.Draft">
-未发布草稿态
-</RadioButton>
+                      未发布草稿态
+                    </RadioButton>
                     <RadioButton :value="ModerationTestTarget.Version">
-指定历史版本
-</RadioButton>
+                      指定历史版本
+                    </RadioButton>
                   </RadioGroup>
                 </div>
                 <div
@@ -454,10 +454,8 @@ onMounted(() => {
                       <span v-if="testResult.activationSequence">激活流水:
                         <strong>#{{ testResult.activationSequence }}</strong></span>
                       <Tag v-if="testResult.runtimeStatus" color="blue">
-{{
-                        testResult.runtimeStatus
-                      }}
-</Tag>
+                        {{ testResult.runtimeStatus }}
+                      </Tag>
                     </div>
                   </div>
 

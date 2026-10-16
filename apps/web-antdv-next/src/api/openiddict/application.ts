@@ -121,8 +121,5 @@ export async function getConstantsTreeApi() {
  * 获取 OpenIddict 标准 Claims 声明列表
  */
 export async function getClaimsApi() {
-  return requestClient.get<Record<string, string>>(
-    '/openiddict/consts/claims',
-  );
+  return requestClient.get<Record<string, string>>('/openiddict/consts/claims');
 }
-

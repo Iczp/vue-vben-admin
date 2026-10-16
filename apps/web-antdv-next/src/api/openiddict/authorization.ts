@@ -39,9 +39,5 @@ export async function revokeAuthorizationApi(id: string) {
  * 批量吊销授权记录
  */
 export async function revokeManyAuthorizationsApi(ids: string[]) {
-  return requestClient.post<void>(
-    '/openiddict/authorization/revoke-many',
-    ids,
-  );
+  return requestClient.post<void>('/openiddict/authorization/revoke-many', ids);
 }
-

@@ -171,8 +171,8 @@ onMounted(() => {
           查看设备明细列表 →
         </AButton>
         <AButton :loading="loading" size="small" @click="loadData">
-刷新
-</AButton>
+          刷新
+        </AButton>
       </div>
     </div>
 

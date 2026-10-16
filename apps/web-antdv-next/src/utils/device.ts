@@ -31,12 +31,13 @@ function generateLocalFingerprint(): string {
 
     // 1. UserAgent & Platform
     if (typeof navigator !== 'undefined') {
-      components.push(navigator.userAgent || '', navigator.language || '');
       components.push(
+        navigator.userAgent || '',
+        navigator.language || '',
         String(navigator.hardwareConcurrency || ''),
         String((navigator as any).deviceMemory || ''),
+        navigator.platform || '',
       );
-      components.push(navigator.platform || '');
     }
 
     // 2. Screen & Timezone

@@ -201,6 +201,7 @@ function remove(row: DeviceGroup) {
       v-model:open="members"
       :app-id="appId"
       :group="current"
+      @changed="page.load()"
     />
   </Page>
 </template>

@@ -366,8 +366,8 @@ function getAppInitials(name: string) {
           allow-clear
         >
           <template #prefix>
-<SearchIcon class="text-muted-foreground size-4" />
-</template>
+            <SearchIcon class="text-muted-foreground size-4" />
+          </template>
         </AInput>
       </div>
 
@@ -463,16 +463,16 @@ function getAppInitials(name: string) {
                     v-if="app.isCustom"
                     color="blue"
                     class="text-[10px] scale-90 origin-left !m-0"
-                    >
-自定义别名
-</ATag>
+                  >
+                    自定义别名
+                  </ATag>
                   <ATag
                     v-else
                     color="default"
                     class="text-[10px] scale-90 origin-left !m-0"
-                    >
-自动生成别名
-</ATag>
+                  >
+                    自动生成别名
+                  </ATag>
                   <span
                     class="text-[11px] text-muted-foreground/80 truncate font-mono"
                     :title="app.appId"
@@ -606,8 +606,8 @@ function getAppInitials(name: string) {
                     app.name
                   }}</span>
                   <ATag v-if="app.isCustom" color="blue" class="text-[10px]">
-自定义
-</ATag>
+                    自定义
+                  </ATag>
                   <ATooltip title="修改别名">
                     <EditIcon
                       class="text-xs text-muted-foreground/60 hover:text-primary cursor-pointer size-3.5"

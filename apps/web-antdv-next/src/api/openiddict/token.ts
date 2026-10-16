@@ -38,13 +38,9 @@ export async function revokeTokenApi(id: string) {
  * 按用户主体吊销全部令牌（强制下线）
  */
 export async function revokeTokensBySubjectApi(subject: string) {
-  return requestClient.post<void>(
-    '/openiddict/token/revoke-by-subject',
-    null,
-    {
-      params: { subject },
-    },
-  );
+  return requestClient.post<void>('/openiddict/token/revoke-by-subject', null, {
+    params: { subject },
+  });
 }
 
 /**
@@ -53,4 +49,3 @@ export async function revokeTokensBySubjectApi(subject: string) {
 export async function revokeManyTokensApi(ids: string[]) {
   return requestClient.post<void>('/openiddict/token/revoke-many', ids);
 }
-

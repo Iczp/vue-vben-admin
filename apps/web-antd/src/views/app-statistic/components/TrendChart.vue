@@ -55,15 +55,15 @@ const activeMetrics = ref<string[]>(
 
 function toggleMetric(key: string) {
   const index = activeMetrics.value.indexOf(key);
-  if (index !== -1) {
-    if (activeMetrics.value.length > 1) {
-      activeMetrics.value.splice(index, 1);
-    }
-  } else {
+  if (index === -1) {
     if (activeMetrics.value.length >= 3) {
       activeMetrics.value.shift();
     }
     activeMetrics.value.push(key);
+  } else {
+    if (activeMetrics.value.length > 1) {
+      activeMetrics.value.splice(index, 1);
+    }
   }
 }
 

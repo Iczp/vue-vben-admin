@@ -15,12 +15,12 @@ export function createArticleMessageId(): string {
 export function articleClientMessageId(id: string): string {
   // Preserve all UUID bits while fitting Chat_Message.ClientMessageId (26 characters).
   const bytes = id
-    .replaceAll(/-/g, '')
+    .replaceAll('-', '')
     .match(/.{2}/g)!
     .map((hex) => Number.parseInt(hex, 16));
   const encoded = btoa(String.fromCharCode(...bytes))
-    .replaceAll(/\+/g, '-')
-    .replaceAll(/\//g, '_')
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
     .replace(/=+$/, '');
   return `art:${encoded}`;
 }

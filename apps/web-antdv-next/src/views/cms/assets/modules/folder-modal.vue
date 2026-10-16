@@ -143,11 +143,13 @@ const [Modal, modalApi] = useVbenModal({
   onConfirm: handleConfirm,
   async onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData<{
-        parentId?: string;
-        record?: AssetFolderDto;
-        scope?: number;
-      }>();
+      const data = modalApi.getData() as
+        | undefined
+        | {
+            parentId?: string;
+            record?: AssetFolderDto;
+            scope?: number;
+          };
       if (data?.record) {
         isEdit.value = true;
         recordId.value = data.record.id;

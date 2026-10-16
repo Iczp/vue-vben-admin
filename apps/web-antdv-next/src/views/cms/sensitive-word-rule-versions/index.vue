@@ -1,4 +1,11 @@
 <script lang="ts" setup>
+import type {
+  SensitiveWordRulePreviewDto,
+  SensitiveWordRuleVersionDto,
+  SensitiveWordRuleVersionStatus,
+  SensitiveWordRuntimeDto,
+} from '#/api/cms';
+
 import { onMounted, reactive, ref } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -22,10 +29,6 @@ import {
   getSensitiveWordRuntimeApi,
   previewSensitiveWordRuleVersionApi,
   reloadSensitiveWordRuntimeApi,
-  type SensitiveWordRulePreviewDto,
-  type SensitiveWordRuleVersionDto,
-  type SensitiveWordRuleVersionStatus,
-  type SensitiveWordRuntimeDto,
 } from '#/api/cms';
 
 import { useColumns, versionStatusOptions } from './data';

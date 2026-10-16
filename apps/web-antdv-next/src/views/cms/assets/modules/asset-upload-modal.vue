@@ -266,10 +266,12 @@ const [Modal, modalApi] = useVbenModal({
   onOpenChange(isOpen) {
     if (isOpen) {
       resetState();
-      const data = modalApi.getData<{
-        folderId?: string;
-        scope?: AssetScope;
-      }>();
+      const data = modalApi.getData() as
+        | undefined
+        | {
+            folderId?: string;
+            scope?: AssetScope;
+          };
       currentFolderId.value = data?.folderId;
       currentScope.value = data?.scope;
     }

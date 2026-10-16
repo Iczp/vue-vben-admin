@@ -92,11 +92,13 @@ const [Modal, modalApi] = useVbenModal({
   onConfirm: handleConfirm,
   async onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData<{
-        assetIds: string[];
-        currentFolderId?: string;
-        scope?: number;
-      }>();
+      const data = modalApi.getData() as
+        | undefined
+        | {
+            assetIds: string[];
+            currentFolderId?: string;
+            scope?: number;
+          };
       assetIds.value = data?.assetIds || [];
       targetFolderId.value = data?.currentFolderId || '';
       await loadFolders(data?.scope);

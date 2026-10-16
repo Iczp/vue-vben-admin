@@ -401,12 +401,12 @@ watch(
             <Checkbox
               v-model:checked="filters.isRecommend"
               aria-label="推荐筛选"
-              >
-是否推荐
-</Checkbox>
+            >
+              是否推荐
+            </Checkbox>
             <Checkbox v-model:checked="filters.isTop" aria-label="置顶筛选">
-是否置顶
-</Checkbox>
+              是否置顶
+            </Checkbox>
           </div>
           <label class="flex items-center gap-1 text-xs">发布起始<input
               v-model="filters.publishFrom"
@@ -423,8 +423,8 @@ watch(
               type="primary"
               :loading="loading"
               @click="loadArticles(true)"
-              >
-搜索
+            >
+              搜索
 </Button><Button :disabled="loading" @click="resetFilters">重置</Button>
           </div>
         </div>
@@ -474,12 +474,12 @@ watch(
                     v-for="category in row.categories"
                     :key="category.id"
                     color="cyan"
-                    >
-{{ category.name
+                  >
+                    {{ category.name
                     }}{{
                       category.id === row.mainCategoryId ? ' · 主栏目' : ''
                     }}
-</Tag>
+                  </Tag>
                   <span
                     v-if="!row.categories?.length"
                     class="text-muted-foreground"
@@ -491,9 +491,9 @@ watch(
                     v-for="tagItem in row.tags"
                     :key="tagItem.id"
                     color="blue"
-                    >
-{{ tagItem.name }}
-</Tag>
+                  >
+                    {{ tagItem.name }}
+                  </Tag>
                   <span v-if="!row.tags?.length" class="text-muted-foreground">暂无标签</span>
                 </div>
                 <div
@@ -506,19 +506,19 @@ watch(
                         (option) => option.value === row.status,
                       )?.color
                     "
-                    >
-{{
+                  >
+                    {{
                       articleStatusOptions.find(
                         (option) => option.value === row.status,
                       )?.label
                     }}
-</Tag>
+                  </Tag>
                   <Tag
                     v-if="isVisible === undefined && !row.isVisible"
                     color="warning"
-                    >
-不可见
-</Tag>
+                  >
+                    不可见
+                  </Tag>
                   <span v-if="row.publishTime">发布于 {{ formatDateTime(row.publishTime) }}</span>
                   <Tag v-if="row.isTop" color="red">置顶</Tag><Tag v-if="row.isRecommend" color="orange">推荐</Tag>
                   <a
@@ -541,12 +541,12 @@ watch(
             :key="row.id"
             closable
             @close="selected.delete(row.id)"
-            >
-<span
+          >
+            <span
               class="inline-block max-w-40 truncate align-middle"
               :title="row.title"
               >{{ row.title }}</span>
-</Tag>
+          </Tag>
           <span v-if="!selected.size" class="text-xs text-muted-foreground">勾选文章后，点击底部确认。</span>
         </div>
         <div class="article-selector-pagination">
@@ -571,18 +571,18 @@ watch(
             size="small"
             :disabled="!selected.size"
             @click="selected.clear()"
-            >
-清空选择
-</Button>
+          >
+            清空选择
+          </Button>
         </div>
         <div class="flex gap-2">
           <Button @click="close">取消</Button><Button
             type="primary"
             :disabled="loading || !selected.size || selected.size > limit"
             @click="confirm"
-            >
-确定选择（{{ selected.size }}）
-</Button>
+          >
+            确定选择（{{ selected.size }}）
+          </Button>
         </div>
       </div>
     </template>

@@ -161,10 +161,8 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
           </DescriptionsItem>
           <DescriptionsItem label="绑定应用场景">
             <Tag color="blue">
-{{
-              currentRule?.scene || '通用场景 (General)'
-            }}
-</Tag>
+              {{ currentRule?.scene || '通用场景 (General)' }}
+            </Tag>
           </DescriptionsItem>
           <DescriptionsItem label="前台客户端调用代码">
             <code class="text-xs bg-muted px-1.5 py-0.5 rounded text-primary">
@@ -321,10 +319,8 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
 
               <template v-else-if="column.key === 'categoryName'">
                 <Tag v-if="record.categoryName" color="cyan">
-{{
-                  record.categoryName
-                }}
-</Tag>
+                  {{ record.categoryName }}
+                </Tag>
                 <span v-else class="text-muted-foreground text-xs">未分类</span>
               </template>
 

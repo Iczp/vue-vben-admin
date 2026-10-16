@@ -438,6 +438,7 @@ function onSearchOwner() {
 const allFilterText = ref('');
 const allPlatformFilter = ref<string | undefined>(undefined);
 const allHostFilter = ref<string | undefined>(undefined);
+const allClientIdFilter = ref<string | undefined>(undefined);
 
 function onAllActionClick({
   code,
@@ -495,6 +496,7 @@ const [AllGrid, allGridApi] = useVbenVxeGrid({
           }
 
           const res = await getOnlineConnectionsApi({
+            clientId: allClientIdFilter.value?.trim() || undefined,
             host: allHostFilter.value?.trim() || undefined,
             keyword: allFilterText.value.trim() || undefined,
             maxResultCount,
@@ -603,8 +605,8 @@ onMounted(() => {
                     @search="() => hostGridApi.query()"
                   />
                   <Button size="small" @click="hostGridApi.query">
-刷新主机
-</Button>
+                    刷新主机
+                  </Button>
                 </div>
               </template>
             </HostGrid>
@@ -738,16 +740,25 @@ onMounted(() => {
                     v-model:value="allFilterText"
                     placeholder="搜索连接ID / 用户名 / IP..."
                     allow-clear
-                    class="w-60"
+                    class="w-56"
                     size="small"
                     @search="() => allGridApi.query()"
+                  />
+
+                  <Input
+                    v-model:value="allClientIdFilter"
+                    placeholder="客户端ID过滤"
+                    allow-clear
+                    class="w-32"
+                    size="small"
+                    @press-enter="() => allGridApi.query()"
                   />
 
                   <Input
                     v-model:value="allHostFilter"
                     placeholder="主机过滤"
                     allow-clear
-                    class="w-36"
+                    class="w-32"
                     size="small"
                     @press-enter="() => allGridApi.query()"
                   />
@@ -763,6 +774,7 @@ onMounted(() => {
                       { label: 'iOS', value: 'ios' },
                       { label: 'Windows', value: 'windows' },
                       { label: 'macOS', value: 'macos' },
+                      { label: 'Linux', value: 'linux' },
                       { label: 'Web', value: 'web' },
                     ]"
                     @change="allGridApi.query"

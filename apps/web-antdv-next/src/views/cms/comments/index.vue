@@ -174,8 +174,8 @@ function onFilterChange() {
             >
               <RadioButton :value="undefined">全部</RadioButton>
               <RadioButton :value="CommentStatus.PendingReview">
-待审核
-</RadioButton>
+                待审核
+              </RadioButton>
               <RadioButton :value="CommentStatus.Approved">已通过</RadioButton>
               <RadioButton :value="CommentStatus.Rejected">已驳回</RadioButton>
               <RadioButton :value="CommentStatus.Hidden">已隐藏</RadioButton>

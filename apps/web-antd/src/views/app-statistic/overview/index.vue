@@ -114,8 +114,8 @@ onMounted(() => {
       <div class="flex items-center space-x-2 text-xs text-muted-foreground">
         <span>更新时间: {{ lastUpdated }}</span>
         <AButton :loading="loading" size="small" @click="loadData">
-刷新
-</AButton>
+          刷新
+        </AButton>
       </div>
     </div>
 

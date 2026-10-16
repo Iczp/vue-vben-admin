@@ -457,10 +457,12 @@ const [Modal, modalApi] = useVbenModal({
                     v-if="record.oldSourceCategory && record.newSourceCategory"
                     >→</span>
                   <Tag color="cyan">
-{{
-                    record.newSourceCategory || record.oldSourceCategory || '-'
-                  }}
-</Tag>
+                    {{
+                      record.newSourceCategory ||
+                      record.oldSourceCategory ||
+                      '-'
+                    }}
+                  </Tag>
                 </div>
               </template>
 

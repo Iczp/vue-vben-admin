@@ -565,8 +565,8 @@ function onFilterChange() {
               <RadioButton :value="undefined">全部状态</RadioButton>
               <RadioButton :value="ArticleStatus.Draft">草稿</RadioButton>
               <RadioButton :value="ArticleStatus.PendingReview">
-待审核
-</RadioButton>
+                待审核
+              </RadioButton>
               <RadioButton :value="ArticleStatus.Approved">已审核</RadioButton>
               <RadioButton :value="ArticleStatus.Published">已发布</RadioButton>
               <RadioButton :value="ArticleStatus.Offline">已下架</RadioButton>
@@ -601,23 +601,23 @@ function onFilterChange() {
             篇内容
           </span>
           <Button type="link" size="small" @click="clearSelection">
-取消选择
-</Button>
+            取消选择
+          </Button>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
           <Button size="small" @click="openBatchCategoryModal">
-批量设置分类
-</Button>
+            批量设置分类
+          </Button>
           <Button size="small" @click="openBatchTagModal">批量设置标签</Button>
           <Button size="small" type="primary" ghost @click="onBatchPublish">
-批量发布
-</Button>
+            批量发布
+          </Button>
           <Button size="small" @click="onBatchOffline">批量下架</Button>
 
           <Button size="small" @click="openBatchStatusModal">
-批量修改状态
-</Button>
+            批量修改状态
+          </Button>
 
           <Button size="small" danger @click="onBatchDelete">批量删除</Button>
         </div>
@@ -711,20 +711,20 @@ function onFilterChange() {
         >
           <RadioButton :value="ArticleStatus.Draft">草稿 (Draft)</RadioButton>
           <RadioButton :value="ArticleStatus.PendingReview">
-待审核 (Pending Review)
-</RadioButton>
+            待审核 (Pending Review)
+          </RadioButton>
           <RadioButton :value="ArticleStatus.Approved">
-已审核 (Approved)
-</RadioButton>
+            已审核 (Approved)
+          </RadioButton>
           <RadioButton :value="ArticleStatus.Published">
-已发布 (Published)
-</RadioButton>
+            已发布 (Published)
+          </RadioButton>
           <RadioButton :value="ArticleStatus.Offline">
-已下架 (Offline)
-</RadioButton>
+            已下架 (Offline)
+          </RadioButton>
           <RadioButton :value="ArticleStatus.Archived">
-已归档 (Archived)
-</RadioButton>
+            已归档 (Archived)
+          </RadioButton>
         </RadioGroup>
       </div>
     </Modal>

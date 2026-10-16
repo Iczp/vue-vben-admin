@@ -17,7 +17,11 @@ import {
 } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getAppDevices, setAppDeviceState } from '#/api/modules/app-device';
+import {
+  getAppDevices,
+  logoutAppDevice,
+  setAppDeviceState,
+} from '#/api/modules/app-device';
 import { appDevicePermissions as p } from '#/api/modules/app-device/permissions';
 import { useAbpStore } from '#/store/abp';
 
@@ -136,6 +140,24 @@ function state(row: AppDevice, operation: 'delete' | 'disable' | 'enable') {
           message.warning('设备已被其他操作修改，请刷新后重试');
           await page.load();
         } else throw error;
+      } finally {
+        mutating.value = false;
+      }
+    },
+  });
+}
+function logout(row: AppDevice) {
+  Modal.confirm({
+    title: '强制下线设备',
+    content: `退出设备【${row.profile.name || row.deviceId}】的所有登录？该设备需要重新登录。`,
+    async onOk() {
+      mutating.value = true;
+      try {
+        const result = await logoutAppDevice(appId.value, row.deviceId);
+        message.success(
+          result.revokedSessions > 0 ? '设备已退出登录' : '该设备已无登录会话',
+        );
+        await page.reset();
       } finally {
         mutating.value = false;
       }
@@ -261,6 +283,16 @@ function confirmAssign() {
           </template>
           <template #actions="{ row }">
             <div class="flex flex-wrap justify-center gap-1">
+              <Button
+                v-if="abp.hasPermission(p.disable)"
+                size="small"
+                type="link"
+                danger
+                :disabled="mutating"
+                @click="logout(row)"
+                >
+强制下线
+</Button>
               <Button size="small" type="link" @click="showDetail(row)">
                 详情
               </Button>

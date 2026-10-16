@@ -51,12 +51,12 @@ function onDelete(row: AuthorizationDto) {
 
 function onActionClick({ code, row }: { code: string; row: AuthorizationDto }) {
   switch (code) {
-    case 'revoke': {
-      onRevoke(row);
-      break;
-    }
     case 'delete': {
       onDelete(row);
+      break;
+    }
+    case 'revoke': {
+      onRevoke(row);
       break;
     }
   }

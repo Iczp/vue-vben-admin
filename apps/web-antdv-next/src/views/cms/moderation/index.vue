@@ -124,14 +124,14 @@ function onFilterChange() {
             >
               <RadioButton :value="undefined">全部状态</RadioButton>
               <RadioButton :value="ContentModerationStatus.NeedManualReview">
-需人工审核
-</RadioButton>
+                需人工审核
+              </RadioButton>
               <RadioButton :value="ContentModerationStatus.Rejected">
-违规拦截
-</RadioButton>
+                违规拦截
+              </RadioButton>
               <RadioButton :value="ContentModerationStatus.Approved">
-合规通过
-</RadioButton>
+                合规通过
+              </RadioButton>
             </RadioGroup>
 
             <Select

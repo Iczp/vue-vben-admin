@@ -74,10 +74,8 @@ const [Modal, modalApi] = useVbenModal({
             {{ currentAsset.fileName }}
           </div>
           <Tag color="blue">
-{{
-            currentAsset.extension || currentAsset.mimeType
-          }}
-</Tag>
+            {{ currentAsset.extension || currentAsset.mimeType }}
+          </Tag>
         </div>
 
         <Form layout="vertical">

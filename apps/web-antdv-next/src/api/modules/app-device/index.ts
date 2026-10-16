@@ -22,6 +22,17 @@ export const getAppDeviceConfiguration = () =>
     '/app-device/abp/application-configuration',
     { params: { includeLocalizationResources: false }, timeout: 10_000 },
   );
+export const logoutAppDevice = (appId: string, deviceId: string) =>
+  requestClient.post<{
+    deviceRecordId: string;
+    disconnectRequested: boolean;
+    revokedSessions: number;
+  }>(`${base}/logout`, {
+    appId,
+    deviceId,
+    allUsers: true,
+    reason: '管理员已退出该设备登录，请重新登录。',
+  });
 export const getAppDevices = (params: DeviceQuery) =>
   requestClient.get<CursorPage<AppDevice>>(base, { params });
 export const getAppDevice = (appId: string, id: string) =>
@@ -36,11 +47,9 @@ export const setAppDeviceState = (
   operation: 'delete' | 'disable' | 'enable',
   input: DeviceEdit,
 ) =>
-  requestClient.post<AppDevice | null>(
-    `${base}/${id}/state`,
-    input,
-    { params: { operation } },
-  );
+  requestClient.post<AppDevice | null>(`${base}/${id}/state`, input, {
+    params: { operation },
+  });
 export const getAppDeviceBindings = (
   appId: string,
   id: string,

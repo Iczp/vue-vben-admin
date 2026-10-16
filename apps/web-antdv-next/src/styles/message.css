@@ -27,7 +27,6 @@
   word-break: break-word !important;
   cursor: text !important;
   user-select: text !important;
-  user-select: text !important;
   border-radius: 8px !important;
   box-shadow:
     0 6px 16px 0 rgb(0 0 0 / 12%),
@@ -38,7 +37,6 @@
   display: inline-flex !important;
   gap: 8px !important;
   align-items: center !important;
-  user-select: text !important;
   user-select: text !important;
 }
 
@@ -53,7 +51,6 @@
   overflow-y: auto !important;
   font-size: 13px !important;
   user-select: text !important;
-  user-select: text !important;
   border-radius: 8px !important;
 }
 
@@ -63,6 +60,5 @@
   font-size: 12px !important;
   line-height: 1.5 !important;
   word-break: break-word !important;
-  user-select: text !important;
   user-select: text !important;
 }

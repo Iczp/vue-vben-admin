@@ -224,8 +224,8 @@ onMounted(() => {
             <div class="flex items-center gap-2">
               <span class="text-sm font-bold text-foreground">📊 报表统计粒度 (ReportType)</span>
               <Tag color="processing" class="text-xs font-medium">
-当前核心分析维度
-</Tag>
+                当前核心分析维度
+              </Tag>
             </div>
             <span class="text-xs text-muted-foreground">{{
               currentGranularityTitle

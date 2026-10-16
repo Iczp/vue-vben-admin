@@ -1,4 +1,11 @@
 <script lang="ts" setup>
+import type {
+  CreateSensitiveWordWhitelistInput,
+  ModerationScene,
+  SensitiveWordWhitelistDto,
+  UpdateSensitiveWordWhitelistInput,
+} from '#/api/cms';
+
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
@@ -7,12 +14,8 @@ import { Form, FormItem, Input, message, Select, Spin } from 'antdv-next';
 
 import {
   createSensitiveWordWhitelistApi,
-  type CreateSensitiveWordWhitelistInput,
   getSensitiveWordWhitelistApi,
-  type ModerationScene,
-  type SensitiveWordWhitelistDto,
   updateSensitiveWordWhitelistApi,
-  type UpdateSensitiveWordWhitelistInput,
 } from '#/api/cms';
 
 import { sceneOptions } from '../../sensitive-words/data';

@@ -13,8 +13,6 @@ import {
   Dropdown,
   Empty,
   Input,
-  Menu,
-  MenuItem,
   message,
   Modal,
   Pagination,
@@ -375,10 +373,10 @@ async function loadGridViewData() {
 
 function toggleGridItemSelection(item: AssetDto) {
   const idx = selectedRows.value.findIndex((r) => r.id === item.id);
-  if (idx !== -1) {
-    selectedRows.value.splice(idx, 1);
-  } else {
+  if (idx === -1) {
     selectedRows.value.push(item);
+  } else {
+    selectedRows.value.splice(idx, 1);
   }
 }
 
@@ -453,10 +451,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
   gridEvents: {
     checkboxChange: () => {
-      selectedRows.value = gridApi.grid?.getCheckboxRecords() || [];
+      selectedRows.value =
+        (gridApi.grid?.getCheckboxRecords() as AssetDto[]) || [];
     },
     checkboxAll: () => {
-      selectedRows.value = gridApi.grid?.getCheckboxRecords() || [];
+      selectedRows.value =
+        (gridApi.grid?.getCheckboxRecords() as AssetDto[]) || [];
     },
   },
 });
@@ -592,26 +592,28 @@ function onFilterChange() {
               <Button size="small" @click="onEditFolder(currentFolderRecord)">
                 ✏️ 编辑/移动文件夹
               </Button>
-              <Dropdown :trigger="['click']">
+              <Dropdown
+                :menu="{
+                  items: [
+                    {
+                      key: 'del',
+                      label: '🗑️ 直接删除空文件夹',
+                      danger: true,
+                    },
+                    {
+                      key: 'del_move',
+                      label: '📦 删除并将素材移至父级',
+                      danger: true,
+                    },
+                  ],
+                  onClick: ({ key }) => {
+                    if (key === 'del') onDeleteCurrentFolderDirect();
+                    else if (key === 'del_move') onDeleteCurrentFolderAndMove();
+                  },
+                }"
+                :trigger="['click']"
+              >
                 <Button size="small" danger> 🗑️ 删除文件夹 </Button>
-                <template #overlay>
-                  <Menu>
-                    <MenuItem
-                      key="del"
-                      danger
-                      @click="onDeleteCurrentFolderDirect"
-                    >
-                      🗑️ 直接删除空文件夹
-                    </MenuItem>
-                    <MenuItem
-                      key="del_move"
-                      danger
-                      @click="onDeleteCurrentFolderAndMove"
-                    >
-                      📦 删除并将素材移至父级
-                    </MenuItem>
-                  </Menu>
-                </template>
               </Dropdown>
             </div>
           </div>

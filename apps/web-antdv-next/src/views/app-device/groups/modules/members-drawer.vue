@@ -15,6 +15,7 @@ import DevicePicker from '../../components/device-picker.vue';
 import MemberAction from '../../components/member-action.vue';
 import { useCursorPage } from '../../use-cursor-page';
 const props = defineProps<{ appId: string; group?: DeviceGroup }>();
+const emit = defineEmits<{ changed: [] }>();
 const open = defineModel<boolean>('open', { default: false });
 const abp = useAbpStore();
 const picker = ref(false);
@@ -65,6 +66,10 @@ watch([open, () => props.appId, () => props.group?.id], () => {
   if (open.value && props.group && abp.hasPermission(p.read)) void page.reset();
   else page.clear();
 });
+async function membersChanged() {
+  await page.load();
+  emit('changed');
+}
 function remove(ids: string[]) {
   if (!props.group || ids.length === 0) return;
   action.value?.start(props.group, ids, false);
@@ -160,6 +165,6 @@ function addPicker() {
     :key="`${appId}:${group?.id}`"
     :app-id="appId"
     @busy="busy = $event"
-    @success="page.load()"
+    @success="membersChanged"
   />
 </template>

@@ -154,8 +154,8 @@ const contentTypes = ref<ContentTypeItem[]>([
             </p>
           </div>
           <Tag color="processing">
-共 {{ contentTypes.length }} 个系统内置内容模型
-</Tag>
+            共 {{ contentTypes.length }} 个系统内置内容模型
+          </Tag>
         </div>
       </Card>
 

@@ -314,13 +314,11 @@ onMounted(() => {
                   selectedEntryName.name
                 }}</span>
                 <Tag v-if="selectedEntryName.code" color="blue">
-{{
-                  selectedEntryName.code
-                }}
-</Tag>
+                  {{ selectedEntryName.code }}
+                </Tag>
                 <Tag v-if="selectedEntryName.isChoice" color="green">
-下拉选项字典
-</Tag>
+                  下拉选项字典
+                </Tag>
                 <Tag v-else color="default">自由文本录入</Tag>
                 <span
                   v-if="selectedEntryName.description"

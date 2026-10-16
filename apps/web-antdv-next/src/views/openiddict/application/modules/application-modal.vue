@@ -246,9 +246,9 @@ const [Modal, modalApi] = useVbenModal<ApplicationDto | null>({
           refreshTokenLifetime.value = detail.refreshTokenLifetime;
           authorizationCodeLifetime.value = detail.authorizationCodeLifetime;
           deviceCodeLifetime.value = detail.deviceCodeLifetime;
-          allowedCorsOriginsText.value = (
-            detail.allowedCorsOrigins || []
-          ).join('\n');
+          allowedCorsOriginsText.value = (detail.allowedCorsOrigins || []).join(
+            '\n',
+          );
         } catch {
           appModel.value = raw as any;
           clientId.value = raw.clientId || '';
@@ -453,13 +453,13 @@ defineExpose({ modalApi });
         </Tabs.TabPane>
 
         <!-- 令牌生命周期与安全 (Lifetimes & CORS) -->
-        <Tabs.TabPane
-          key="security"
-          tab="令牌生命周期与安全"
-        >
+        <Tabs.TabPane key="security" tab="令牌生命周期与安全">
           <div class="space-y-4 pt-2">
-            <div class="rounded bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
-              💡 客户端独立的生命周期配置优先于系统全局默认值（留空则继承系统全局默认）。时间单位均为<strong>秒 (Seconds)</strong>。
+            <div
+              class="rounded bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed"
+            >
+              💡
+              客户端独立的生命周期配置优先于系统全局默认值（留空则继承系统全局默认）。时间单位均为<strong>秒 (Seconds)</strong>。
             </div>
 
             <Row :gutter="16">

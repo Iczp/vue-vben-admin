@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  SensitiveWordBatchStatus,
+  SensitiveWordSyncBatchDto,
+} from '#/api/cms';
+
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -12,8 +17,6 @@ import {
   applySensitiveWordSyncBatchApi,
   getSensitiveWordSyncBatchesApi,
   ignoreSensitiveWordSyncBatchApi,
-  type SensitiveWordBatchStatus,
-  type SensitiveWordSyncBatchDto,
   supersedeSensitiveWordSyncBatchApi,
 } from '#/api/cms';
 

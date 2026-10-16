@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'itemClick', item: { name: string; raw: any; value: number; }): void;
+  (e: 'itemClick', item: { name: string; raw: any; value: number }): void;
 }>();
 
 const chartRef = ref<EchartsUIType>();

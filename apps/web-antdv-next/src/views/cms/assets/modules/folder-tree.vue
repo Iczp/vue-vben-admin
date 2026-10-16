@@ -9,9 +9,6 @@ import {
   Button,
   Card,
   Dropdown,
-  Menu,
-  MenuDivider,
-  MenuItem,
   message,
   Modal,
   Spin,
@@ -367,7 +364,42 @@ onMounted(() => {
           @select="onSelectNode"
         >
           <template #titleRender="node">
-            <Dropdown :trigger="props.isSelector ? [] : ['contextmenu']">
+            <Dropdown
+              :disabled="!node.raw || props.isSelector"
+              :menu="{
+                items: [
+                  {
+                    key: 'add',
+                    label: '➕ 新建子文件夹',
+                  },
+                  {
+                    key: 'edit',
+                    label: '✏️ 重命名 / 编辑',
+                  },
+                  {
+                    type: 'divider',
+                  },
+                  {
+                    key: 'del',
+                    label: '🗑️ 删除空文件夹',
+                    danger: true,
+                  },
+                  {
+                    key: 'del_move',
+                    label: '📦 删除并移出素材到父级',
+                    danger: true,
+                  },
+                ],
+                onClick: ({ key }) => {
+                  if (key === 'add') handleAddChild(node.raw);
+                  else if (key === 'edit') handleEdit(node.raw);
+                  else if (key === 'del') handleDeleteDirect(node.raw);
+                  else if (key === 'del_move')
+                    handleDeleteAndMoveToParent(node.raw);
+                },
+              }"
+              :trigger="props.isSelector ? [] : ['contextmenu']"
+            >
               <div
                 class="flex items-center justify-between group py-0.5 pr-1 w-full"
               >
@@ -399,7 +431,28 @@ onMounted(() => {
                     >
                       ✏️
                     </span>
-                    <Dropdown :trigger="['click']">
+                    <Dropdown
+                      :menu="{
+                        items: [
+                          {
+                            key: 'del',
+                            label: '🗑️ 直接删除空文件夹',
+                            danger: true,
+                          },
+                          {
+                            key: 'del_move',
+                            label: '📦 删除并移出素材到父级',
+                            danger: true,
+                          },
+                        ],
+                        onClick: ({ key }) => {
+                          if (key === 'del') handleDeleteDirect(node.raw);
+                          else if (key === 'del_move')
+                            handleDeleteAndMoveToParent(node.raw);
+                        },
+                      }"
+                      :trigger="['click']"
+                    >
                       <span
                         class="px-1 py-0.5 text-xs hover:text-destructive cursor-pointer rounded hover:bg-muted"
                         title="删除文件夹"
@@ -407,24 +460,6 @@ onMounted(() => {
                       >
                         🗑️
                       </span>
-                      <template #overlay>
-                        <Menu>
-                          <MenuItem
-                            key="del"
-                            danger
-                            @click="handleDeleteDirect(node.raw)"
-                          >
-                            🗑️ 直接删除空文件夹
-                          </MenuItem>
-                          <MenuItem
-                            key="del_move"
-                            danger
-                            @click="handleDeleteAndMoveToParent(node.raw)"
-                          >
-                            📦 删除并移出素材到父级
-                          </MenuItem>
-                        </Menu>
-                      </template>
                     </Dropdown>
                   </div>
 
@@ -460,34 +495,6 @@ onMounted(() => {
                   </span>
                 </div>
               </div>
-
-              <!-- 右键菜单仅对自定义文件夹生效 -->
-              <template #overlay>
-                <Menu v-if="node.raw && !props.isSelector">
-                  <MenuItem key="add" @click="handleAddChild(node.raw)">
-                    ➕ 新建子文件夹
-                  </MenuItem>
-                  <MenuItem key="edit" @click="handleEdit(node.raw)">
-                    ✏️ 重命名 / 编辑
-                  </MenuItem>
-                  <MenuDivider />
-                  <MenuItem
-                    key="del"
-                    danger
-                    @click="handleDeleteDirect(node.raw)"
-                  >
-                    🗑️ 删除空文件夹
-                  </MenuItem>
-                  <MenuItem
-                    key="del_move"
-                    danger
-                    @click="handleDeleteAndMoveToParent(node.raw)"
-                  >
-                    📦 删除并移出素材到父级
-                  </MenuItem>
-                </Menu>
-                <div v-else class="hidden"></div>
-              </template>
             </Dropdown>
           </template>
         </Tree>

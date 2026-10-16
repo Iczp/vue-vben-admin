@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  SensitiveWordSourceDto,
+  SensitiveWordSourceType,
+} from '#/api/cms';
+
 import { reactive } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -14,8 +19,6 @@ import {
   enableSensitiveWordSourceApi,
   getSensitiveWordSourcesApi,
   initializeDefaultSourcesApi,
-  type SensitiveWordSourceDto,
-  type SensitiveWordSourceType,
   syncSensitiveWordSourceApi,
 } from '#/api/cms';
 

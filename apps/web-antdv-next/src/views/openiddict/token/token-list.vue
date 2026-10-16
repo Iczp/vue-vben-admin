@@ -72,12 +72,12 @@ function onRevokeBySubject() {
 
 function onActionClick({ code, row }: { code: string; row: TokenDto }) {
   switch (code) {
-    case 'revoke': {
-      onRevoke(row);
-      break;
-    }
     case 'delete': {
       onDelete(row);
+      break;
+    }
+    case 'revoke': {
+      onRevoke(row);
       break;
     }
   }

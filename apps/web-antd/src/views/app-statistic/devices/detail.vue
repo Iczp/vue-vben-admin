@@ -99,8 +99,8 @@ onMounted(() => {
         </h2>
       </div>
       <AButton :loading="loading" size="small" @click="loadDetail">
-刷新
-</AButton>
+        刷新
+      </AButton>
     </div>
 
     <ASpin :spinning="loading">
@@ -129,10 +129,8 @@ onMounted(() => {
 
             <ADescriptions.Item label="平台">
               <ATag color="blue">
-{{
-                deviceDetail.device.platform || '-'
-              }}
-</ATag>
+                {{ deviceDetail.device.platform || '-' }}
+              </ATag>
             </ADescriptions.Item>
 
             <ADescriptions.Item label="设备品牌">

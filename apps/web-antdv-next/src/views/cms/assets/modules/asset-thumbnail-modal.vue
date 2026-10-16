@@ -249,8 +249,8 @@ const [Modal, modalApi] = useVbenModal({
                 </div>
                 <div class="flex gap-2 pt-1">
                   <Button size="small" @click="onSliderChange(0.1)">
-首帧
-</Button>
+                    首帧
+                  </Button>
                   <Button
                     v-if="videoDuration > 1"
                     size="small"

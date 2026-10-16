@@ -12,11 +12,11 @@ import { Button, Input, message, Modal, Select } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteApplicationApi, getApplicationsApi } from '#/api/openiddict';
 import { $t } from '#/locales';
+import PermissionModal from '#/views/permission/permission-modal.vue';
 
 import { useColumns } from './data';
 import ApplicationModal from './modules/application-modal.vue';
 import SecretModal from './modules/secret-modal.vue';
-import PermissionModal from '#/views/permission/permission-modal.vue';
 
 const keyword = ref('');
 const clientTypeFilter = ref<string | undefined>(undefined);

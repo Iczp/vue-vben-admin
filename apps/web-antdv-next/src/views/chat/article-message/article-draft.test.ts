@@ -26,13 +26,13 @@ describe('article draft', () => {
     expect(id).toHaveLength(26);
     expect(articleClientMessageId(uuid)).toBe(id);
     const decoded = atob(
-      `${id.slice(4).replaceAll(/-/g, '+').replaceAll(/_/g, '/')}==`,
+      `${id.slice(4).replaceAll('-', '+').replaceAll('_', '/')}==`,
     );
     expect(
       [...decoded]
         .map((char) => char.charCodeAt(0).toString(16).padStart(2, '0'))
         .join(''),
-    ).toBe(uuid.replaceAll(/-/g, ''));
+    ).toBe(uuid.replaceAll('-', ''));
     expect(
       articleClientMessageId('12345678-90ab-4cde-8f12-3456789abcdf'),
     ).not.toBe(id);

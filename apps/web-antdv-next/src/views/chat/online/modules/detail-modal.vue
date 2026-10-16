@@ -10,6 +10,7 @@ import {
   Descriptions,
   DescriptionsItem,
   Empty,
+  message,
   Spin,
   Tag,
 } from 'antdv-next';
@@ -20,6 +21,7 @@ import {
   getChatObjectAvatarUrl,
   getOnlineConnectionApi,
 } from '#/api/chat';
+import { copyToClipboard } from '#/utils/clipboard';
 import {
   getObjectTypeColor,
   getObjectTypeName,
@@ -32,6 +34,12 @@ const chatObjectsLoading = ref(false);
 
 // 内存缓存，避免同个连接重复打开时重复请求
 const chatObjectCache = new Map<number | string, ChatObjectDto>();
+
+async function onCopy(text?: string, label = '内容') {
+  if (!text) return;
+  await copyToClipboard(text);
+  message.success(`已复制 ${label}`);
+}
 
 async function fetchBoundChatObjects(idList: number[]) {
   if (!idList || idList.length === 0) {
@@ -107,20 +115,25 @@ defineExpose({ modalApi });
 </script>
 
 <template>
-  <Modal title="连接池详细信息" class="w-[680px]">
+  <Modal title="连接池详细信息" class="w-[720px]">
     <Spin :spinning="loading">
-      <div v-if="detailData" class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-        <Descriptions title="网络通道信息" bordered size="small" :column="2">
+      <div v-if="detailData" class="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
+        <!-- 1. 网络与设备信息 -->
+        <Descriptions title="网络与设备信息" bordered size="small" :column="2">
           <DescriptionsItem label="连接 ID (ConnectionId)" :span="2">
-            <span class="font-mono text-xs select-all">{{
-              detailData.connectionId
-            }}</span>
+            <span
+              class="font-mono text-xs select-all cursor-pointer hover:text-primary"
+              title="点击复制"
+              @click="onCopy(detailData.connectionId, '连接 ID')"
+            >
+              {{ detailData.connectionId }}
+            </span>
           </DescriptionsItem>
           <DescriptionsItem label="宿主主机 (Host)">
             <Tag color="blue">{{ detailData.host || '-' }}</Tag>
           </DescriptionsItem>
           <DescriptionsItem label="IP 地址">
-            {{ detailData.ipAddress || '-' }}
+            <span class="font-mono">{{ detailData.ipAddress || '-' }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="客户端平台">
             <Tag color="green">{{ detailData.platform || '-' }}</Tag>
@@ -129,10 +142,37 @@ defineExpose({ modalApi });
             {{ detailData.deviceType || '-' }}
           </DescriptionsItem>
           <DescriptionsItem label="设备品牌 / 型号">
-            {{ detailData.brand || detailData.model || '-' }}
+            <span class="font-medium text-foreground">
+              {{
+                [detailData.brand, detailData.model]
+                  .filter(Boolean)
+                  .join(' ') || '-'
+              }}
+            </span>
           </DescriptionsItem>
-          <DescriptionsItem label="浏览器 / Client">
+          <DescriptionsItem label="设备唯一标识 (DeviceId)">
+            <span
+              v-if="detailData.deviceId"
+              class="font-mono text-xs select-all cursor-pointer hover:text-primary"
+              title="点击复制"
+              @click="onCopy(detailData.deviceId, 'DeviceId')"
+            >
+              {{ detailData.deviceId }}
+            </span>
+            <span v-else>-</span>
+          </DescriptionsItem>
+          <DescriptionsItem label="设备底层环境 (DeviceInfo)">
+            <span class="text-xs text-muted-foreground">{{
+              detailData.deviceInfo || '-'
+            }}</span>
+          </DescriptionsItem>
+          <DescriptionsItem label="浏览器 (Browser)">
             {{ detailData.browser || '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="客户端运行时 (BrowserInfo)">
+            <span class="text-xs text-muted-foreground">{{
+              detailData.browserInfo || '-'
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="连接创建时间">
             {{ detailData.creationTime || '-' }}
@@ -142,6 +182,38 @@ defineExpose({ modalApi });
           </DescriptionsItem>
         </Descriptions>
 
+        <!-- 2. 应用与授权信息 -->
+        <Descriptions title="应用与授权信息" bordered size="small" :column="2">
+          <DescriptionsItem label="应用名称 (AppName)">
+            <span class="font-medium">{{ detailData.appName || '-' }}</span>
+          </DescriptionsItem>
+          <DescriptionsItem label="应用 ID (AppId)">
+            <span class="font-mono text-xs">{{ detailData.appId || '-' }}</span>
+          </DescriptionsItem>
+          <DescriptionsItem label="客户端 ID (ClientId)">
+            <Tag v-if="detailData.clientId" color="geekblue">
+{{
+              detailData.clientId
+            }}
+</Tag>
+            <span v-else>-</span>
+          </DescriptionsItem>
+          <DescriptionsItem label="客户端名称 (ClientName)">
+            {{ detailData.clientName || '-' }}
+          </DescriptionsItem>
+          <DescriptionsItem label="推送客户端 ID (PushClientId)">
+            <span class="font-mono text-xs">{{
+              detailData.pushClientId || '-'
+            }}</span>
+          </DescriptionsItem>
+          <DescriptionsItem label="查询 ID (QueryId)">
+            <span class="font-mono text-xs">{{
+              detailData.queryId || '-'
+            }}</span>
+          </DescriptionsItem>
+        </Descriptions>
+
+        <!-- 3. 关联用户与聊天对象 -->
         <Descriptions
           title="关联用户与聊天对象"
           bordered
@@ -149,24 +221,45 @@ defineExpose({ modalApi });
           :column="2"
         >
           <DescriptionsItem label="用户 ID">
-            <span class="font-mono text-xs">{{
-              detailData.userId || '-'
-            }}</span>
+            <span
+              v-if="detailData.userId"
+              class="font-mono text-xs select-all cursor-pointer hover:text-primary"
+              title="点击复制"
+              @click="onCopy(detailData.userId, '用户 ID')"
+            >
+              {{ detailData.userId }}
+            </span>
+            <span v-else>-</span>
           </DescriptionsItem>
           <DescriptionsItem label="用户登录名">
             <span class="font-medium">{{ detailData.userName || '-' }}</span>
           </DescriptionsItem>
-          <DescriptionsItem label="设备唯一 ID" :span="2">
-            <span class="font-mono text-xs">{{
-              detailData.deviceId || '-'
-            }}</span>
-          </DescriptionsItem>
-          <DescriptionsItem label="推送客户端 ID (PushClientId)" :span="2">
-            <span class="font-mono text-xs">{{
-              detailData.pushClientId || '-'
-            }}</span>
-          </DescriptionsItem>
           <DescriptionsItem label="绑定聊天对象 (ChatObjects)" :span="2">
+            <!-- 绑定 ID 标签列表（可直接点击复制） -->
+            <div
+              v-if="
+                detailData.chatObjectIdList &&
+                detailData.chatObjectIdList.length > 0
+              "
+              class="mb-2"
+            >
+              <div class="text-[11px] text-muted-foreground mb-1">
+                已绑定 ID (共
+                {{ detailData.chatObjectIdList.length }} 个，点击可复制):
+              </div>
+              <div class="flex flex-wrap gap-1">
+                <Tag
+                  v-for="id in detailData.chatObjectIdList"
+                  :key="id"
+                  color="blue"
+                  class="cursor-pointer hover:opacity-80 transition-opacity text-[11px] mr-0"
+                  @click="onCopy(String(id), `聊天对象 ID #${id}`)"
+                >
+                  #{{ id }}
+                </Tag>
+              </div>
+            </div>
+
             <!-- 加载状态 -->
             <div v-if="chatObjectsLoading" class="flex items-center gap-2 py-2">
               <Spin size="small" />
@@ -237,7 +330,15 @@ defineExpose({ modalApi });
               </div>
             </div>
             <!-- 仅在没有任何 ID 时提示 -->
-            <span v-else class="text-xs text-muted-foreground">暂无绑定</span>
+            <span
+              v-else-if="
+                !detailData.chatObjectIdList ||
+                detailData.chatObjectIdList.length === 0
+              "
+              class="text-xs text-muted-foreground"
+            >
+              暂无绑定
+            </span>
           </DescriptionsItem>
         </Descriptions>
       </div>

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { ModerationScene, SensitiveWordWhitelistDto } from '#/api/cms';
+
 import { reactive } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -12,8 +14,6 @@ import {
   disableSensitiveWordWhitelistApi,
   enableSensitiveWordWhitelistApi,
   getSensitiveWordWhitelistsApi,
-  type ModerationScene,
-  type SensitiveWordWhitelistDto,
 } from '#/api/cms';
 
 import { sceneOptions } from '../sensitive-words/data';

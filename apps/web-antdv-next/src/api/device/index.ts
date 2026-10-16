@@ -8,6 +8,7 @@ import { requestClient } from '#/api/request';
 // ==================== Device 类型与 DTO ====================
 
 export interface DeviceDto {
+  appId?: string;
   appVersion?: string;
   brand?: string;
   creationTime?: string;
@@ -172,8 +173,24 @@ export async function updateDeviceApi(id: string, data: DeviceUpdateInput) {
 }
 
 /**
- * 踢下线/删除设备
+ * 删除设备资料（退出登录使用 logoutDeviceApi）
  */
+export interface DeviceLogoutResult {
+  deviceRecordId: string;
+  revokedSessions: number;
+  disconnectRequested: boolean;
+}
+export async function logoutDeviceApi(
+  device: Pick<DeviceDto, 'appId' | 'deviceId'>,
+) {
+  return requestClient.post<DeviceLogoutResult>('/chat/device/logout', {
+    appId: device.appId,
+    deviceId: device.deviceId,
+    allUsers: true,
+    reason: '管理员已退出该设备登录，请重新登录。',
+  });
+}
+
 export async function deleteDeviceApi(id: string) {
   return requestClient.post<void>(`/chat/device/${id}/delete`);
 }

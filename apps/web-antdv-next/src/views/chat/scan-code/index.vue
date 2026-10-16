@@ -246,17 +246,17 @@ onUnmounted(() => {
                 </div>
                 <div>
                   <Tag v-if="monitorStatus === 'idle'" color="blue">
-等待扫码
-</Tag>
+                    等待扫码
+                  </Tag>
                   <Tag v-else-if="monitorStatus === 'scanned'" color="orange">
-已扫码待确认
-</Tag>
+                    已扫码待确认
+                  </Tag>
                   <Tag v-else-if="monitorStatus === 'granted'" color="green">
-授权成功
-</Tag>
+                    授权成功
+                  </Tag>
                   <Tag v-else-if="monitorStatus === 'canceled'" color="red">
-已取消
-</Tag>
+                    已取消
+                  </Tag>
                 </div>
               </div>
 

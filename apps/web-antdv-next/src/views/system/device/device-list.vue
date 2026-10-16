@@ -9,11 +9,7 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { Button, Input, message, Modal, Select } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  deleteDeviceApi,
-  deleteDevicesManyApi,
-  getDevicesApi,
-} from '#/api/device';
+import { getDevicesApi, logoutDeviceApi } from '#/api/device';
 import { $t } from '#/locales';
 
 import { useColumns } from './data';
@@ -72,7 +68,7 @@ function onDelete(row: DeviceDto) {
     okType: 'danger',
     title: '强制下线设备',
     async onOk() {
-      await deleteDeviceApi(row.id);
+      await logoutDeviceApi(row);
       message.success('设备已强制下线');
       groupPanelRef.value?.reload();
       refreshGrid();
@@ -94,9 +90,21 @@ function onBatchDelete() {
     okType: 'danger',
     title: '批量下线设备',
     async onOk() {
-      const ids = records.map((r: DeviceDto) => r.id);
-      await deleteDevicesManyApi(ids);
-      message.success(`已成功批量下线 ${records.length} 台设备`);
+      let succeeded = 0;
+      for (const row of records as DeviceDto[]) {
+        try {
+          await logoutDeviceApi(row);
+          succeeded++;
+        } catch {
+          /* The shared request handler displays the individual error. */
+        }
+      }
+      if (succeeded === records.length)
+        message.success(`已成功下线 ${succeeded} 台设备`);
+      else
+        message.warning(
+          `已下线 ${succeeded} 台，${records.length - succeeded} 台未完成，可重试`,
+        );
       groupPanelRef.value?.reload();
       refreshGrid();
     },

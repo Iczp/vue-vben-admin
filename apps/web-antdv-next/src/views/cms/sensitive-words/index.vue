@@ -1,4 +1,11 @@
 <script lang="ts" setup>
+import type {
+  ModerationScene,
+  SensitiveRiskLevel,
+  SensitiveWordDto,
+  SensitiveWordRulePreviewDto,
+} from '#/api/cms';
+
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -14,11 +21,7 @@ import {
   enableSensitiveWordApi,
   exportSensitiveWordsApi,
   getSensitiveWordsApi,
-  type ModerationScene,
   previewSensitiveWordRuleVersionApi,
-  type SensitiveRiskLevel,
-  type SensitiveWordDto,
-  type SensitiveWordRulePreviewDto,
 } from '#/api/cms';
 
 import {
@@ -129,13 +132,13 @@ async function onExport() {
       '备注',
     ];
     const rows = list.map((item) => [
-      `"${item.word.replaceAll(/"/g, '""')}"`,
+      `"${item.word.replaceAll('"', '""')}"`,
       `"${item.category}"`,
       `"${item.riskLevel}"`,
       `"${item.action}"`,
       `"${item.scene || '全局通用'}"`,
       item.isEnabled ? '启用' : '禁用',
-      `"${(item.remark || '').replaceAll(/"/g, '""')}"`,
+      `"${(item.remark || '').replaceAll('"', '""')}"`,
     ]);
 
     const csvContent = `\uFEFF${[headers.join(','), ...rows.map((r) => r.join(','))].join('\n')}`;

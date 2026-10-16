@@ -872,9 +872,9 @@ defineExpose({
                     上传目标目录：<Tag
                       color="blue"
                       class="!m-0 font-mono text-xs"
-                      >
-{{ currentFolderPath }}
-</Tag>
+                    >
+                      {{ currentFolderPath }}
+                    </Tag>
                   </div>
                   <div
                     v-if="uploadQueue.length > 0"

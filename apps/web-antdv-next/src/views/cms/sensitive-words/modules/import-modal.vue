@@ -173,8 +173,8 @@ const [Modal, modalApi] = useVbenModal({
             <RadioGroup v-model:value="formState.conflictStrategy">
               <Radio value="Skip">跳过不处理 (保留原记录)</Radio>
               <Radio value="Overwrite">
-覆盖更新 (更新为当前分类与处置规则)
-</Radio>
+                覆盖更新 (更新为当前分类与处置规则)
+              </Radio>
             </RadioGroup>
             <div
               v-if="formState.conflictStrategy === 'Overwrite'"
