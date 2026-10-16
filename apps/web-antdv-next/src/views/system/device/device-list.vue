@@ -6,13 +6,7 @@ import { nextTick, ref } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 
-import {
-  Button,
-  Input,
-  message,
-  Modal,
-  Select,
-} from 'antdv-next';
+import { Button, Input, message, Modal, Select } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -109,13 +103,7 @@ function onBatchDelete() {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: DeviceDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: DeviceDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -264,11 +252,7 @@ function onDeviceSaved() {
                 @change="refreshGrid"
               />
 
-              <Button
-                danger
-                size="small"
-                @click="onBatchDelete"
-              >
+              <Button danger size="small" @click="onBatchDelete">
                 批量下线
               </Button>
             </div>

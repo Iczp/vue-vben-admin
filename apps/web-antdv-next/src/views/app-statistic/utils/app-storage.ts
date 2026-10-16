@@ -1,4 +1,5 @@
 import type { StatisticApplicationDto } from '#/api/app-statistic/applications';
+
 import { getStatisticApplicationsApi } from '#/api/app-statistic/applications';
 
 const APP_STATISTIC_APP_ID_KEY = 'app_statistic_selected_app_id';
@@ -22,7 +23,6 @@ export interface FormattedAppItem {
   today: string;
 }
 
-
 /**
  * 智能自动生成 App 别名/名称
  * 例如：
@@ -37,7 +37,7 @@ export function generateAppAlias(appId: string): string {
   }
 
   // 去除常见反向域名格式前缀 (如 com., net., cn., org., io.)
-  let clean = appId.replace(/^(com|net|org|cn|io)\./i, '');
+  const clean = appId.replace(/^(com|net|org|cn|io)\./i, '');
 
   // 按照点、下划线、中划线切分
   const parts = clean.split(/[._-]+/).filter(Boolean);
@@ -167,7 +167,9 @@ export function removeCustomApp(appId: string): void {
 /**
  * 加载所有应用列表（合并后端应用、手动登记应用及自动生成别名）
  */
-export async function loadApplicationsWithAliases(): Promise<FormattedAppItem[]> {
+export async function loadApplicationsWithAliases(): Promise<
+  FormattedAppItem[]
+> {
   let backendApps: StatisticApplicationDto[] = [];
   try {
     backendApps = await getStatisticApplicationsApi();
@@ -184,7 +186,8 @@ export async function loadApplicationsWithAliases(): Promise<FormattedAppItem[]>
   for (const app of backendApps) {
     const autoAlias = generateAppAlias(app.appId);
     const custom = customAliases[app.appId];
-    const backendName = app.name && app.name !== app.appId ? app.name : undefined;
+    const backendName =
+      app.name && app.name !== app.appId ? app.name : undefined;
 
     // 确定展示名称：用户自定义别名 > 后端显式配置名称 > 自动生成别名
     const displayName = custom || backendName || autoAlias;
@@ -201,7 +204,6 @@ export async function loadApplicationsWithAliases(): Promise<FormattedAppItem[]>
       timeZone: app.timeZone || 'UTC',
       today: app.today || new Date().toISOString().slice(0, 10),
     });
-
   }
 
   // 2. 处理前端手动登记的应用
@@ -223,7 +225,7 @@ export async function loadApplicationsWithAliases(): Promise<FormattedAppItem[]>
     }
   }
 
-  return Array.from(appMap.values()).sort((a, b) => a.appId.localeCompare(b.appId));
+  return [...appMap.values()].sort((a, b) => a.appId.localeCompare(b.appId));
 }
 
 /**
@@ -264,7 +266,9 @@ export function setStoredAppId(appId: string | undefined): void {
 /**
  * 监听 App 变更事件
  */
-export function onAppChange(handler: (appId: string | undefined) => void): () => void {
+export function onAppChange(
+  handler: (appId: string | undefined) => void,
+): () => void {
   if (typeof window === 'undefined') return () => {};
 
   const listener = (event: Event) => {

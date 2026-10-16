@@ -7,14 +7,7 @@ import { useRouter } from 'vue-router';
 import { useVbenModal } from '@vben/common-ui';
 import { ExternalLink } from '@vben/icons';
 
-import {
-  Alert,
-  Button,
-  Empty,
-  Spin,
-  Table,
-  Tag,
-} from 'antdv-next';
+import { Alert, Button, Empty, Spin, Table, Tag } from 'antdv-next';
 
 import { getAssetReferencesApi } from '#/api/cms';
 
@@ -85,7 +78,7 @@ const [Modal, modalApi] = useVbenModal({
   footer: false,
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { asset?: AssetDto } | undefined;
+      const data = modalApi.getData() as undefined | { asset?: AssetDto };
       if (data?.asset) {
         currentAsset.value = data.asset;
         referenceList.value = [];
@@ -109,13 +102,22 @@ const [Modal, modalApi] = useVbenModal({
       >
         <template #message>
           <span class="font-medium">
-            该素材已被引用 {{ referenceList.length }} 次，系统已开启引用保护，无法直接删除！
+            该素材已被引用
+            {{ referenceList.length }} 次，系统已开启引用保护，无法直接删除！
           </span>
         </template>
         <template #description>
-          <div class="text-xs mt-1 text-muted-foreground flex items-center justify-between">
+          <div
+            class="text-xs mt-1 text-muted-foreground flex items-center justify-between"
+          >
             <span>如确需停止展示该素材，可将素材状态变更为【已禁用】，禁用后外部不可访问。</span>
-            <Button size="small" type="primary" danger ghost @click="handleDisableAsset">
+            <Button
+              size="small"
+              type="primary"
+              danger
+              ghost
+              @click="handleDisableAsset"
+            >
               去禁用此素材
             </Button>
           </div>
@@ -131,12 +133,21 @@ const [Modal, modalApi] = useVbenModal({
       />
 
       <!-- 素材基本信息条 -->
-      <div class="flex items-center justify-between p-3 border rounded bg-muted/20 text-xs">
+      <div
+        class="flex items-center justify-between p-3 border rounded bg-muted/20 text-xs"
+      >
         <div class="flex items-center gap-3 truncate">
-          <span class="font-medium text-sm text-foreground truncate" :title="currentAsset.fileName">
+          <span
+            class="font-medium text-sm text-foreground truncate"
+            :title="currentAsset.fileName"
+          >
             {{ currentAsset.fileName }}
           </span>
-          <Tag color="cyan">{{ currentAsset.extension || currentAsset.mimeType }}</Tag>
+          <Tag color="cyan">
+{{
+            currentAsset.extension || currentAsset.mimeType
+          }}
+</Tag>
         </div>
         <span class="text-muted-foreground shrink-0">ID: {{ currentAsset.id }}</span>
       </div>
@@ -167,12 +178,18 @@ const [Modal, modalApi] = useVbenModal({
               </template>
 
               <template v-else-if="column.key === 'targetTitle'">
-                <span class="font-medium text-sm">{{ record.targetTitle }}</span>
+                <span class="font-medium text-sm">{{
+                  record.targetTitle
+                }}</span>
               </template>
 
               <template v-else-if="column.key === 'referenceTime'">
                 <span class="text-xs text-muted-foreground">
-                  {{ record.referenceTime ? new Date(record.referenceTime).toLocaleString() : '—' }}
+                  {{
+                    record.referenceTime
+                      ? new Date(record.referenceTime).toLocaleString()
+                      : '—'
+                  }}
                 </span>
               </template>
 

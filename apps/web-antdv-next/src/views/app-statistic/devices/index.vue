@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { FormattedAppItem } from '../utils/app-storage';
+
 import type { DeviceDto, GetDevicesInput } from '#/api/app-statistic/types';
 
 import { onMounted, ref } from 'vue';
@@ -11,23 +13,18 @@ import {
   Input as AInput,
   Row as ARow,
   Select as ASelect,
+  SelectOption as ASelectOption,
   Tag as ATag,
   DatePicker,
 } from 'antdv-next';
-import { SelectOption as ASelectOption } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getDevicesApi } from '#/api/app-statistic/device';
 import { $t } from '#/locales';
 
-import {
-  AppHeaderSwitch,
-  DeviceDisplay,
-  UserDisplay,
-} from '../components';
+import { AppHeaderSwitch, DeviceDisplay, UserDisplay } from '../components';
 import StatisticError from '../components/StatisticError.vue';
 import ATable from '../components/StatisticTable.vue';
-import type { FormattedAppItem } from '../utils/app-storage';
 import {
   getStoredAppId,
   loadApplicationsWithAliases,
@@ -329,7 +326,12 @@ onMounted(async () => {
             placeholder="App"
             size="small"
             class="w-full"
-            @change="(val: unknown) => { if (typeof val === 'string') setStoredAppId(val); handleSearch(); }"
+            @change="
+              (val: unknown) => {
+                if (typeof val === 'string') setStoredAppId(val);
+                handleSearch();
+              }
+            "
           />
           <AInput
             v-else
@@ -401,15 +403,15 @@ onMounted(async () => {
           />
         </ACol>
         <ACol :lg="6" :md="6" :sm="12" :xs="24">
-<AInput
+          <AInput
             v-model:value="searchInput.manufacturer"
             allow-clear
             :placeholder="$t('appStatistic.text016')"
             @press-enter="handleSearch"
-        />
-</ACol>
+          />
+        </ACol>
         <ACol :lg="6" :md="6" :sm="12" :xs="24">
-<DatePicker
+          <DatePicker
             :value="
               searchInput.minLastSeenTime
                 ? dayjs(searchInput.minLastSeenTime)
@@ -417,10 +419,10 @@ onMounted(async () => {
             "
             :placeholder="$t('appStatistic.text131')"
             @change="setMinSeen"
-        />
-</ACol>
+          />
+        </ACol>
         <ACol :lg="6" :md="6" :sm="12" :xs="24">
-<DatePicker
+          <DatePicker
             :value="
               searchInput.maxLastSeenTime
                 ? dayjs(searchInput.maxLastSeenTime)
@@ -428,8 +430,8 @@ onMounted(async () => {
             "
             :placeholder="$t('appStatistic.text132')"
             @change="setMaxSeen"
-        />
-</ACol>
+          />
+        </ACol>
       </ARow>
     </ACard>
 
@@ -447,14 +449,14 @@ onMounted(async () => {
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'lastUserId'">
-            <UserDisplay :userId="record.lastUserId" />
+            <UserDisplay :user-id="record.lastUserId" />
           </template>
 
           <template v-else-if="column.key === 'deviceKey'">
             <DeviceDisplay
               :device="record"
-              :deviceId="record.id"
-              :deviceKey="record.deviceKey"
+              :device-id="record.id"
+              :device-key="record.deviceKey"
             />
           </template>
 

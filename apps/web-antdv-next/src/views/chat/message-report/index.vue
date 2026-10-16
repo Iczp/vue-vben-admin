@@ -96,15 +96,24 @@ const [DetailGrid, detailGridApi] = useVbenVxeGrid({
           }
 
           return await getMessageReportListApi({
-            dateBucket: dateBucketFilter.value.trim() ? Number(dateBucketFilter.value.trim()) : undefined,
-            endDateBucket: endDateBucketFilter.value.trim() ? Number(endDateBucketFilter.value.trim()) : undefined,
+            dateBucket: dateBucketFilter.value.trim()
+              ? Number(dateBucketFilter.value.trim())
+              : undefined,
+            endDateBucket: endDateBucketFilter.value.trim()
+              ? Number(endDateBucketFilter.value.trim())
+              : undefined,
             maxResultCount,
-            messageTypes: messageTypesFilter.value.length > 0 ? messageTypesFilter.value : undefined,
+            messageTypes:
+              messageTypesFilter.value.length > 0
+                ? messageTypesFilter.value
+                : undefined,
             reportType: currentReportType.value,
             sessionId: sessionIdFilter.value.trim() || undefined,
             skipCount,
             sorting,
-            startDateBucket: startDateBucketFilter.value.trim() ? Number(startDateBucketFilter.value.trim()) : undefined,
+            startDateBucket: startDateBucketFilter.value.trim()
+              ? Number(startDateBucketFilter.value.trim())
+              : undefined,
           });
         },
       },
@@ -141,15 +150,24 @@ const [SummaryGrid, summaryGridApi] = useVbenVxeGrid({
           }
 
           return await getMessageReportSummaryApi({
-            dateBucket: dateBucketFilter.value.trim() ? Number(dateBucketFilter.value.trim()) : undefined,
-            endDateBucket: endDateBucketFilter.value.trim() ? Number(endDateBucketFilter.value.trim()) : undefined,
+            dateBucket: dateBucketFilter.value.trim()
+              ? Number(dateBucketFilter.value.trim())
+              : undefined,
+            endDateBucket: endDateBucketFilter.value.trim()
+              ? Number(endDateBucketFilter.value.trim())
+              : undefined,
             maxResultCount,
-            messageTypes: messageTypesFilter.value.length > 0 ? messageTypesFilter.value : undefined,
+            messageTypes:
+              messageTypesFilter.value.length > 0
+                ? messageTypesFilter.value
+                : undefined,
             reportType: currentReportType.value,
             sessionId: sessionIdFilter.value.trim() || undefined,
             skipCount,
             sorting,
-            startDateBucket: startDateBucketFilter.value.trim() ? Number(startDateBucketFilter.value.trim()) : undefined,
+            startDateBucket: startDateBucketFilter.value.trim()
+              ? Number(startDateBucketFilter.value.trim())
+              : undefined,
           });
         },
       },
@@ -205,9 +223,13 @@ onMounted(() => {
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
               <span class="text-sm font-bold text-foreground">📊 报表统计粒度 (ReportType)</span>
-              <Tag color="processing" class="text-xs font-medium">当前核心分析维度</Tag>
+              <Tag color="processing" class="text-xs font-medium">
+当前核心分析维度
+</Tag>
             </div>
-            <span class="text-xs text-muted-foreground">{{ currentGranularityTitle }}</span>
+            <span class="text-xs text-muted-foreground">{{
+              currentGranularityTitle
+            }}</span>
           </div>
           <RadioGroup
             v-model:value="currentReportType"
@@ -221,16 +243,26 @@ onMounted(() => {
         </Card>
 
         <!-- 状态指标 1: 引擎收集状态 -->
-        <Card size="small" class="lg:col-span-2 shadow-sm flex flex-col justify-center">
+        <Card
+          size="small"
+          class="lg:col-span-2 shadow-sm flex flex-col justify-center"
+        >
           <Statistic
             title="统计引擎收集状态"
             :value="reportOptions?.enable ? '已启用' : '未启用'"
-            :value-style="{ color: reportOptions?.enable ? '#10b981' : '#ef4444', fontWeight: 700, fontSize: '18px' }"
+            :value-style="{
+              color: reportOptions?.enable ? '#10b981' : '#ef4444',
+              fontWeight: 700,
+              fontSize: '18px',
+            }"
           />
         </Card>
 
         <!-- 状态指标 2: 自动落库周期 -->
-        <Card size="small" class="lg:col-span-2 shadow-sm flex flex-col justify-center">
+        <Card
+          size="small"
+          class="lg:col-span-2 shadow-sm flex flex-col justify-center"
+        >
           <Statistic
             title="自动落库周期 (Seconds)"
             :value="reportOptions?.flushToDbTimerPeriodSeconds ?? '-'"
@@ -240,10 +272,17 @@ onMounted(() => {
         </Card>
 
         <!-- 统计落库操作入口 -->
-        <Card size="small" class="lg:col-span-3 shadow-sm flex items-center justify-between bg-muted/20">
+        <Card
+          size="small"
+          class="lg:col-span-3 shadow-sm flex items-center justify-between bg-muted/20"
+        >
           <div>
-            <div class="text-xs font-semibold text-foreground mb-1">持久化固化落库</div>
-            <div class="text-xs text-primary font-medium">即时落盘 Redis 统计指标</div>
+            <div class="text-xs font-semibold text-foreground mb-1">
+              持久化固化落库
+            </div>
+            <div class="text-xs text-primary font-medium">
+              即时落盘 Redis 统计指标
+            </div>
           </div>
           <Button type="primary" @click="onOpenFlushModal">
             统计落库 (Flush)
@@ -255,7 +294,15 @@ onMounted(() => {
       <Card
         size="small"
         class="flex-1 flex flex-col h-full shadow-sm overflow-hidden"
-        :styles="{ body: { padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } }"
+        :styles="{
+          body: {
+            padding: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            overflow: 'hidden',
+          },
+        }"
       >
         <Tabs
           v-model:active-key="activeTab"
@@ -299,7 +346,11 @@ onMounted(() => {
                       @press-enter="detailGridApi.query"
                     />
 
-                    <Button type="primary" size="small" @click="detailGridApi.query">
+                    <Button
+                      type="primary"
+                      size="small"
+                      @click="detailGridApi.query"
+                    >
                       查询明细
                     </Button>
                   </div>
@@ -332,7 +383,11 @@ onMounted(() => {
                       @press-enter="summaryGridApi.query"
                     />
 
-                    <Button type="primary" size="small" @click="summaryGridApi.query">
+                    <Button
+                      type="primary"
+                      size="small"
+                      @click="summaryGridApi.query"
+                    >
                       查询汇总
                     </Button>
                   </div>
@@ -354,10 +409,10 @@ onMounted(() => {
 
 .report-type-radio-group :deep(.ant-radio-button-wrapper) {
   flex: 1;
-  text-align: center;
-  font-weight: 600;
-  font-size: 13px;
   height: 36px;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 34px;
+  text-align: center;
 }
 </style>

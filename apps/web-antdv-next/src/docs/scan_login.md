@@ -140,16 +140,16 @@ SCAN_LOGIN_SIGNALR_BASE_URL + SCAN_LOGIN_HUB_PATH
 
 认证使用 SignalR 客户端的 `accessTokenFactory`（Bearer Access Token），不是把 Token 放到二维码、`state` 或 query 中。当前 Flutter 强制 `WebSockets` transport，并使用 `skipNegotiation` 配置。Web 平台还需要在页面预加载兼容的 SignalR JavaScript 客户端；IO 平台使用 `signalr_netcore`。
 
-| Query 参数 | 必填性 | 含义 |
-| --- | --- | --- |
-| `appId` | 是 | 应用 ID |
-| `appName` | 是 | 应用名称 |
-| `deviceId` | 是 | 稳定、非敏感 UUID；Flutter 用安全存储持久化 |
-| `deviceType` | 是 | 平台/设备类型 |
-| `pushClientId` | 可空 | 推送客户端 ID |
-| `brand` / `model` | 可空 | 设备品牌和型号 |
-| `platform` | 是 | 平台标识 |
-| `browser` | 可空 | 浏览器名；非 Web 通常为空 |
+| Query 参数        | 必填性 | 含义                                        |
+| ----------------- | ------ | ------------------------------------------- |
+| `appId`           | 是     | 应用 ID                                     |
+| `appName`         | 是     | 应用名称                                    |
+| `deviceId`        | 是     | 稳定、非敏感 UUID；Flutter 用安全存储持久化 |
+| `deviceType`      | 是     | 平台/设备类型                               |
+| `pushClientId`    | 可空   | 推送客户端 ID                               |
+| `brand` / `model` | 可空   | 设备品牌和型号                              |
+| `platform`        | 是     | 平台标识                                    |
+| `browser`         | 可空   | 浏览器名；非 Web 通常为空                   |
 
 ### 4.2 Hub 调用
 
@@ -267,7 +267,7 @@ Authorization: Bearer <授权端用户 token>
 {
   "content": "gotoim://scan-login?code=...",
   "scanHandlers": [
-    {"action": "scan-login", "result": "gotoim://scan-login?code={code}"}
+    { "action": "scan-login", "result": "gotoim://scan-login?code={code}" }
   ]
 }
 ```

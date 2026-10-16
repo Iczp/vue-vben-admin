@@ -48,8 +48,16 @@ export function useColumns(
       cellRender: {
         name: 'CellTag',
         options: [
-          { color: 'warning', label: $t('page.identity.role.static', '系统静态'), value: true },
-          { color: 'cyan', label: $t('page.identity.role.custom', '自定义'), value: false },
+          {
+            color: 'warning',
+            label: $t('page.identity.role.static', '系统静态'),
+            value: true,
+          },
+          {
+            color: 'cyan',
+            label: $t('page.identity.role.custom', '自定义'),
+            value: false,
+          },
         ],
       },
       field: 'isStatic',

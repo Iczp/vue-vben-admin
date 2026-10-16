@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+import type { Dayjs } from 'dayjs';
+
+import type { FormattedAppItem } from '../utils/app-storage';
+
 import type { EventDto, GetEventsInput } from '#/api/app-statistic/types';
 
 import { onMounted, ref } from 'vue';
@@ -9,29 +13,24 @@ import {
   Card as ACard,
   Col as ACol,
   Descriptions as ADescriptions,
+  DescriptionsItem as ADescriptionsItem,
   Drawer as ADrawer,
   Input as AInput,
   Row as ARow,
   Select as ASelect,
+  SelectOption as ASelectOption,
   Tag as ATag,
   DatePicker,
   message,
 } from 'antdv-next';
-import { SelectOption as ASelectOption } from 'antdv-next';
-import { DescriptionsItem as ADescriptionsItem } from 'antdv-next';
-import dayjs, { type Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
 import { getEventsApi } from '#/api/app-statistic/event';
 import { $t } from '#/locales';
 
-import {
-  AppHeaderSwitch,
-  DeviceDisplay,
-  UserDisplay,
-} from '../components';
+import { AppHeaderSwitch, DeviceDisplay, UserDisplay } from '../components';
 import StatisticError from '../components/StatisticError.vue';
 import ATable from '../components/StatisticTable.vue';
-import type { FormattedAppItem } from '../utils/app-storage';
 import {
   getStoredAppId,
   loadApplicationsWithAliases,
@@ -333,7 +332,12 @@ const ARangePicker = DatePicker.RangePicker;
             placeholder="App"
             size="small"
             class="w-full"
-            @change="(val: unknown) => { if (typeof val === 'string') setStoredAppId(val); handleSearch(); }"
+            @change="
+              (val: unknown) => {
+                if (typeof val === 'string') setStoredAppId(val);
+                handleSearch();
+              }
+            "
           />
           <AInput
             v-else
@@ -472,11 +476,11 @@ const ARangePicker = DatePicker.RangePicker;
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'userId'">
-            <UserDisplay :userId="record.userId" />
+            <UserDisplay :user-id="record.userId" />
           </template>
 
           <template v-else-if="column.key === 'deviceId'">
-            <DeviceDisplay :deviceId="record.deviceId" />
+            <DeviceDisplay :device-id="record.deviceId" />
           </template>
 
           <template v-else-if="column.dataIndex === 'eventName'">
@@ -553,11 +557,11 @@ const ARangePicker = DatePicker.RangePicker;
           </ADescriptionsItem>
 
           <ADescriptionsItem label="用户 (User)" :span="2">
-            <UserDisplay :userId="selectedEvent.userId" />
+            <UserDisplay :user-id="selectedEvent.userId" />
           </ADescriptionsItem>
 
           <ADescriptionsItem label="设备 (Device)" :span="2">
-            <DeviceDisplay :deviceId="selectedEvent.deviceId" />
+            <DeviceDisplay :device-id="selectedEvent.deviceId" />
           </ADescriptionsItem>
         </ADescriptions>
 

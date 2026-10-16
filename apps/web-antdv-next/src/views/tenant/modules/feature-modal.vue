@@ -5,14 +5,7 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Card,
-  Input,
-  message,
-  Select,
-  Spin,
-  Switch,
-} from 'antdv-next';
+import { Card, Input, message, Select, Spin, Switch } from 'antdv-next';
 
 import { getFeaturesApi, updateFeaturesApi } from '#/api/feature-management';
 import { $t } from '#/locales';
@@ -28,8 +21,7 @@ const modalTitle = ref('');
 
 function isBooleanFeature(feature: FeatureDto) {
   const typeName = feature.valueType?.name?.toLowerCase() || '';
-  const validatorName =
-    feature.valueType?.validator?.name?.toLowerCase() || '';
+  const validatorName = feature.valueType?.validator?.name?.toLowerCase() || '';
   return (
     typeName.includes('bool') ||
     typeName.includes('toggle') ||
@@ -47,11 +39,11 @@ function getFeatureOptions(feature: FeatureDto) {
   }));
 }
 
-const [Modal, modalApi] = useVbenModal<{
+const [Modal, modalApi] = useVbenModal<null | {
   providerKey?: string;
   providerName?: string;
   title?: string;
-} | null>({
+}>({
   fullscreenButton: false,
   async onConfirm() {
     try {

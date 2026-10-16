@@ -6,14 +6,22 @@ export function createArticleMessageId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   bytes[6] = (bytes[6]! & 0x0f) | 0x40;
   bytes[8] = (bytes[8]! & 0x3f) | 0x80;
-  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  const hex = [...bytes]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export function articleClientMessageId(id: string): string {
   // Preserve all UUID bits while fitting Chat_Message.ClientMessageId (26 characters).
-  const bytes = id.replace(/-/g, '').match(/.{2}/g)!.map((hex) => Number.parseInt(hex, 16));
-  const encoded = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const bytes = id
+    .replaceAll(/-/g, '')
+    .match(/.{2}/g)!
+    .map((hex) => Number.parseInt(hex, 16));
+  const encoded = btoa(String.fromCharCode(...bytes))
+    .replaceAll(/\+/g, '-')
+    .replaceAll(/\//g, '_')
+    .replace(/=+$/, '');
   return `art:${encoded}`;
 }
 
@@ -57,7 +65,8 @@ export function articleItems(content: unknown): ArticleMessageItem[] {
     .filter((item) => item.title || item.originalUrl);
 }
 export function validateArticles(items: ArticleMessageItem[]): string {
-  if (items.length < 1 || items.length > 8) return '每组文章必须包含 1～8 篇。';
+  if (items.length === 0 || items.length > 8)
+    return '每组文章必须包含 1～8 篇。';
   for (const [index, item] of items.entries()) {
     if (!item.title.trim() || item.title.length > 256)
       return `第 ${index + 1} 篇：标题必填且不超过 256 字。`;

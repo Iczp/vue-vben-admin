@@ -160,11 +160,7 @@ onMounted(() => {
     </div>
 
     <!-- Filter Bar -->
-    <StatisticFilterBar
-      v-model="query"
-      :loading="loading"
-      @change="loadData"
-    />
+    <StatisticFilterBar v-model="query" :loading="loading" @change="loadData" />
 
     <!-- Charts Row: Channel Share & Bar Ranking -->
     <ARow :gutter="16">

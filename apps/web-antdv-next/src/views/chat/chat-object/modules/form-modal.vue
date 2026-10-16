@@ -47,9 +47,7 @@ const typeOptions = ref<{ label: string; value: string }[]>([]);
 
 const isEdit = computed(() => !!currentRecord.value?.id);
 const modalTitle = computed(() =>
-  isEdit.value
-    ? `编辑聊天对象 - ${currentRecord.value?.name}`
-    : '新建聊天对象',
+  isEdit.value ? `编辑聊天对象 - ${currentRecord.value?.name}` : '新建聊天对象',
 );
 
 async function loadOptions() {
@@ -66,8 +64,8 @@ async function loadOptions() {
       label: `${t.name} (${t.id})`,
       value: t.id,
     }));
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -185,13 +183,28 @@ defineExpose({ modalApi });
             :disabled="isEdit"
             class="w-full"
             :options="[
-              { label: '个人号 (Personal)', value: ChatObjectTypeEnums.Personal },
+              {
+                label: '个人号 (Personal)',
+                value: ChatObjectTypeEnums.Personal,
+              },
               { label: '群聊/房间 (Room)', value: ChatObjectTypeEnums.Room },
-              { label: '官方服务号 (Official)', value: ChatObjectTypeEnums.Official },
-              { label: '订阅号 (Subscription)', value: ChatObjectTypeEnums.Subscription },
+              {
+                label: '官方服务号 (Official)',
+                value: ChatObjectTypeEnums.Official,
+              },
+              {
+                label: '订阅号 (Subscription)',
+                value: ChatObjectTypeEnums.Subscription,
+              },
               { label: '智能机器人 (Robot)', value: ChatObjectTypeEnums.Robot },
-              { label: '商户店长 (ShopKeeper)', value: ChatObjectTypeEnums.ShopKeeper },
-              { label: '商户店员 (ShopWaiter)', value: ChatObjectTypeEnums.ShopWaiter },
+              {
+                label: '商户店长 (ShopKeeper)',
+                value: ChatObjectTypeEnums.ShopKeeper,
+              },
+              {
+                label: '商户店员 (ShopWaiter)',
+                value: ChatObjectTypeEnums.ShopWaiter,
+              },
               { label: '客户 (Customer)', value: ChatObjectTypeEnums.Customer },
             ]"
           />
@@ -232,14 +245,19 @@ defineExpose({ modalApi });
 
         <div v-if="verificationMethod === VerificationMethodEnums.Password">
           <div class="mb-1 font-medium text-sm">进群/好友验证密码</div>
-          <Input.Password v-model:value="password" placeholder="请输入验证密码" />
+          <Input.Password
+            v-model:value="password"
+            placeholder="请输入验证密码"
+          />
         </div>
       </div>
 
       <div class="flex items-center justify-between py-1">
         <div>
           <div class="font-medium text-sm">公开可被搜索 (isPublic)</div>
-          <div class="text-xs text-muted-foreground">开启后其他用户可通过搜索发现</div>
+          <div class="text-xs text-muted-foreground">
+            开启后其他用户可通过搜索发现
+          </div>
         </div>
         <Switch v-model:checked="isPublic" />
       </div>
@@ -247,14 +265,20 @@ defineExpose({ modalApi });
       <div class="flex items-center justify-between py-1">
         <div>
           <div class="font-medium text-sm">正常启用状态 (isEnabled)</div>
-          <div class="text-xs text-muted-foreground">禁用后该对象将被冻结封禁</div>
+          <div class="text-xs text-muted-foreground">
+            禁用后该对象将被冻结封禁
+          </div>
         </div>
         <Switch v-model:checked="isEnabled" />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">个性签名 / 说明</div>
-        <Input.TextArea v-model:value="description" :rows="2" placeholder="可选填对象签名或群简介" />
+        <Input.TextArea
+          v-model:value="description"
+          :rows="2"
+          placeholder="可选填对象签名或群简介"
+        />
       </div>
     </div>
   </Modal>

@@ -7,9 +7,9 @@ import { useVbenModal } from '@vben/common-ui';
 
 import { Tag } from 'antdv-next';
 
-const log = ref<SecurityLogDto | null>(null);
+const log = ref<null | SecurityLogDto>(null);
 
-const [Modal, modalApi] = useVbenModal<SecurityLogDto | null>({
+const [Modal, modalApi] = useVbenModal<null | SecurityLogDto>({
   fullscreenButton: false,
   onOpenChange(isOpen) {
     if (isOpen) {
@@ -37,7 +37,9 @@ defineExpose({ modalApi });
         </div>
         <div class="border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
           <span class="text-muted-foreground mr-2">客户端 IP:</span>
-          <span class="font-mono">{{ log?.extraProperties?.ClientIpAddress || '-' }}</span>
+          <span class="font-mono">{{
+            log?.extraProperties?.ClientIpAddress || '-'
+          }}</span>
         </div>
         <div class="border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
           <span class="text-muted-foreground mr-2">记录时间:</span>
@@ -51,9 +53,13 @@ defineExpose({ modalApi });
           <span class="text-muted-foreground mr-2">身份类别:</span>
           <span>{{ log?.identity || '-' }}</span>
         </div>
-        <div class="col-span-2 border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
+        <div
+          class="col-span-2 border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50"
+        >
           <span class="text-muted-foreground block mb-1">客户端/浏览器信息:</span>
-          <span class="text-xs text-muted-foreground break-all">{{ log?.browserInfo || '-' }}</span>
+          <span class="text-xs text-muted-foreground break-all">{{
+            log?.browserInfo || '-'
+          }}</span>
         </div>
       </div>
     </div>

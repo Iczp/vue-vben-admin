@@ -5,12 +5,7 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Checkbox,
-  Input,
-  message,
-  Spin,
-} from 'antdv-next';
+import { Checkbox, Input, message, Spin } from 'antdv-next';
 
 import {
   deleteDefaultConnectionStringApi,
@@ -22,7 +17,7 @@ import { $t } from '#/locales';
 const emit = defineEmits(['success']);
 
 const loading = ref(false);
-const tenantModel = ref<TenantDto | null>(null);
+const tenantModel = ref<null | TenantDto>(null);
 const useSharedDatabase = ref(true);
 const defaultConnectionString = ref('');
 
@@ -31,7 +26,7 @@ const getTitle = computed(
     `${$t('page.tenant.connectionString', '数据库连接字符串')} - ${tenantModel.value?.name || ''}`,
 );
 
-const [Modal, modalApi] = useVbenModal<TenantDto | null>({
+const [Modal, modalApi] = useVbenModal<null | TenantDto>({
   fullscreenButton: false,
   async onConfirm() {
     if (!tenantModel.value?.id) return;
@@ -100,7 +95,12 @@ defineExpose({ modalApi });
         <div>
           <Checkbox v-model:checked="useSharedDatabase">
             <span class="font-medium">
-              {{ $t('page.tenant.useSharedDatabase', '使用共享数据库（默认宿主数据库）') }}
+              {{
+                $t(
+                  'page.tenant.useSharedDatabase',
+                  '使用共享数据库（默认宿主数据库）',
+                )
+              }}
             </span>
           </Checkbox>
         </div>
@@ -116,7 +116,12 @@ defineExpose({ modalApi });
             placeholder="Server=...;Database=...;User Id=...;Password=...;"
           />
           <div class="mt-1 text-xs text-gray-400">
-            {{ $t('page.tenant.connStringTip', '配置此租户专用的独立数据库连接字符串') }}
+            {{
+              $t(
+                'page.tenant.connStringTip',
+                '配置此租户专用的独立数据库连接字符串',
+              )
+            }}
           </div>
         </div>
       </div>

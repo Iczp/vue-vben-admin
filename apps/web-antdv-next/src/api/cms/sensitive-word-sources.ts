@@ -1,4 +1,3 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   SensitiveWordSourceCreateInput,
   SensitiveWordSourceDetailDto,
@@ -9,12 +8,16 @@ import type {
   SourceCheckResultDto,
 } from './types';
 
+import type { PagedResultDto } from '#/api/abp/types';
+
 import { requestClient } from '#/api/request';
 
 /**
  * 分页获取敏感词外部数据源列表
  */
-export async function getSensitiveWordSourcesApi(params?: SensitiveWordSourceGetListInput) {
+export async function getSensitiveWordSourcesApi(
+  params?: SensitiveWordSourceGetListInput,
+) {
   return requestClient.get<PagedResultDto<SensitiveWordSourceDto>>(
     '/cms/admin/sensitive-word-sources',
     { params },
@@ -33,7 +36,9 @@ export async function getSensitiveWordSourceApi(id: string) {
 /**
  * 创建外部数据源
  */
-export async function createSensitiveWordSourceApi(data: SensitiveWordSourceCreateInput) {
+export async function createSensitiveWordSourceApi(
+  data: SensitiveWordSourceCreateInput,
+) {
   return requestClient.post<SensitiveWordSourceDetailDto>(
     '/cms/admin/sensitive-word-sources',
     data,
@@ -64,14 +69,18 @@ export async function deleteSensitiveWordSourceApi(id: string) {
  * 启用外部数据源
  */
 export async function enableSensitiveWordSourceApi(id: string) {
-  return requestClient.post<void>(`/cms/admin/sensitive-word-sources/${id}/enable`);
+  return requestClient.post<void>(
+    `/cms/admin/sensitive-word-sources/${id}/enable`,
+  );
 }
 
 /**
  * 禁用外部数据源
  */
 export async function disableSensitiveWordSourceApi(id: string) {
-  return requestClient.post<void>(`/cms/admin/sensitive-word-sources/${id}/disable`);
+  return requestClient.post<void>(
+    `/cms/admin/sensitive-word-sources/${id}/disable`,
+  );
 }
 
 /**

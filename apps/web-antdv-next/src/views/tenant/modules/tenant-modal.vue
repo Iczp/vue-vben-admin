@@ -5,19 +5,14 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Col,
-  Input,
-  message,
-  Row,
-} from 'antdv-next';
+import { Col, Input, message, Row } from 'antdv-next';
 
 import { createTenantApi, updateTenantApi } from '#/api/multi-tenancy';
 import { $t } from '#/locales';
 
 const emit = defineEmits(['success']);
 
-const tenantModel = ref<TenantDto | null>(null);
+const tenantModel = ref<null | TenantDto>(null);
 
 const name = ref('');
 const adminEmailAddress = ref('');
@@ -36,7 +31,7 @@ function resetState() {
   adminPassword.value = '';
 }
 
-const [Modal, modalApi] = useVbenModal<TenantDto | null>({
+const [Modal, modalApi] = useVbenModal<null | TenantDto>({
   fullscreenButton: false,
   async onConfirm() {
     if (!name.value.trim()) {
@@ -48,7 +43,9 @@ const [Modal, modalApi] = useVbenModal<TenantDto | null>({
       return;
     }
     if (!isEdit.value && !adminPassword.value) {
-      message.error($t('page.tenant.adminPasswordRequired', '请输入管理员密码'));
+      message.error(
+        $t('page.tenant.adminPasswordRequired', '请输入管理员密码'),
+      );
       return;
     }
 

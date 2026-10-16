@@ -38,8 +38,8 @@ import {
   publishArticleApi,
 } from '#/api/cms';
 
-import { useColumns } from './data';
 import CategoryTreeSelect from '../components/CategoryTreeSelect.vue';
+import { useColumns } from './data';
 import ArticleModal from './modules/article-modal.vue';
 import ReviewModal from './modules/review-modal.vue';
 import RevisionModal from './modules/revision-modal.vue';
@@ -240,10 +240,6 @@ function onActionClick({
   row: AdminArticleListItemDto;
 }) {
   switch (code) {
-    case 'view': {
-      onView(row);
-      break;
-    }
     case 'archive': {
       onArchive(row);
       break;
@@ -276,6 +272,10 @@ function onActionClick({
       onSchedule(row);
       break;
     }
+    case 'view': {
+      onView(row);
+      break;
+    }
   }
 }
 
@@ -284,7 +284,8 @@ const selectedRows = ref<AdminArticleListItemDto[]>([]);
 const selectedRowKeys = ref<string[]>([]);
 
 function updateSelection() {
-  const records = (gridApi.grid?.getCheckboxRecords() || []) as AdminArticleListItemDto[];
+  const records = (gridApi.grid?.getCheckboxRecords() ||
+    []) as AdminArticleListItemDto[];
   selectedRows.value = records;
   selectedRowKeys.value = records.map((r) => r.id);
 }
@@ -313,14 +314,14 @@ const batchCategoryIds = ref<string[]>([]);
 const batchCategoryOverwrite = ref(true);
 
 function openBatchCategoryModal() {
-  if (!selectedRowKeys.value.length) return;
+  if (selectedRowKeys.value.length === 0) return;
   batchCategoryIds.value = [];
   batchCategoryOverwrite.value = true;
   batchCategoryModalVisible.value = true;
 }
 
 async function handleBatchCategorySubmit() {
-  if (!batchCategoryIds.value.length) {
+  if (batchCategoryIds.value.length === 0) {
     message.warning('请选择至少一个栏目分类');
     return;
   }
@@ -347,14 +348,14 @@ const batchTagNames = ref<string[]>([]);
 const batchTagOverwrite = ref(true);
 
 function openBatchTagModal() {
-  if (!selectedRowKeys.value.length) return;
+  if (selectedRowKeys.value.length === 0) return;
   batchTagNames.value = [];
   batchTagOverwrite.value = true;
   batchTagModalVisible.value = true;
 }
 
 async function handleBatchTagSubmit() {
-  if (!batchTagNames.value.length) {
+  if (batchTagNames.value.length === 0) {
     message.warning('请选择或输入至少一个标签');
     return;
   }
@@ -376,7 +377,7 @@ async function handleBatchTagSubmit() {
 
 // 批量发布
 function onBatchPublish() {
-  if (!selectedRowKeys.value.length) return;
+  if (selectedRowKeys.value.length === 0) return;
   Modal.confirm({
     content: `确认将选中的 ${selectedRowKeys.value.length} 篇内容立即发布吗？发布后前台将立即同步可见。`,
     okText: '确认批量发布',
@@ -392,7 +393,7 @@ function onBatchPublish() {
 
 // 批量下架
 function onBatchOffline() {
-  if (!selectedRowKeys.value.length) return;
+  if (selectedRowKeys.value.length === 0) return;
   Modal.confirm({
     content: `确认将选中的 ${selectedRowKeys.value.length} 篇内容下架吗？下架后前台将不可见。`,
     okText: '确认批量下架',
@@ -409,7 +410,7 @@ function onBatchOffline() {
 
 // 批量删除
 function onBatchDelete() {
-  if (!selectedRowKeys.value.length) return;
+  if (selectedRowKeys.value.length === 0) return;
   Modal.confirm({
     content: `确定删除选中的 ${selectedRowKeys.value.length} 篇内容吗？此操作将移入回收站。`,
     okText: '确认批量删除',
@@ -430,7 +431,7 @@ const batchStatusLoading = ref(false);
 const batchTargetStatus = ref<ArticleStatus>(ArticleStatus.Draft);
 
 function openBatchStatusModal() {
-  if (!selectedRowKeys.value.length) return;
+  if (selectedRowKeys.value.length === 0) return;
   batchTargetStatus.value = ArticleStatus.Draft;
   batchStatusModalVisible.value = true;
 }
@@ -515,7 +516,11 @@ function onFilterChange() {
   <Page auto-content-height>
     <div class="h-full flex flex-col gap-3">
       <!-- 顶部搜索工具栏 -->
-      <Card variant="borderless" class="shrink-0 shadow-sm" :styles="{ body: { padding: '12px 16px' } }">
+      <Card
+        variant="borderless"
+        class="shrink-0 shadow-sm"
+        :styles="{ body: { padding: '12px 16px' } }"
+      >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-3">
             <Input.Search
@@ -559,7 +564,9 @@ function onFilterChange() {
             >
               <RadioButton :value="undefined">全部状态</RadioButton>
               <RadioButton :value="ArticleStatus.Draft">草稿</RadioButton>
-              <RadioButton :value="ArticleStatus.PendingReview">待审核</RadioButton>
+              <RadioButton :value="ArticleStatus.PendingReview">
+待审核
+</RadioButton>
               <RadioButton :value="ArticleStatus.Approved">已审核</RadioButton>
               <RadioButton :value="ArticleStatus.Published">已发布</RadioButton>
               <RadioButton :value="ArticleStatus.Offline">已下架</RadioButton>
@@ -587,25 +594,39 @@ function onFilterChange() {
       >
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium text-foreground">
-            已勾选 <span class="text-primary font-bold">{{ selectedRowKeys.length }}</span> 篇内容
+            已勾选
+            <span class="text-primary font-bold">{{
+              selectedRowKeys.length
+            }}</span>
+            篇内容
           </span>
-          <Button type="link" size="small" @click="clearSelection">取消选择</Button>
+          <Button type="link" size="small" @click="clearSelection">
+取消选择
+</Button>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <Button size="small" @click="openBatchCategoryModal">批量设置分类</Button>
+          <Button size="small" @click="openBatchCategoryModal">
+批量设置分类
+</Button>
           <Button size="small" @click="openBatchTagModal">批量设置标签</Button>
-          <Button size="small" type="primary" ghost @click="onBatchPublish">批量发布</Button>
+          <Button size="small" type="primary" ghost @click="onBatchPublish">
+批量发布
+</Button>
           <Button size="small" @click="onBatchOffline">批量下架</Button>
 
-          <Button size="small" @click="openBatchStatusModal">批量修改状态</Button>
+          <Button size="small" @click="openBatchStatusModal">
+批量修改状态
+</Button>
 
           <Button size="small" danger @click="onBatchDelete">批量删除</Button>
         </div>
       </div>
 
       <!-- 文章数据列表 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>
@@ -629,10 +650,14 @@ function onFilterChange() {
             class="w-full"
           />
         </div>
-        <div class="flex items-center justify-between p-3 bg-muted/20 rounded border">
+        <div
+          class="flex items-center justify-between p-3 bg-muted/20 rounded border"
+        >
           <div>
             <div class="font-medium text-sm">覆盖现有分类</div>
-            <div class="text-xs text-muted-foreground">开启后将清除选中文档原有的分类，仅保留新选分类；关闭则为追加模式</div>
+            <div class="text-xs text-muted-foreground">
+              开启后将清除选中文档原有的分类，仅保留新选分类；关闭则为追加模式
+            </div>
           </div>
           <Switch v-model:checked="batchCategoryOverwrite" />
         </div>
@@ -657,10 +682,14 @@ function onFilterChange() {
             :options="tagOptions"
           />
         </div>
-        <div class="flex items-center justify-between p-3 bg-muted/20 rounded border">
+        <div
+          class="flex items-center justify-between p-3 bg-muted/20 rounded border"
+        >
           <div>
             <div class="font-medium text-sm">覆盖现有标签</div>
-            <div class="text-xs text-muted-foreground">开启后将清除选中文档原有的标签，仅保留新选标签；关闭则为追加模式</div>
+            <div class="text-xs text-muted-foreground">
+              开启后将清除选中文档原有的标签，仅保留新选标签；关闭则为追加模式
+            </div>
           </div>
           <Switch v-model:checked="batchTagOverwrite" />
         </div>
@@ -676,13 +705,26 @@ function onFilterChange() {
     >
       <div class="py-4 space-y-3">
         <label class="block text-sm font-medium">请选择要统一变更的目标状态：</label>
-        <RadioGroup v-model:value="batchTargetStatus" class="flex flex-col gap-2.5">
+        <RadioGroup
+          v-model:value="batchTargetStatus"
+          class="flex flex-col gap-2.5"
+        >
           <RadioButton :value="ArticleStatus.Draft">草稿 (Draft)</RadioButton>
-          <RadioButton :value="ArticleStatus.PendingReview">待审核 (Pending Review)</RadioButton>
-          <RadioButton :value="ArticleStatus.Approved">已审核 (Approved)</RadioButton>
-          <RadioButton :value="ArticleStatus.Published">已发布 (Published)</RadioButton>
-          <RadioButton :value="ArticleStatus.Offline">已下架 (Offline)</RadioButton>
-          <RadioButton :value="ArticleStatus.Archived">已归档 (Archived)</RadioButton>
+          <RadioButton :value="ArticleStatus.PendingReview">
+待审核 (Pending Review)
+</RadioButton>
+          <RadioButton :value="ArticleStatus.Approved">
+已审核 (Approved)
+</RadioButton>
+          <RadioButton :value="ArticleStatus.Published">
+已发布 (Published)
+</RadioButton>
+          <RadioButton :value="ArticleStatus.Offline">
+已下架 (Offline)
+</RadioButton>
+          <RadioButton :value="ArticleStatus.Archived">
+已归档 (Archived)
+</RadioButton>
         </RadioGroup>
       </div>
     </Modal>

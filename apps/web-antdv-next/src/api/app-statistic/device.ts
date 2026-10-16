@@ -1,5 +1,3 @@
-import { requestClient } from '#/api/request';
-
 import type {
   AppStatisticQueryInput,
   DeviceAnalysisDto,
@@ -8,6 +6,8 @@ import type {
   GetDevicesInput,
   PagedResultDto,
 } from './types';
+
+import { requestClient } from '#/api/request';
 
 /**
  * 获取设备分析统计

@@ -3,18 +3,13 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Form,
-  FormItem,
-  Input,
-  message,
-  RadioGroup,
-} from 'antdv-next';
+import { Form, FormItem, Input, message, RadioGroup } from 'antdv-next';
 
 import {
   flushMessageReportApi,
   MessageReportTypes,
 } from '#/api/chat/message-report';
+
 import { reportTypeOptions } from '../data';
 
 const emit = defineEmits<{
@@ -30,16 +25,18 @@ const [Modal, modalApi] = useVbenModal<{ defaultType?: MessageReportTypes }>({
     try {
       modalApi.lock();
       const res = await flushMessageReportApi({
-        dateBucket: dateBucket.value.trim() ? Number(dateBucket.value.trim()) : undefined,
+        dateBucket: dateBucket.value.trim()
+          ? Number(dateBucket.value.trim())
+          : undefined,
         type: reportType.value,
       });
 
-      if (res !== false) {
+      if (res === false) {
+        message.warning('落库执行完毕，无新数据变动');
+      } else {
         message.success('统计数据落库成功');
         modalApi.close();
         emit('success');
-      } else {
-        message.warning('落库执行完毕，无新数据变动');
       }
     } finally {
       modalApi.lock(false);
@@ -62,7 +59,9 @@ defineExpose({ modalApi });
 <template>
   <Modal title="消息统计数据落库 (Flush)" class="w-[520px]">
     <div class="p-4 space-y-3">
-      <div class="rounded-md bg-blue-50 dark:bg-blue-950/40 p-3 text-xs text-blue-800 dark:text-blue-300">
+      <div
+        class="rounded-md bg-blue-50 dark:bg-blue-950/40 p-3 text-xs text-blue-800 dark:text-blue-300"
+      >
         落库操作将把缓存（Redis）中的即时消息统计指标固化计算写入数据库实体表中。
       </div>
 

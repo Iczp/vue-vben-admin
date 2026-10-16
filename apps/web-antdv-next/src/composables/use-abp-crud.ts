@@ -1,12 +1,13 @@
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PagedResultDto } from '#/api/abp/types';
 
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Modal, message } from 'antdv-next';
+import { message, Modal } from 'antdv-next';
 
-import { type VxeTableGridOptions, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { $t } from '#/locales';
 
 export interface UseAbpCrudOptions<

@@ -1,10 +1,4 @@
 <script lang="ts" setup>
-import type {
-  SensitiveWordRulePreviewDto,
-  SensitiveWordRuleVersionDto,
-  SensitiveWordRuntimeDto,
-} from '#/api/cms';
-
 import { onMounted, reactive, ref } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -28,7 +22,10 @@ import {
   getSensitiveWordRuntimeApi,
   previewSensitiveWordRuleVersionApi,
   reloadSensitiveWordRuntimeApi,
+  type SensitiveWordRulePreviewDto,
+  type SensitiveWordRuleVersionDto,
   type SensitiveWordRuleVersionStatus,
+  type SensitiveWordRuntimeDto,
 } from '#/api/cms';
 
 import { useColumns, versionStatusOptions } from './data';
@@ -37,8 +34,8 @@ import PublishModal from './modules/publish-modal.vue';
 import RollbackModal from './modules/rollback-modal.vue';
 import VersionDetailModal from './modules/version-detail-modal.vue';
 
-const preview = ref<SensitiveWordRulePreviewDto | null>(null);
-const runtime = ref<SensitiveWordRuntimeDto | null>(null);
+const preview = ref<null | SensitiveWordRulePreviewDto>(null);
+const runtime = ref<null | SensitiveWordRuntimeDto>(null);
 const previewLoading = ref(false);
 const runtimeReloading = ref(false);
 
@@ -89,7 +86,8 @@ async function loadRuntime() {
 
 async function onReloadRuntime() {
   Modal.confirm({
-    content: '重新加载将指示所有线上运行节点立即重载并热切换至当前发布的激活版本。确认重载吗？',
+    content:
+      '重新加载将指示所有线上运行节点立即重载并热切换至当前发布的激活版本。确认重载吗？',
     okText: '确认重载',
     title: '重载规则引擎运行时',
     async onOk() {
@@ -212,11 +210,23 @@ onMounted(() => {
               <div class="flex flex-wrap items-center gap-6 text-sm">
                 <div class="flex items-center gap-2">
                   <span class="text-muted-foreground">当前线上运行版本:</span>
-                  <Tag color="success" class="text-sm font-semibold px-2 py-0.5">
-                    v{{ runtime?.ruleVersionNumber ?? preview?.activeVersion ?? '-' }}
+                  <Tag
+                    color="success"
+                    class="text-sm font-semibold px-2 py-0.5"
+                  >
+                    v{{
+                      runtime?.ruleVersionNumber ??
+                      preview?.activeVersion ??
+                      '-'
+                    }}
                   </Tag>
-                  <Tooltip v-if="runtime" :title="`耗时: ${runtime.buildDurationMs}ms | 节点数: ${runtime.nodes?.length ?? 1}`">
-                    <span class="text-xs text-muted-foreground flex items-center gap-1">
+                  <Tooltip
+                    v-if="runtime"
+                    :title="`耗时: ${runtime.buildDurationMs}ms | 节点数: ${runtime.nodes?.length ?? 1}`"
+                  >
+                    <span
+                      class="text-xs text-muted-foreground flex items-center gap-1"
+                    >
                       <span>● 集群就绪</span>
                     </span>
                   </Tooltip>
@@ -224,8 +234,11 @@ onMounted(() => {
 
                 <div class="flex items-center gap-2">
                   <span class="text-muted-foreground">草稿词条总数:</span>
-                  <span class="font-bold text-foreground">{{ preview?.totalWords ?? 0 }}</span>
-                  <span class="text-xs text-muted-foreground">（正则 {{ preview?.totalRegexWords ?? 0 }} / 白名单 {{ preview?.totalWhitelists ?? 0 }}）</span>
+                  <span class="font-bold text-foreground">{{
+                    preview?.totalWords ?? 0
+                  }}</span>
+                  <span class="text-xs text-muted-foreground">（正则 {{ preview?.totalRegexWords ?? 0 }} / 白名单
+                    {{ preview?.totalWhitelists ?? 0 }}）</span>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -244,13 +257,8 @@ onMounted(() => {
                   <template #icon><Plus class="size-4" /></template>
                   发布新版本
                 </Button>
-                <Button @click="onOpenActivations">
-                  审计流水
-                </Button>
-                <Button
-                  :loading="runtimeReloading"
-                  @click="onReloadRuntime"
-                >
+                <Button @click="onOpenActivations"> 审计流水 </Button>
+                <Button :loading="runtimeReloading" @click="onReloadRuntime">
                   <template #icon><RotateCw class="size-4" /></template>
                   广播重载
                 </Button>
@@ -270,7 +278,10 @@ onMounted(() => {
             >
               <template #message>
                 <span class="font-medium">
-                  草稿态有尚未发布的词库变更（自上次发布修订号 #{{ preview?.lastPublishedDraftRevision }} 以来已有增删改）。线上审核仍在使用旧版本，请在测试通过后点击【发布新版本】生效。
+                  草稿态有尚未发布的词库变更（自上次发布修订号 #{{
+                    preview?.lastPublishedDraftRevision
+                  }}
+                  以来已有增删改）。线上审核仍在使用旧版本，请在测试通过后点击【发布新版本】生效。
                 </span>
               </template>
             </Alert>
@@ -302,7 +313,9 @@ onMounted(() => {
       </Card>
 
       <!-- 版本列表主视图 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>

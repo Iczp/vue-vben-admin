@@ -61,13 +61,7 @@ function onDelete(row: IdentityRoleDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: IdentityRoleDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: IdentityRoleDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -160,10 +154,7 @@ function refreshGrid() {
             />
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              type="primary"
-              @click="onCreate"
-            >
+            <Button type="primary" @click="onCreate">
               <Plus class="size-4 mr-1" />
               {{ $t('common.create', '新建角色') }}
             </Button>

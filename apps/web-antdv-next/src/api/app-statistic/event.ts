@@ -1,6 +1,6 @@
-import { requestClient } from '#/api/request';
-
 import type { EventDto, GetEventsInput, PagedResultDto } from './types';
+
+import { requestClient } from '#/api/request';
 
 /**
  * 分页获取事件日志列表

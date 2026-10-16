@@ -1,10 +1,11 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   GetTenantsInput,
   TenantCreateDto,
   TenantDto,
   TenantUpdateDto,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

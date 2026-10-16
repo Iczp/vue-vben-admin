@@ -46,13 +46,7 @@ function onDelete(row: AppVersionDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: AppVersionDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: AppVersionDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -126,9 +120,7 @@ function refreshGrid() {
             $t('page.system.title', '系统管理')
           }}</span>
           <span class="text-muted-foreground/60">/</span>
-          <span class="font-bold text-base text-foreground"
-            >App 版本发布与升级管理</span
-          >
+          <span class="font-bold text-base text-foreground">App 版本发布与升级管理</span>
         </div>
       </template>
 
@@ -161,10 +153,7 @@ function refreshGrid() {
             />
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              type="primary"
-              @click="onCreate"
-            >
+            <Button type="primary" @click="onCreate">
               <Plus class="size-4 mr-1" />
               发布新版本
             </Button>

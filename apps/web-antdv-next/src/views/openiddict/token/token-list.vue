@@ -6,10 +6,15 @@ import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Input, message, Modal, Select } from 'antdv-next';
+import { Button, Input, message, Modal, Select } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteTokenApi, getTokensApi } from '#/api/openiddict';
+import {
+  deleteTokenApi,
+  getTokensApi,
+  revokeTokenApi,
+  revokeTokensBySubjectApi,
+} from '#/api/openiddict';
 import { $t } from '#/locales';
 
 import { useColumns } from './data';
@@ -17,29 +22,64 @@ import { useColumns } from './data';
 const subjectFilter = ref('');
 const statusFilter = ref<string | undefined>(undefined);
 
-function onDelete(row: TokenDto) {
+function onRevoke(row: TokenDto) {
   Modal.confirm({
     cancelText: $t('common.cancel', '取消'),
-    content: `确定要撤销该访问令牌 (Token) 吗？`,
+    content: `确定要吊销该令牌吗？吊销后该令牌将立即失效。`,
     okText: $t('common.confirm', '确认'),
     okType: 'danger',
     async onOk() {
-      await deleteTokenApi(row.id);
-      message.success('令牌已成功撤销');
+      await revokeTokenApi(row.id);
+      message.success('令牌已成功吊销');
       refreshGrid();
     },
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: TokenDto;
-}) {
-  if (code === 'delete') {
-    onDelete(row);
+function onDelete(row: TokenDto) {
+  Modal.confirm({
+    cancelText: $t('common.cancel', '取消'),
+    content: `确定要彻底删除该令牌记录吗？`,
+    okText: $t('common.confirm', '确认'),
+    okType: 'danger',
+    async onOk() {
+      await deleteTokenApi(row.id);
+      message.success('令牌记录已成功删除');
+      refreshGrid();
+    },
+  });
+}
+
+function onRevokeBySubject() {
+  const sub = subjectFilter.value.trim();
+  if (!sub) {
+    message.warning('请先在搜索框输入要下线的用户主体 (Subject / UserId)');
+    return;
+  }
+
+  Modal.confirm({
+    cancelText: $t('common.cancel', '取消'),
+    content: `确定要强制下线用户 "${sub}" 的所有在线令牌吗？该用户所有已签发令牌将被立即吊销。`,
+    okText: '确认强制下线',
+    okType: 'danger',
+    async onOk() {
+      await revokeTokensBySubjectApi(sub);
+      message.success(`用户 "${sub}" 的所有令牌已成功吊销`);
+      refreshGrid();
+    },
+  });
+}
+
+function onActionClick({ code, row }: { code: string; row: TokenDto }) {
+  switch (code) {
+    case 'revoke': {
+      onRevoke(row);
+      break;
+    }
+    case 'delete': {
+      onDelete(row);
+      break;
+    }
   }
 }
 
@@ -99,9 +139,7 @@ function refreshGrid() {
             $t('page.openiddict.title', 'OpenIddict 认证服务')
           }}</span>
           <span class="text-muted-foreground/60">/</span>
-          <span class="font-bold text-base text-foreground"
-            >访问令牌管理 (Tokens)</span
-          >
+          <span class="font-bold text-base text-foreground">访问令牌管理 (Tokens)</span>
         </div>
       </template>
 
@@ -130,6 +168,15 @@ function refreshGrid() {
               ]"
               @change="refreshGrid"
             />
+          </div>
+          <div class="flex items-center gap-2">
+            <Button
+              danger
+              :disabled="!subjectFilter.trim()"
+              @click="onRevokeBySubject"
+            >
+              强制下线该用户 (吊销全部)
+            </Button>
           </div>
         </div>
       </template>

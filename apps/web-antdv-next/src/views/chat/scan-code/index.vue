@@ -51,13 +51,7 @@ function onDetail(row: ScanCodeDto) {
   detailDrawerApi.setData({ id: row.id }).open();
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: ScanCodeDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: ScanCodeDto }) {
   if (code === 'detail') {
     onDetail(row);
   }
@@ -157,9 +151,16 @@ onUnmounted(() => {
     <DetailDrawerComp />
 
     <div class="h-full flex flex-col bg-background rounded-lg p-2">
-      <Tabs v-model:active-key="activeTab" class="flex-1 flex flex-col overflow-hidden">
+      <Tabs
+        v-model:active-key="activeTab"
+        class="flex-1 flex flex-col overflow-hidden"
+      >
         <!-- Tab 1: 通用扫码记录与处理器流水 -->
-        <Tabs.TabPane key="logs" tab="扫码流水日志" class="h-full flex flex-col">
+        <Tabs.TabPane
+          key="logs"
+          tab="扫码流水日志"
+          class="h-full flex flex-col"
+        >
           <Grid>
             <template #table-title>
               <div class="flex items-center gap-1.5 text-sm font-medium">
@@ -170,7 +171,9 @@ onUnmounted(() => {
             </template>
 
             <template #top>
-              <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
+              <div
+                class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1"
+              >
                 <div class="flex items-center gap-2 flex-wrap">
                   <Input.Search
                     v-model:value="filterText"
@@ -204,34 +207,67 @@ onUnmounted(() => {
         </Tabs.TabPane>
 
         <!-- Tab 2: 扫码登录调试监视 -->
-        <Tabs.TabPane key="login_monitor" tab="扫码登录监视器" class="h-full flex flex-col overflow-y-auto p-4">
+        <Tabs.TabPane
+          key="login_monitor"
+          tab="扫码登录监视器"
+          class="h-full flex flex-col overflow-y-auto p-4"
+        >
           <div class="max-w-2xl mx-auto w-full space-y-4">
             <Card title="扫码登录会话状态与生命周期测试" size="small">
               <div class="flex items-center justify-between mb-4">
                 <div class="space-x-2">
-                  <Button type="primary" :loading="monitorLoading" @click="onGenerateLoginCode">
+                  <Button
+                    type="primary"
+                    :loading="monitorLoading"
+                    @click="onGenerateLoginCode"
+                  >
                     生成新二维码会话
                   </Button>
-                  <Button :disabled="!generatedData" @click="onSimulateMobileScan">
+                  <Button
+                    :disabled="!generatedData"
+                    @click="onSimulateMobileScan"
+                  >
                     模拟移动端扫码
                   </Button>
-                  <Button :disabled="!generatedData" type="dashed" @click="onSimulateMobileGrant">
+                  <Button
+                    :disabled="!generatedData"
+                    type="dashed"
+                    @click="onSimulateMobileGrant"
+                  >
                     模拟确认授权
                   </Button>
-                  <Button :disabled="!generatedData" danger @click="onCancelLogin">
+                  <Button
+                    :disabled="!generatedData"
+                    danger
+                    @click="onCancelLogin"
+                  >
                     取消
                   </Button>
                 </div>
                 <div>
-                  <Tag v-if="monitorStatus === 'idle'" color="blue">等待扫码</Tag>
-                  <Tag v-else-if="monitorStatus === 'scanned'" color="orange">已扫码待确认</Tag>
-                  <Tag v-else-if="monitorStatus === 'granted'" color="green">授权成功</Tag>
-                  <Tag v-else-if="monitorStatus === 'canceled'" color="red">已取消</Tag>
+                  <Tag v-if="monitorStatus === 'idle'" color="blue">
+等待扫码
+</Tag>
+                  <Tag v-else-if="monitorStatus === 'scanned'" color="orange">
+已扫码待确认
+</Tag>
+                  <Tag v-else-if="monitorStatus === 'granted'" color="green">
+授权成功
+</Tag>
+                  <Tag v-else-if="monitorStatus === 'canceled'" color="red">
+已取消
+</Tag>
                 </div>
               </div>
 
-              <div v-if="generatedData" class="flex flex-col items-center justify-center p-6 border rounded-lg bg-muted/10 space-y-3">
-                <QRCode :value="generatedData.actionUrl || generatedData.code" :size="180" />
+              <div
+                v-if="generatedData"
+                class="flex flex-col items-center justify-center p-6 border rounded-lg bg-muted/10 space-y-3"
+              >
+                <QRCode
+                  :value="generatedData.actionUrl || generatedData.code"
+                  :size="180"
+                />
                 <div class="text-xs font-mono text-muted-foreground select-all">
                   Code: {{ generatedData.code }}
                 </div>

@@ -23,11 +23,9 @@ export async function updatePermissionsApi(
   params: GetPermissionParams,
   data: UpdatePermissionsDto,
 ) {
-  return requestClient.put<void>(
-    '/permission-management/permissions',
-    data,
-    { params },
-  );
+  return requestClient.put<void>('/permission-management/permissions', data, {
+    params,
+  });
 }
 
 export * from './types';

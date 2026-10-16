@@ -32,7 +32,7 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { id?: string } | undefined;
+      const data = modalApi.getData() as undefined | { id?: string };
       runId.value = data?.id || '';
       reason.value = '';
     } else {
@@ -62,4 +62,3 @@ defineExpose({ modalApi });
     </div>
   </Modal>
 </template>
-

@@ -7,10 +7,7 @@ import { useVbenModal } from '@vben/common-ui';
 
 import { Button, Input, message } from 'antdv-next';
 
-import {
-  generateClientSecretApi,
-  setClientSecretApi,
-} from '#/api/openiddict';
+import { generateClientSecretApi, setClientSecretApi } from '#/api/openiddict';
 
 const emit = defineEmits(['success']);
 

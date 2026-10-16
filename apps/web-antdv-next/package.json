@@ -26,7 +26,7 @@
     "#/*": "./src/*"
   },
   "dependencies": {
-    "@fingerprintjs/fingerprintjs": "^5.2.0",
+    "@fingerprintjs/fingerprintjs": "catalog:",
     "@microsoft/signalr": "catalog:",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
@@ -46,8 +46,8 @@
     "@vueuse/integrations": "catalog:",
     "antdv-next": "catalog:",
     "dayjs": "catalog:",
-    "qrcode": "catalog:",
     "pinia": "catalog:",
+    "qrcode": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },

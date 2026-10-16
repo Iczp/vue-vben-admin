@@ -138,7 +138,9 @@ defineExpose({ modalApi });
         <template v-if="isDetailMode">
           <Descriptions title="基本信息" bordered size="small" :column="2">
             <DescriptionsItem label="设备备注名称">
-              <span class="font-medium text-foreground">{{ detailData.name || '-' }}</span>
+              <span class="font-medium text-foreground">{{
+                detailData.name || '-'
+              }}</span>
             </DescriptionsItem>
             <DescriptionsItem label="设备唯一 ID">
               <span class="font-mono text-xs">{{ detailData.deviceId }}</span>
@@ -180,20 +182,30 @@ defineExpose({ modalApi });
               {{ detailData.appVersion ? `(v${detailData.appVersion})` : '' }}
             </DescriptionsItem>
             <DescriptionsItem label="屏幕分辨率">
-              {{ detailData.screenWidth && detailData.screenHeight ? `${detailData.screenWidth} × ${detailData.screenHeight}` : '-' }}
+              {{
+                detailData.screenWidth && detailData.screenHeight
+                  ? `${detailData.screenWidth} × ${detailData.screenHeight}`
+                  : '-'
+              }}
               {{ detailData.pixelRatio ? `(@${detailData.pixelRatio}x)` : '' }}
             </DescriptionsItem>
             <DescriptionsItem label="浏览器 / WebView">
-              {{ detailData.browserName || '-' }} {{ detailData.browserVersion || '' }}
+              {{ detailData.browserName || '-' }}
+              {{ detailData.browserVersion || '' }}
             </DescriptionsItem>
             <DescriptionsItem label="系统语言 / 主题">
-              {{ detailData.language || detailData.osLanguage || '-' }} / {{ detailData.theme || detailData.osTheme || '默认' }}
+              {{ detailData.language || detailData.osLanguage || '-' }} /
+              {{ detailData.theme || detailData.osTheme || '默认' }}
             </DescriptionsItem>
             <DescriptionsItem label="网络与硬件开关">
-              Wi-Fi: {{ detailData.wifiEnabled ? '已开' : '关' }} | 蓝牙: {{ detailData.bluetoothEnabled ? '已开' : '关' }} | 定位: {{ detailData.locationEnabled ? '已开' : '关' }}
+              Wi-Fi: {{ detailData.wifiEnabled ? '已开' : '关' }} | 蓝牙:
+              {{ detailData.bluetoothEnabled ? '已开' : '关' }} | 定位:
+              {{ detailData.locationEnabled ? '已开' : '关' }}
             </DescriptionsItem>
             <DescriptionsItem label="User-Agent" :span="2">
-              <div class="font-mono text-xs break-all max-h-24 overflow-y-auto text-muted-foreground">
+              <div
+                class="font-mono text-xs break-all max-h-24 overflow-y-auto text-muted-foreground"
+              >
                 {{ detailData.ua || '-' }}
               </div>
             </DescriptionsItem>
@@ -219,7 +231,9 @@ defineExpose({ modalApi });
             <FormItem label="允许该设备登录">
               <div class="flex items-center justify-between border rounded p-3">
                 <div>
-                  <div class="font-medium text-sm">允许通过此设备凭据或 Token 登录</div>
+                  <div class="font-medium text-sm">
+                    允许通过此设备凭据或 Token 登录
+                  </div>
                   <div class="text-xs text-muted-foreground">
                     若关闭，后端将拦截该设备的认证和访问请求
                   </div>

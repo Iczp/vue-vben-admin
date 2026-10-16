@@ -15,7 +15,5 @@ export async function getSensitiveWordRuntimeApi() {
  * 手动触发重新加载当前租户已发布的规则版本
  */
 export async function reloadSensitiveWordRuntimeApi() {
-  return requestClient.post<void>(
-    '/cms/admin/sensitive-word-runtime/reload',
-  );
+  return requestClient.post<void>('/cms/admin/sensitive-word-runtime/reload');
 }

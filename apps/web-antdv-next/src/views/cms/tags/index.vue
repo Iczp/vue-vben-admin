@@ -62,13 +62,7 @@ function onDelete(row: TagDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: TagDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: TagDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -140,7 +134,11 @@ function onFilterChange() {
   <Page auto-content-height>
     <div class="h-full flex flex-col gap-3">
       <!-- 搜索栏 -->
-      <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
+      <Card
+        variant="borderless"
+        class="shrink-0 shadow-sm"
+        :body-style="{ padding: '12px 16px' }"
+      >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <Input.Search
@@ -178,7 +176,9 @@ function onFilterChange() {
       </Card>
 
       <!-- 标签数据列表 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>

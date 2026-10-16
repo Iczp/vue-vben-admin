@@ -35,7 +35,9 @@ const emit = defineEmits(['success']);
 const loading = ref(false);
 const recordId = ref<null | string>(null);
 const isEdit = computed(() => Boolean(recordId.value));
-const modalTitle = computed(() => (isEdit.value ? '编辑置顶推广' : '新建置顶推广'));
+const modalTitle = computed(() =>
+  isEdit.value ? '编辑置顶推广' : '新建置顶推广',
+);
 
 const entityType = ref('Article');
 const entityId = ref('');
@@ -99,7 +101,9 @@ const [Modal, modalApi] = useVbenModal<ContentPromotionDto | undefined>({
           endTime: endTime.value ? endTime.value.toISOString() : undefined,
           isEnabled: isEnabled.value,
           reason: reason.value || undefined,
-          startTime: startTime.value ? startTime.value.toISOString() : undefined,
+          startTime: startTime.value
+            ? startTime.value.toISOString()
+            : undefined,
           weight: weight.value,
         };
         await updatePromotionApi(recordId.value, updateData);
@@ -112,7 +116,9 @@ const [Modal, modalApi] = useVbenModal<ContentPromotionDto | undefined>({
           isEnabled: isEnabled.value,
           reason: reason.value || undefined,
           scene: scene.value,
-          startTime: startTime.value ? startTime.value.toISOString() : undefined,
+          startTime: startTime.value
+            ? startTime.value.toISOString()
+            : undefined,
           weight: weight.value,
         };
         await createPromotionApi(createData);
@@ -216,10 +222,14 @@ const [Modal, modalApi] = useVbenModal<ContentPromotionDto | undefined>({
           />
         </FormItem>
 
-        <div class="flex items-center justify-between p-3 border rounded bg-muted/20">
+        <div
+          class="flex items-center justify-between p-3 border rounded bg-muted/20"
+        >
           <div>
             <div class="font-medium text-sm">投放状态</div>
-            <div class="text-xs text-muted-foreground">关闭后将立即从指定场景取消推广曝光</div>
+            <div class="text-xs text-muted-foreground">
+              关闭后将立即从指定场景取消推广曝光
+            </div>
           </div>
           <Switch v-model:checked="isEnabled" />
         </div>

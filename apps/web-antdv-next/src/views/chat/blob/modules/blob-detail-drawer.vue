@@ -44,7 +44,9 @@ defineExpose({ drawerApi });
         <div class="bg-muted/20 p-3 rounded-lg border space-y-2">
           <div class="flex items-center justify-between py-1 border-b">
             <span class="text-muted-foreground">原始文件名:</span>
-            <span class="font-medium text-foreground">{{ detail.fileName || '-' }}</span>
+            <span class="font-medium text-foreground">{{
+              detail.fileName || '-'
+            }}</span>
           </div>
 
           <div class="flex items-center justify-between py-1 border-b">
@@ -64,7 +66,10 @@ defineExpose({ drawerApi });
 
           <div class="flex items-center justify-between py-1 border-b">
             <span class="text-muted-foreground">文件大小:</span>
-            <span class="font-bold">{{ formatBytes(detail.fileSize) }} ({{ detail.fileSize ?? 0 }} Bytes)</span>
+            <span class="font-bold">{{ formatBytes(detail.fileSize) }} ({{
+                detail.fileSize ?? 0
+              }}
+              Bytes)</span>
           </div>
 
           <div class="flex items-center justify-between py-1 border-b">

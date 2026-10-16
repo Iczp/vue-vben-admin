@@ -49,7 +49,7 @@ const [Modal, modalApi] = useVbenModal({
   onConfirm: handleConfirm,
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { asset?: AssetDto } | undefined;
+      const data = modalApi.getData() as undefined | { asset?: AssetDto };
       if (data?.asset) {
         currentAsset.value = data.asset;
         status.value = data.asset.status;
@@ -64,11 +64,20 @@ const [Modal, modalApi] = useVbenModal({
   <Modal class="w-[500px]">
     <Spin :spinning="loading">
       <div v-if="currentAsset" class="py-2 space-y-4">
-        <div class="flex items-center justify-between p-3 border rounded bg-muted/20 text-xs">
-          <div class="font-medium text-sm text-foreground truncate" :title="currentAsset.fileName">
+        <div
+          class="flex items-center justify-between p-3 border rounded bg-muted/20 text-xs"
+        >
+          <div
+            class="font-medium text-sm text-foreground truncate"
+            :title="currentAsset.fileName"
+          >
             {{ currentAsset.fileName }}
           </div>
-          <Tag color="blue">{{ currentAsset.extension || currentAsset.mimeType }}</Tag>
+          <Tag color="blue">
+{{
+            currentAsset.extension || currentAsset.mimeType
+          }}
+</Tag>
         </div>
 
         <Form layout="vertical">

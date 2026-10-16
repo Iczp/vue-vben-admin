@@ -14,22 +14,44 @@ export const categoryOptions = [
   { label: '色情低俗 (Sexual)', value: SensitiveWordCategories.Sexual },
   { label: '辱骂侮辱 (Abuse)', value: SensitiveWordCategories.Abuse },
   { label: '诈骗欺诈 (Fraud)', value: SensitiveWordCategories.Fraud },
-  { label: '垃圾广告 (Advertisement)', value: SensitiveWordCategories.Advertisement },
-  { label: '违规导流 (ContactInfo)', value: SensitiveWordCategories.ContactInfo },
+  {
+    label: '垃圾广告 (Advertisement)',
+    value: SensitiveWordCategories.Advertisement,
+  },
+  {
+    label: '违规导流 (ContactInfo)',
+    value: SensitiveWordCategories.ContactInfo,
+  },
   { label: '违法违禁 (Illegal)', value: SensitiveWordCategories.Illegal },
   { label: '自定义业务词 (Custom)', value: SensitiveWordCategories.Custom },
 ];
 
 export const riskLevelOptions = [
   { color: 'error', label: '高风险 (High)', value: SensitiveRiskLevel.High },
-  { color: 'warning', label: '中风险 (Medium)', value: SensitiveRiskLevel.Medium },
+  {
+    color: 'warning',
+    label: '中风险 (Medium)',
+    value: SensitiveRiskLevel.Medium,
+  },
   { color: 'processing', label: '低风险 (Low)', value: SensitiveRiskLevel.Low },
 ];
 
 export const actionOptions = [
-  { color: 'error', label: '拦截拒绝 (Reject)', value: SensitiveWordAction.Reject },
-  { color: 'warning', label: '人工审核 (Review)', value: SensitiveWordAction.Review },
-  { color: 'success', label: '放行通过 (Pass)', value: SensitiveWordAction.Pass },
+  {
+    color: 'error',
+    label: '拦截拒绝 (Reject)',
+    value: SensitiveWordAction.Reject,
+  },
+  {
+    color: 'warning',
+    label: '人工审核 (Review)',
+    value: SensitiveWordAction.Review,
+  },
+  {
+    color: 'success',
+    label: '放行通过 (Pass)',
+    value: SensitiveWordAction.Pass,
+  },
 ];
 
 export const sceneOptions = [
@@ -149,7 +171,10 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
-          { code: 'toggle', text: (row: SensitiveWordDto) => (row.isEnabled ? '禁用' : '启用') },
+          {
+            code: 'toggle',
+            text: (row: SensitiveWordDto) => (row.isEnabled ? '禁用' : '启用'),
+          },
           { code: 'edit', text: '编辑' },
           {
             code: 'delete',

@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-import type { BatchImportResultDto, SensitiveWordBatchImportInput } from '#/api/cms';
+import type {
+  BatchImportResultDto,
+  SensitiveWordBatchImportInput,
+} from '#/api/cms';
 
 import { reactive, ref } from 'vue';
 
@@ -25,7 +28,12 @@ import {
   SensitiveWordCategories,
 } from '#/api/cms';
 
-import { actionOptions, categoryOptions, riskLevelOptions, sceneOptions } from '../data';
+import {
+  actionOptions,
+  categoryOptions,
+  riskLevelOptions,
+  sceneOptions,
+} from '../data';
 
 const emit = defineEmits(['success']);
 
@@ -75,7 +83,9 @@ const [Modal, modalApi] = useVbenModal({
         overrideLocked: formState.overrideLocked,
       });
       importResult.value = res;
-      message.success(`导入完成：新增 ${res.createdCount} 条，更新 ${res.updatedCount} 条，跳过 ${res.skippedCount} 条`);
+      message.success(
+        `导入完成：新增 ${res.createdCount} 条，更新 ${res.updatedCount} 条，跳过 ${res.skippedCount} 条`,
+      );
       emit('success');
     } catch (error) {
       console.error('批量导入失败', error);
@@ -104,7 +114,9 @@ const [Modal, modalApi] = useVbenModal({
         />
 
         <div v-if="importResult" class="p-3 border rounded bg-muted/30">
-          <div class="font-medium text-sm mb-1 text-primary">最近一次导入汇总：</div>
+          <div class="font-medium text-sm mb-1 text-primary">
+            最近一次导入汇总：
+          </div>
           <div class="text-xs text-muted-foreground flex flex-wrap gap-4">
             <span>总计提交: {{ importResult.totalCount }}</span>
             <span class="text-emerald-600">成功新增: {{ importResult.createdCount }}</span>
@@ -160,9 +172,14 @@ const [Modal, modalApi] = useVbenModal({
           <FormItem label="遇到已存在同名词条时的策略">
             <RadioGroup v-model:value="formState.conflictStrategy">
               <Radio value="Skip">跳过不处理 (保留原记录)</Radio>
-              <Radio value="Overwrite">覆盖更新 (更新为当前分类与处置规则)</Radio>
+              <Radio value="Overwrite">
+覆盖更新 (更新为当前分类与处置规则)
+</Radio>
             </RadioGroup>
-            <div v-if="formState.conflictStrategy === 'Overwrite'" class="mt-2 pl-1">
+            <div
+              v-if="formState.conflictStrategy === 'Overwrite'"
+              class="mt-2 pl-1"
+            >
               <Checkbox v-model:checked="formState.overrideLocked">
                 强制覆盖已锁定的受保护词条 (Override Locked)
               </Checkbox>

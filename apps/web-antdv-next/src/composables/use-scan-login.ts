@@ -116,11 +116,11 @@ export function useScanLogin() {
             try {
               // 自动执行 OAuth scan-token 兑换与主流程登录
               await authStore.authLoginWithScanToken(payload.scanToken);
-            } catch (err: any) {
+            } catch (error: any) {
               status.value = 'error';
               errorMessage.value =
-                err?.response?.data?.error_description ||
-                err?.message ||
+                error?.response?.data?.error_description ||
+                error?.message ||
                 '登录兑换失败';
             }
           },
@@ -146,10 +146,10 @@ export function useScanLogin() {
       verificationCode.value = code;
       status.value = 'generated';
       startCountdown(res.expiredTime);
-    } catch (err: any) {
+    } catch (error: any) {
       clearCountdown();
       status.value = 'error';
-      errorMessage.value = err?.message || '生成二维码失败，请刷新重试';
+      errorMessage.value = error?.message || '生成二维码失败，请刷新重试';
     }
   }
 

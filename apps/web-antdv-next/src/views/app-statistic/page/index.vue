@@ -7,8 +7,7 @@ import type {
 
 import { onMounted, ref } from 'vue';
 
-import { Alert } from 'antdv-next';
-import { Button as AButton, Card as ACard } from 'antdv-next';
+import { Button as AButton, Card as ACard, Alert } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getPageAnalysisApi } from '#/api/app-statistic/page';

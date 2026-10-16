@@ -4,7 +4,15 @@ declare module 'qrcode' {
       dark?: string;
       light?: string;
     };
-    errorCorrectionLevel?: 'H' | 'L' | 'M' | 'Q' | 'high' | 'low' | 'medium' | 'quartile';
+    errorCorrectionLevel?:
+      | 'H'
+      | 'high'
+      | 'L'
+      | 'low'
+      | 'M'
+      | 'medium'
+      | 'Q'
+      | 'quartile';
     margin?: number;
     scale?: number;
     small?: boolean;
@@ -13,29 +21,29 @@ declare module 'qrcode' {
   }
 
   export function toDataURL(
-    text: string | Buffer,
+    text: Buffer | string,
     options?: QRCodeRenderersOptions,
   ): Promise<string>;
 
   export function toDataURL(
-    text: string | Buffer,
+    text: Buffer | string,
     callback: (error: Error | null | undefined, url: string) => void,
   ): void;
 
   export function toDataURL(
-    text: string | Buffer,
+    text: Buffer | string,
     options: QRCodeRenderersOptions,
     callback: (error: Error | null | undefined, url: string) => void,
   ): void;
 
   export function toString(
-    text: string | Buffer,
+    text: Buffer | string,
     options?: QRCodeRenderersOptions,
   ): Promise<string>;
 
   export function toCanvas(
     canvasElement: HTMLCanvasElement,
-    text: string | Buffer,
+    text: Buffer | string,
     options?: QRCodeRenderersOptions,
   ): Promise<void>;
 }

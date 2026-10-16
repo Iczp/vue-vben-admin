@@ -45,13 +45,7 @@ function onDelete(row: ScopeDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: ScopeDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: ScopeDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -118,9 +112,7 @@ function refreshGrid() {
             $t('page.openiddict.title', 'OpenIddict 认证服务')
           }}</span>
           <span class="text-muted-foreground/60">/</span>
-          <span class="font-bold text-base text-foreground"
-            >作用域管理 (Scopes)</span
-          >
+          <span class="font-bold text-base text-foreground">作用域管理 (Scopes)</span>
         </div>
       </template>
 
@@ -139,10 +131,7 @@ function refreshGrid() {
             />
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              type="primary"
-              @click="onCreate"
-            >
+            <Button type="primary" @click="onCreate">
               <Plus class="size-4 mr-1" />
               新建作用域
             </Button>

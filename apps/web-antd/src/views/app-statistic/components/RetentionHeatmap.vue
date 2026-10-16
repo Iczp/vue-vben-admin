@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { RetentionDto } from '#/api/app-statistic/types';
+
 import { computed } from 'vue';
 
 import {
@@ -7,8 +9,6 @@ import {
   Table as ATable,
   Tooltip as ATooltip,
 } from 'ant-design-vue';
-
-import type { RetentionDto } from '#/api/app-statistic/types';
 
 import StatisticEmpty from './StatisticEmpty.vue';
 
@@ -57,8 +57,8 @@ const tableData = computed<CohortRow[]>(() => {
     else if (item.retentionDay === 30) row.d30 = item;
   });
 
-  return Array.from(map.values()).sort(
-    (a, b) => b.cohortDate.localeCompare(a.cohortDate),
+  return [...map.values()].sort((a, b) =>
+    b.cohortDate.localeCompare(a.cohortDate),
   );
 });
 
@@ -151,11 +151,19 @@ const columns = [
         >
           <template #bodyCell="{ column, record }">
             <template
-              v-if="['d1', 'd3', 'd7', 'd14', 'd30'].includes(String(column.dataIndex))"
+              v-if="
+                ['d1', 'd3', 'd7', 'd14', 'd30'].includes(
+                  String(column.dataIndex),
+                )
+              "
             >
               <div
                 v-if="record[column.dataIndex as keyof CohortRow]"
-                :style="getCellStyle(record[column.dataIndex as keyof CohortRow] as RetentionDto)"
+                :style="
+                  getCellStyle(
+                    record[column.dataIndex as keyof CohortRow] as RetentionDto,
+                  )
+                "
                 class="py-1 px-2 rounded text-center transition-colors"
               >
                 <ATooltip
@@ -164,7 +172,9 @@ const columns = [
                   <span>
                     {{
                       (
-                        record[column.dataIndex as keyof CohortRow] as RetentionDto
+                        record[
+                          column.dataIndex as keyof CohortRow
+                        ] as RetentionDto
                       ).retentionRate?.toFixed(1)
                     }}%
                   </span>

@@ -54,7 +54,10 @@ export async function updateEmailSettingsApi(data: UpdateEmailSettingsDto) {
  * 发送测试邮件
  */
 export async function sendTestEmailApi(data: SendTestEmailInput) {
-  return requestClient.post('/setting-management/emailing/send-test-email', data);
+  return requestClient.post(
+    '/setting-management/emailing/send-test-email',
+    data,
+  );
 }
 
 /**

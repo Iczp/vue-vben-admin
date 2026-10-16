@@ -1,20 +1,26 @@
 import type { PagedAndSortedResultRequestDto } from '#/api/abp/types';
 
 export interface ApplicationDto {
+  accessTokenLifetime?: number;
+  allowedCorsOrigins?: string[];
   applicationType?: string;
+  authorizationCodeLifetime?: number;
   clientId?: string;
   clientType?: string;
   clientUri?: string;
   concurrencyStamp?: string;
   consentType?: string;
+  deviceCodeLifetime?: number;
   displayName?: string;
   displayNames?: Record<string, string>;
   grantTypes?: string[];
   id: string;
+  identityTokenLifetime?: number;
   logoUri?: string;
   permissions?: string[];
   postLogoutRedirectUris?: string[];
   redirectUris?: string[];
+  refreshTokenLifetime?: number;
   requirements?: string[];
   scopes?: string[];
   type?: string;
@@ -29,19 +35,25 @@ export interface ApplicationDetailDto extends ApplicationDto {
 }
 
 export interface ApplicationCreateInput {
+  accessTokenLifetime?: number;
+  allowedCorsOrigins?: string[];
   applicationType?: string;
+  authorizationCodeLifetime?: number;
   clientId: string;
   clientSecret?: string;
   clientType?: string;
   clientUri?: string;
   consentType?: string;
+  deviceCodeLifetime?: number;
   displayName?: string;
   grantTypes?: string[];
+  identityTokenLifetime?: number;
   jsonWebKeySet?: string;
   logoUri?: string;
   permissions?: string[];
   postLogoutRedirectUris?: string[];
   redirectUris?: string[];
+  refreshTokenLifetime?: number;
   requirements?: string[];
   scopes?: string[];
   settings?: string;
@@ -49,18 +61,24 @@ export interface ApplicationCreateInput {
 }
 
 export interface ApplicationUpdateInput {
+  accessTokenLifetime?: number;
+  allowedCorsOrigins?: string[];
   applicationType?: string;
+  authorizationCodeLifetime?: number;
   clientId: string;
   clientType?: string;
   clientUri?: string;
   consentType?: string;
+  deviceCodeLifetime?: number;
   displayName?: string;
   grantTypes?: string[];
+  identityTokenLifetime?: number;
   jsonWebKeySet?: string;
   logoUri?: string;
   permissions?: string[];
   postLogoutRedirectUris?: string[];
   redirectUris?: string[];
+  refreshTokenLifetime?: number;
   requirements?: string[];
   scopes?: string[];
   settings?: string;
@@ -82,6 +100,7 @@ export interface GetApplicationsInput extends PagedAndSortedResultRequestDto {
 }
 
 export interface ScopeDto {
+  claims?: string[];
   description?: string;
   descriptions?: Record<string, string>;
   displayName?: string;
@@ -92,6 +111,7 @@ export interface ScopeDto {
 }
 
 export interface ScopeCreateInput {
+  claims?: string[];
   description?: string;
   displayName?: string;
   name: string;
@@ -99,6 +119,7 @@ export interface ScopeCreateInput {
 }
 
 export interface ScopeUpdateInput {
+  claims?: string[];
   description?: string;
   displayName?: string;
   name: string;

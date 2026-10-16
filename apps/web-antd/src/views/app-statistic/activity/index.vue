@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  ActivityAnalysisDto,
+  AppStatisticQueryInput,
+} from '#/api/app-statistic/types';
+
 import { computed, onMounted, ref } from 'vue';
 
 import {
@@ -11,10 +16,6 @@ import {
 import dayjs from 'dayjs';
 
 import { getActivityAnalysisApi } from '#/api/app-statistic/activity';
-import type {
-  ActivityAnalysisDto,
-  AppStatisticQueryInput,
-} from '#/api/app-statistic/types';
 
 import {
   DimensionBarChart,
@@ -57,11 +58,11 @@ async function loadData() {
 
 const currentTrendMetrics = computed(() => {
   switch (activeTrendTab.value) {
-    case 'wau': {
-      return [{ key: 'wau', label: '周活跃用户 (WAU)', color: '#52c41a' }];
-    }
     case 'mau': {
       return [{ key: 'mau', label: '月活跃用户 (MAU)', color: '#722ed1' }];
+    }
+    case 'wau': {
+      return [{ key: 'wau', label: '周活跃用户 (WAU)', color: '#52c41a' }];
     }
     default: {
       return [{ key: 'dau', label: '日活跃用户 (DAU)', color: '#1677ff' }];
@@ -79,7 +80,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">活跃分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          活跃分析
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           深度分析应用用户黏性 (DAU/MAU)、使用频次与访问时长分布
         </p>
@@ -146,7 +149,11 @@ onMounted(() => {
       <template #title>
         <div class="flex flex-wrap items-center justify-between gap-2 py-1">
           <span class="font-medium text-sm">活跃趋势</span>
-          <ARadio.Group v-model:value="activeTrendTab" button-style="solid" size="small">
+          <ARadio.Group
+            v-model:value="activeTrendTab"
+            button-style="solid"
+            size="small"
+          >
             <ARadio.Button value="dau">DAU 趋势</ARadio.Button>
             <ARadio.Button value="wau">WAU 趋势</ARadio.Button>
             <ARadio.Button value="mau">MAU 趋势</ARadio.Button>

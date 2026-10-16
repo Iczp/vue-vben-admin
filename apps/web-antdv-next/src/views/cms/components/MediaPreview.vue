@@ -3,7 +3,7 @@ import type { AssetDto } from '#/api/cms';
 
 import { computed, ref, watch } from 'vue';
 
-import { Image, Modal } from 'antdv-next';
+import { Button, Image, Modal } from 'antdv-next';
 
 import { AssetType } from '#/api/cms';
 
@@ -13,12 +13,11 @@ import {
   mediaDimensions,
   mediaTypes,
 } from './media';
-import { Button } from 'antdv-next';
 
 const props = defineProps<{ asset?: AssetDto; open: boolean }>();
 const emit = defineEmits<{
-  'update:open': [value: boolean];
   'set-thumbnail': [asset: AssetDto];
+  'update:open': [value: boolean];
 }>();
 const loaded = ref<{ duration?: number; height?: number; width?: number }>({});
 watch(
@@ -118,18 +117,18 @@ function handleSetCover() {
           v-if="
             asset.type === AssetType.Image || asset.type === AssetType.Video
           "
-          >
-<dt>宽 × 高</dt>
+        >
+          <dt>宽 × 高</dt>
           <dd>{{ mediaDimensions(details) }}</dd>
-</template>
+        </template>
         <template
           v-if="
             asset.type === AssetType.Video || asset.type === AssetType.Audio
           "
-          >
-<dt>播放时长</dt>
+        >
+          <dt>播放时长</dt>
           <dd>{{ formatMediaDuration(details.duration) }}</dd>
-</template>
+        </template>
         <dt>上传时间</dt>
         <dd>
           {{
@@ -171,9 +170,9 @@ function handleSetCover() {
           <dd><Image :src="asset.thumbnailUrl" :width="120" /></dd>
         </template>
         <template v-if="asset.hash">
-<dt>文件哈希</dt>
+          <dt>文件哈希</dt>
           <dd>{{ asset.hash }}</dd>
-</template>
+        </template>
       </dl>
       <p
         v-if="asset.type === AssetType.Video || asset.type === AssetType.Audio"

@@ -45,6 +45,15 @@ export function useColumns(
       title: '目标资源 (Resources)',
     },
     {
+      field: 'claims',
+      formatter: ({ cellValue }) =>
+        Array.isArray(cellValue) && cellValue.length > 0
+          ? cellValue.join(', ')
+          : '-',
+      minWidth: 180,
+      title: '包含用户声明 (Claims)',
+    },
+    {
       cellRender: {
         attrs: {
           nameField: 'name',

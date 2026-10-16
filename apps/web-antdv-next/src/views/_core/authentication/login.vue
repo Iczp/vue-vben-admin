@@ -61,8 +61,7 @@ const formSchema = computed((): VbenFormSchema[] => {
             );
             if (findUser) {
               actions.setValues({
-                password:
-                  findUser.value === 'admin' ? '1q2w3E*' : '123456',
+                password: findUser.value === 'admin' ? '1q2w3E*' : '123456',
                 username: findUser.value,
               });
             }

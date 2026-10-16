@@ -1065,7 +1065,7 @@ export interface SensitiveWordBatchImportInput {
   defaultRiskLevel?: SensitiveRiskLevel;
   defaultAction?: SensitiveWordAction;
   defaultScene?: ModerationScene;
-  conflictStrategy?: 'Skip' | 'Overwrite';
+  conflictStrategy?: 'Overwrite' | 'Skip';
   overrideLocked?: boolean;
 }
 
@@ -1455,5 +1455,3 @@ export interface SensitiveWordRuntimeStateDto {
   nodeName?: string;
   processId?: number;
 }
-
-

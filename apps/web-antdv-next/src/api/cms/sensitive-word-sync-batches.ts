@@ -1,4 +1,3 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   SensitiveWordSyncBatchDetailDto,
   SensitiveWordSyncBatchDto,
@@ -7,6 +6,8 @@ import type {
   SensitiveWordSyncItemDto,
   SensitiveWordSyncItemGetListInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

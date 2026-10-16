@@ -8,9 +8,7 @@ import { RotateCw } from '@vben/icons';
 
 import { Button, Empty, message, Spin, Table, Tag, Tooltip } from 'antdv-next';
 
-import {
-  getSensitiveWordRuleActivationsApi,
-} from '#/api/cms';
+import { getSensitiveWordRuleActivationsApi } from '#/api/cms';
 
 import { activationActionOptions } from '../data';
 
@@ -93,8 +91,11 @@ const [Modal, modalApi] = useVbenModal({
 <template>
   <Modal class="w-[960px]">
     <div class="flex flex-col gap-3 py-2">
-      <div class="flex items-center justify-between text-sm text-muted-foreground">
-        <span>展示所有历史发布与回滚的线性递增序列（Activation Sequence），支持溯源审计。</span>
+      <div
+        class="flex items-center justify-between text-sm text-muted-foreground"
+      >
+        <span>展示所有历史发布与回滚的线性递增序列（Activation
+          Sequence），支持溯源审计。</span>
         <Button size="small" :loading="loading" @click="loadActivations">
           <template #icon><RotateCw class="size-3.5" /></template>
           刷新流水
@@ -105,7 +106,10 @@ const [Modal, modalApi] = useVbenModal({
         <Table
           :columns="columns"
           :data-source="activations"
-          :pagination="{ pageSize: 10, showTotal: (total) => `共 ${total} 次激活事件` }"
+          :pagination="{
+            pageSize: 10,
+            showTotal: (total) => `共 ${total} 次激活事件`,
+          }"
           row-key="id"
           size="small"
           bordered
@@ -117,30 +121,46 @@ const [Modal, modalApi] = useVbenModal({
 
             <template v-else-if="column.key === 'action'">
               <Tag
-                :color="activationActionOptions.find(o => o.value === record.action)?.color"
+                :color="
+                  activationActionOptions.find((o) => o.value === record.action)
+                    ?.color
+                "
               >
-                {{ activationActionOptions.find(o => o.value === record.action)?.label || record.action }}
+                {{
+                  activationActionOptions.find((o) => o.value === record.action)
+                    ?.label || record.action
+                }}
               </Tag>
             </template>
 
             <template v-else-if="column.key === 'toVersionId'">
-              <span class="font-mono text-xs">{{ record.toVersionId?.slice(0, 8) }}</span>
+              <span class="font-mono text-xs">{{
+                record.toVersionId?.slice(0, 8)
+              }}</span>
             </template>
 
             <template v-else-if="column.key === 'fromVersionId'">
-              <span class="font-mono text-xs">{{ record.fromVersionId ? record.fromVersionId.slice(0, 8) : '-' }}</span>
+              <span class="font-mono text-xs">{{
+                record.fromVersionId ? record.fromVersionId.slice(0, 8) : '-'
+              }}</span>
             </template>
 
             <template v-else-if="column.key === 'contentHash'">
               <Tooltip :title="record.contentHash">
                 <span class="font-mono text-xs cursor-pointer select-all">
-                  {{ record.contentHash ? `${record.contentHash.slice(0, 10)}...` : '-' }}
+                  {{
+                    record.contentHash
+                      ? `${record.contentHash.slice(0, 10)}...`
+                      : '-'
+                  }}
                 </span>
               </Tooltip>
             </template>
 
             <template v-else-if="column.key === 'activatedTime'">
-              <span class="text-xs text-muted-foreground">{{ record.activatedTime }}</span>
+              <span class="text-xs text-muted-foreground">{{
+                record.activatedTime
+              }}</span>
             </template>
 
             <template v-else-if="column.key === 'reason'">

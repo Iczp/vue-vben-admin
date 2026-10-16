@@ -26,6 +26,9 @@ import {
   extractVideoFrame,
 } from '#/api/cms/media-metadata';
 
+const emit = defineEmits<{
+  success: [asset?: AssetDto];
+}>();
 const UploadIcon = markRaw(createIconifyIcon('lucide:upload-cloud'));
 const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
 const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
@@ -45,13 +48,9 @@ interface QueueItem {
   videoDuration: number;
 }
 
-const emit = defineEmits<{
-  success: [asset?: AssetDto];
-}>();
-
 const queue = ref<QueueItem[]>([]);
 const isRunningQueue = ref(false);
-const activeVideoItemId = ref<string | null>(null);
+const activeVideoItemId = ref<null | string>(null);
 
 const currentFolderId = ref<string | undefined>(undefined);
 const currentScope = ref<AssetScope | undefined>(undefined);
@@ -184,8 +183,7 @@ function removeQueueItem(id: string) {
   if (isRunningQueue.value) return;
   queue.value = queue.value.filter((i) => i.id !== id);
   if (activeVideoItemId.value === id) {
-    activeVideoItemId.value =
-      queue.value.find((i) => i.isVideo)?.id || null;
+    activeVideoItemId.value = queue.value.find((i) => i.isVideo)?.id || null;
   }
 }
 
@@ -235,10 +233,10 @@ async function startQueueUpload() {
       item.result = res;
       lastUploaded = res;
       successCount++;
-    } catch (err: any) {
+    } catch (error: any) {
       item.status = 'error';
       item.errorMsg =
-        err?.response?.data?.error?.message || err?.message || '上传失败';
+        error?.response?.data?.error?.message || error?.message || '上传失败';
     }
   }
 
@@ -297,7 +295,8 @@ const [Modal, modalApi] = useVbenModal({
           点击或将多个文件拖拽至此区域加入上传队列
         </p>
         <p class="ant-upload-hint text-xs text-muted-foreground px-4">
-          支持多选批量添加视频 (MP4/WebM)、图片 (PNG/JPG/GIF/WebP)、音频与常用文档；视频文件自动提取封面帧，也可点击队列中的视频单独定制封面。
+          支持多选批量添加视频 (MP4/WebM)、图片
+          (PNG/JPG/GIF/WebP)、音频与常用文档；视频文件自动提取封面帧，也可点击队列中的视频单独定制封面。
         </p>
       </UploadDragger>
 
@@ -339,12 +338,20 @@ const [Modal, modalApi] = useVbenModal({
         <Progress
           v-if="isRunningQueue || stats.success > 0"
           :percent="stats.percent"
-          :status="stats.error > 0 ? 'exception' : stats.percent === 100 ? 'success' : 'active'"
+          :status="
+            stats.error > 0
+              ? 'exception'
+              : stats.percent === 100
+                ? 'success'
+                : 'active'
+          "
           size="small"
         />
 
         <!-- 队列滚动列表 -->
-        <div class="max-h-[240px] overflow-y-auto border rounded divide-y bg-muted/10">
+        <div
+          class="max-h-[240px] overflow-y-auto border rounded divide-y bg-muted/10"
+        >
           <div
             v-for="(item, idx) in queue"
             :key="item.id"
@@ -376,7 +383,9 @@ const [Modal, modalApi] = useVbenModal({
                 <div class="font-medium truncate" :title="item.file.name">
                   {{ item.file.name }}
                 </div>
-                <div class="text-muted-foreground flex items-center gap-2 mt-0.5">
+                <div
+                  class="text-muted-foreground flex items-center gap-2 mt-0.5"
+                >
                   <span>{{ (item.file.size / 1024 / 1024).toFixed(2) }} MB</span>
                   <span v-if="item.errorMsg" class="text-destructive truncate">
                     {{ item.errorMsg }}
@@ -401,19 +410,39 @@ const [Modal, modalApi] = useVbenModal({
                 🎞️ 定制封面
               </Button>
 
-              <Tag v-if="item.status === 'extracting'" color="orange" class="!m-0">
+              <Tag
+                v-if="item.status === 'extracting'"
+                color="orange"
+                class="!m-0"
+              >
                 提取帧中
               </Tag>
-              <Tag v-else-if="item.status === 'pending'" color="default" class="!m-0">
+              <Tag
+                v-else-if="item.status === 'pending'"
+                color="default"
+                class="!m-0"
+              >
                 排队中
               </Tag>
-              <Tag v-else-if="item.status === 'uploading'" color="processing" class="!m-0">
+              <Tag
+                v-else-if="item.status === 'uploading'"
+                color="processing"
+                class="!m-0"
+              >
                 上传中...
               </Tag>
-              <Tag v-else-if="item.status === 'success'" color="success" class="!m-0">
+              <Tag
+                v-else-if="item.status === 'success'"
+                color="success"
+                class="!m-0"
+              >
                 ✓ 已完成
               </Tag>
-              <Tag v-else-if="item.status === 'error'" color="error" class="!m-0">
+              <Tag
+                v-else-if="item.status === 'error'"
+                color="error"
+                class="!m-0"
+              >
                 失败
               </Tag>
 
@@ -438,7 +467,9 @@ const [Modal, modalApi] = useVbenModal({
           class="border rounded p-3 bg-background space-y-2.5 shadow-xs"
         >
           <div class="flex items-center justify-between border-b pb-2">
-            <span class="font-medium text-xs flex items-center gap-1.5 truncate">
+            <span
+              class="font-medium text-xs flex items-center gap-1.5 truncate"
+            >
               <span>🎬 视频封面定制：</span>
               <span class="text-primary truncate max-w-[260px]">
                 {{ activeVideoItem.file.name }}
@@ -552,8 +583,7 @@ const [Modal, modalApi] = useVbenModal({
             type="primary"
             :loading="isRunningQueue"
             :disabled="
-              queue.length === 0 ||
-              (stats.pending === 0 && stats.error === 0)
+              queue.length === 0 || (stats.pending === 0 && stats.error === 0)
             "
             @click="startQueueUpload"
           >

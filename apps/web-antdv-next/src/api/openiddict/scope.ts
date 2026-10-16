@@ -1,10 +1,11 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   GetScopesInput,
   ScopeCreateInput,
   ScopeDto,
   ScopeUpdateInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

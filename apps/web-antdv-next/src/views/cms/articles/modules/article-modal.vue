@@ -188,7 +188,9 @@ async function initData(id?: string) {
       tagNames.value = (detail.tags || []).map((t) => t.name);
       isVisible.value = detail.isVisible ?? true;
       isTop.value = detail.isTop ?? false;
-      topExpireTime.value = detail.topExpireTime ? dayjs(detail.topExpireTime) : null;
+      topExpireTime.value = detail.topExpireTime
+        ? dayjs(detail.topExpireTime)
+        : null;
       isRecommend.value = detail.isRecommend ?? false;
       allowComment.value = detail.allowComment ?? true;
       sorting.value = detail.sorting || 0;
@@ -205,7 +207,9 @@ async function initData(id?: string) {
 }
 
 // 正文从素材库插入图片
-const contentMediaSelectorRef = ref<InstanceType<typeof MediaSelector> | null>(null);
+const contentMediaSelectorRef = ref<InstanceType<typeof MediaSelector> | null>(
+  null,
+);
 let activeTiptapEditor: any = null;
 
 function openMediaLibraryForContent(editor?: any) {
@@ -216,7 +220,7 @@ function openMediaLibraryForContent(editor?: any) {
 }
 
 function onInsertImagesToContent(assets: AssetDto[]) {
-  if (!assets || !assets.length) return;
+  if (!assets || assets.length === 0) return;
   const urls = assets.map((asset) =>
     toRelativeAssetUrl(asset.url || asset.sourceUrl || asset.blobName),
   );
@@ -231,7 +235,10 @@ function onInsertImagesToContent(assets: AssetDto[]) {
   } else {
     const imgTags = urls
       .filter(Boolean)
-      .map((url) => `<p><img src="${url}" alt="image" style="max-width:100%;height:auto;" /></p>`)
+      .map(
+        (url) =>
+          `<p><img src="${url}" alt="image" style="max-width:100%;height:auto;" /></p>`,
+      )
       .join('');
     content.value = (content.value || '') + imgTags;
   }
@@ -253,9 +260,9 @@ const tiptapImageUploadOptions = {
         throw new Error('未返回有效的图片链接');
       }
       return url;
-    } catch (err) {
+    } catch (error) {
       message.error(`图片【${file.name}】上传失败`);
-      throw err;
+      throw error;
     }
   },
 };
@@ -370,111 +377,111 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
               在前台网站查看此文章 ↗
             </Button>
           </template>
-        <!-- Tab 1: 基本信息 -->
-        <Tabs.TabPane key="basic" tab="基本信息">
-          <Form layout="vertical" class="mt-2">
-            <FormItem label="文章标题" required>
-              <Input
-                v-model:value="title"
-                placeholder="请输入文章主标题"
-                :maxlength="256"
-                show-count
-              />
-            </FormItem>
+          <!-- Tab 1: 基本信息 -->
+          <Tabs.TabPane key="basic" tab="基本信息">
+            <Form layout="vertical" class="mt-2">
+              <FormItem label="文章标题" required>
+                <Input
+                  v-model:value="title"
+                  placeholder="请输入文章主标题"
+                  :maxlength="256"
+                  show-count
+                />
+              </FormItem>
 
-            <Row :gutter="16">
-              <Col :span="12">
-                <FormItem label="内容模型/形态" required>
-                  <Select
-                    v-model:value="contentType"
-                    placeholder="请选择内容模型与形态"
-                    :options="contentTypeSelectOptions"
-                  />
-                </FormItem>
-              </Col>
-              <Col :span="12">
-                <FormItem label="自定义 URL 别名 (Slug)">
-                  <Input
-                    v-model:value="slug"
-                    placeholder="可选，例如 my-first-post"
-                    :maxlength="128"
-                  />
-                </FormItem>
-              </Col>
-            </Row>
+              <Row :gutter="16">
+                <Col :span="12">
+                  <FormItem label="内容模型/形态" required>
+                    <Select
+                      v-model:value="contentType"
+                      placeholder="请选择内容模型与形态"
+                      :options="contentTypeSelectOptions"
+                    />
+                  </FormItem>
+                </Col>
+                <Col :span="12">
+                  <FormItem label="自定义 URL 别名 (Slug)">
+                    <Input
+                      v-model:value="slug"
+                      placeholder="可选，例如 my-first-post"
+                      :maxlength="128"
+                    />
+                  </FormItem>
+                </Col>
+              </Row>
 
-            <FormItem label="副标题">
-              <Input
-                v-model:value="subTitle"
-                placeholder="可选，请输入副标题"
-                :maxlength="256"
-              />
-            </FormItem>
+              <FormItem label="副标题">
+                <Input
+                  v-model:value="subTitle"
+                  placeholder="可选，请输入副标题"
+                  :maxlength="256"
+                />
+              </FormItem>
 
-            <FormItem label="封面图片">
-              <MediaSelector
-                :asset-types="[1]"
-                v-model:value="coverUrl"
-                placeholder="请输入图片 URL 或点击右侧选择图片"
-              />
-            </FormItem>
+              <FormItem label="封面图片">
+                <MediaSelector
+                  :asset-types="[1]"
+                  v-model:value="coverUrl"
+                  placeholder="请输入图片 URL 或点击右侧选择图片"
+                />
+              </FormItem>
 
-            <Row :gutter="16">
-              <Col :span="12">
-                <FormItem label="文章分类">
-                  <CategoryTreeSelect
-                    v-model:value="categoryIds"
-                    multiple
-                    tree-checkable
-                    :tree-check-strictly="true"
-                    placeholder="选择所属分类（支持多选）"
-                    allow-clear
-                  />
-                </FormItem>
-              </Col>
-              <Col :span="12">
-                <FormItem label="主分类">
-                  <CategoryTreeSelect
-                    v-model:value="mainCategoryId"
-                    placeholder="选择主分类"
-                    allow-clear
-                  />
-                </FormItem>
-              </Col>
-            </Row>
+              <Row :gutter="16">
+                <Col :span="12">
+                  <FormItem label="文章分类">
+                    <CategoryTreeSelect
+                      v-model:value="categoryIds"
+                      multiple
+                      tree-checkable
+                      :tree-check-strictly="true"
+                      placeholder="选择所属分类（支持多选）"
+                      allow-clear
+                    />
+                  </FormItem>
+                </Col>
+                <Col :span="12">
+                  <FormItem label="主分类">
+                    <CategoryTreeSelect
+                      v-model:value="mainCategoryId"
+                      placeholder="选择主分类"
+                      allow-clear
+                    />
+                  </FormItem>
+                </Col>
+              </Row>
 
-            <FormItem label="内容标签">
-              <Select
-                v-model:value="tagNames"
-                mode="tags"
-                placeholder="输入或选择标签，回车新增"
-                :options="tagOptions"
-              />
-            </FormItem>
+              <FormItem label="内容标签">
+                <Select
+                  v-model:value="tagNames"
+                  mode="tags"
+                  placeholder="输入或选择标签，回车新增"
+                  :options="tagOptions"
+                />
+              </FormItem>
 
-            <FormItem label="文章摘要">
-              <Input.TextArea
-                v-model:value="summary"
-                placeholder="请输入文章导读摘要（若不填写，前台将自动截取正文首段）"
-                :rows="3"
-                :maxlength="500"
-                show-count
-              />
-            </FormItem>
-          </Form>
-        </Tabs.TabPane>
+              <FormItem label="文章摘要">
+                <Input.TextArea
+                  v-model:value="summary"
+                  placeholder="请输入文章导读摘要（若不填写，前台将自动截取正文首段）"
+                  :rows="3"
+                  :maxlength="500"
+                  show-count
+                />
+              </FormItem>
+            </Form>
+          </Tabs.TabPane>
 
-        <!-- Tab 2: 文章正文 (使用 Tiptap HTML 富文本编辑器) -->
-        <Tabs.TabPane key="content" tab="正文编辑">
-          <Form layout="vertical" class="mt-2">
-            <FormItem
-              required
-              extra="使用内置 Tiptap 编辑器直接所见即所得排版，支持标题、列表、引用、表格与图片插入"
-            >
-              <template #label>
-                <div class="flex items-center justify-between w-full">
-                  <span class="font-medium">文章正文 (Tiptap HTML 富文本)</span>
-                  <!-- <Button
+          <!-- Tab 2: 文章正文 (使用 Tiptap HTML 富文本编辑器) -->
+          <Tabs.TabPane key="content" tab="正文编辑">
+            <Form layout="vertical" class="mt-2">
+              <FormItem
+                required
+                extra="使用内置 Tiptap 编辑器直接所见即所得排版，支持标题、列表、引用、表格与图片插入"
+              >
+                <template #label>
+                  <div class="flex items-center justify-between w-full">
+                    <span class="font-medium">文章正文 (Tiptap HTML 富文本)</span>
+                    <!-- <Button
                     type="primary"
                     ghost
                     size="small"
@@ -485,153 +492,172 @@ const [Modal, modalApi] = useVbenModal<string | undefined>({
                     </template>
                     从素材媒体库插入图片
                   </Button> -->
+                  </div>
+                </template>
+                <div class="border rounded-lg overflow-hidden">
+                  <VbenTiptap
+                    v-model="content"
+                    :min-height="350"
+                    :max-height="600"
+                    :image-upload="tiptapImageUploadOptions"
+                    placeholder="在此输入或粘贴文章正文内容..."
+                  />
                 </div>
-              </template>
-              <div class="border rounded-lg overflow-hidden">
-                <VbenTiptap
-                  v-model="content"
-                  :min-height="350"
-                  :max-height="600"
-                  :image-upload="tiptapImageUploadOptions"
-                  placeholder="在此输入或粘贴文章正文内容..."
+              </FormItem>
+
+              <!-- 正文插入图片所用的素材库选择器（仅作为弹窗触发） -->
+              <div class="hidden">
+                <MediaSelector
+                  ref="contentMediaSelectorRef"
+                  :asset-types="[AssetType.Image]"
+                  multiple
+                  @select="onInsertImagesToContent"
                 />
               </div>
-            </FormItem>
 
-            <!-- 正文插入图片所用的素材库选择器（仅作为弹窗触发） -->
-            <div class="hidden">
-              <MediaSelector
-                ref="contentMediaSelectorRef"
-                :asset-types="[AssetType.Image]"
-                multiple
-                @select="onInsertImagesToContent"
-              />
-            </div>
+              <FormItem
+                label="Markdown 源码备份 (可选)"
+                extra="如有 Markdown 源稿，可存入此字段方便二次编辑与导出"
+              >
+                <Input.TextArea
+                  v-model:value="markdownContent"
+                  placeholder="可选填入 Markdown 格式源码..."
+                  :rows="4"
+                  class="font-mono text-xs"
+                />
+              </FormItem>
+            </Form>
+          </Tabs.TabPane>
 
-            <FormItem
-              label="Markdown 源码备份 (可选)"
-              extra="如有 Markdown 源稿，可存入此字段方便二次编辑与导出"
-            >
-              <Input.TextArea
-                v-model:value="markdownContent"
-                placeholder="可选填入 Markdown 格式源码..."
-                :rows="4"
-                class="font-mono text-xs"
-              />
-            </FormItem>
-          </Form>
-        </Tabs.TabPane>
+          <!-- Tab 3: 来源与属性 -->
+          <Tabs.TabPane key="source" tab="来源与作者">
+            <Form layout="vertical" class="mt-2">
+              <Row :gutter="16">
+                <Col :span="8">
+                  <FormItem label="内容来源渠道">
+                    <Select
+                      v-model:value="sourceType"
+                      :options="sourceTypeOptions"
+                    />
+                  </FormItem>
+                </Col>
+                <Col :span="8">
+                  <FormItem label="原作者署名">
+                    <Input
+                      v-model:value="sourceAuthor"
+                      placeholder="例如：新华社 / 专栏作者"
+                    />
+                  </FormItem>
+                </Col>
+                <Col :span="8">
+                  <FormItem label="排序权重">
+                    <InputNumber
+                      v-model:value="sorting"
+                      class="w-full"
+                      placeholder="数字越大越靠前"
+                    />
+                  </FormItem>
+                </Col>
+              </Row>
 
-        <!-- Tab 3: 来源与属性 -->
-        <Tabs.TabPane key="source" tab="来源与作者">
-          <Form layout="vertical" class="mt-2">
-            <Row :gutter="16">
-              <Col :span="8">
-                <FormItem label="内容来源渠道">
-                  <Select
-                    v-model:value="sourceType"
-                    :options="sourceTypeOptions"
-                  />
-                </FormItem>
-              </Col>
-              <Col :span="8">
-                <FormItem label="原作者署名">
-                  <Input
-                    v-model:value="sourceAuthor"
-                    placeholder="例如：新华社 / 专栏作者"
-                  />
-                </FormItem>
-              </Col>
-              <Col :span="8">
-                <FormItem label="排序权重">
-                  <InputNumber
-                    v-model:value="sorting"
-                    class="w-full"
-                    placeholder="数字越大越靠前"
-                  />
-                </FormItem>
-              </Col>
-            </Row>
+              <FormItem label="原文链接 (SourceUrl)">
+                <Input
+                  v-model:value="sourceUrl"
+                  placeholder="如系转载，请输入原始出处链接"
+                />
+              </FormItem>
 
-            <FormItem label="原文链接 (SourceUrl)">
-              <Input
-                v-model:value="sourceUrl"
-                placeholder="如系转载，请输入原始出处链接"
-              />
-            </FormItem>
+              <Row :gutter="16">
+                <Col :span="12">
+                  <FormItem
+                    label="基础浏览量"
+                    help="前台/公开展示浏览量 = 基础流量 + 真实流量"
+                  >
+                    <InputNumber
+                      v-model:value="baseViewCount"
+                      :min="0"
+                      :precision="0"
+                      class="w-full"
+                      placeholder="请输入基础浏览量底数，默认 0"
+                    />
+                  </FormItem>
+                </Col>
+                <Col :span="12">
+                  <FormItem label="访问密码 (可选)">
+                    <Input.Password
+                      v-model:value="password"
+                      placeholder="留空表示公开无密码"
+                    />
+                  </FormItem>
+                </Col>
+              </Row>
+            </Form>
+          </Tabs.TabPane>
 
-            <Row :gutter="16">
-              <Col :span="12">
-                <FormItem label="基础浏览量" help="前台/公开展示浏览量 = 基础流量 + 真实流量">
-                  <InputNumber
-                    v-model:value="baseViewCount"
-                    :min="0"
-                    :precision="0"
-                    class="w-full"
-                    placeholder="请输入基础浏览量底数，默认 0"
-                  />
-                </FormItem>
-              </Col>
-              <Col :span="12">
-                <FormItem label="访问密码 (可选)">
-                  <Input.Password
-                    v-model:value="password"
-                    placeholder="留空表示公开无密码"
-                  />
-                </FormItem>
-              </Col>
-            </Row>
-          </Form>
-        </Tabs.TabPane>
-
-        <!-- Tab 4: 推荐与权限控制 -->
-        <Tabs.TabPane key="settings" tab="发布属性与控制">
-          <div class="grid grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg mt-2">
-            <div class="flex items-center justify-between p-3 bg-background rounded border">
-              <div>
-                <div class="font-medium">前台可见</div>
-                <div class="text-xs text-muted-foreground">控制文章是否在客户端列表中展示</div>
+          <!-- Tab 4: 推荐与权限控制 -->
+          <Tabs.TabPane key="settings" tab="发布属性与控制">
+            <div class="grid grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg mt-2">
+              <div
+                class="flex items-center justify-between p-3 bg-background rounded border"
+              >
+                <div>
+                  <div class="font-medium">前台可见</div>
+                  <div class="text-xs text-muted-foreground">
+                    控制文章是否在客户端列表中展示
+                  </div>
+                </div>
+                <Switch v-model:checked="isVisible" />
               </div>
-              <Switch v-model:checked="isVisible" />
-            </div>
 
-            <div class="flex items-center justify-between p-3 bg-background rounded border">
-              <div>
-                <div class="font-medium">允许评论</div>
-                <div class="text-xs text-muted-foreground">是否开启读者在文章下方的评论互动</div>
+              <div
+                class="flex items-center justify-between p-3 bg-background rounded border"
+              >
+                <div>
+                  <div class="font-medium">允许评论</div>
+                  <div class="text-xs text-muted-foreground">
+                    是否开启读者在文章下方的评论互动
+                  </div>
+                </div>
+                <Switch v-model:checked="allowComment" />
               </div>
-              <Switch v-model:checked="allowComment" />
-            </div>
 
-            <div class="flex items-center justify-between p-3 bg-background rounded border">
-              <div>
-                <div class="font-medium">首页置顶</div>
-                <div class="text-xs text-muted-foreground">文章将被固定在栏目列表首部</div>
+              <div
+                class="flex items-center justify-between p-3 bg-background rounded border"
+              >
+                <div>
+                  <div class="font-medium">首页置顶</div>
+                  <div class="text-xs text-muted-foreground">
+                    文章将被固定在栏目列表首部
+                  </div>
+                </div>
+                <Switch v-model:checked="isTop" />
               </div>
-              <Switch v-model:checked="isTop" />
-            </div>
 
-            <div class="flex items-center justify-between p-3 bg-background rounded border">
-              <div>
-                <div class="font-medium">编辑推荐</div>
-                <div class="text-xs text-muted-foreground">标记为精选文章，在推荐场景加权展示</div>
+              <div
+                class="flex items-center justify-between p-3 bg-background rounded border"
+              >
+                <div>
+                  <div class="font-medium">编辑推荐</div>
+                  <div class="text-xs text-muted-foreground">
+                    标记为精选文章，在推荐场景加权展示
+                  </div>
+                </div>
+                <Switch v-model:checked="isRecommend" />
               </div>
-              <Switch v-model:checked="isRecommend" />
             </div>
-          </div>
 
-          <div v-if="isTop" class="mt-4">
-            <FormItem label="置顶过期时间 (到期后自动取消置顶)">
-              <DatePicker
-                v-model:value="topExpireTime"
-                show-time
-                class="w-full"
-                placeholder="可选，留空为永久置顶"
-              />
-            </FormItem>
-          </div>
-        </Tabs.TabPane>
-      </Tabs>
+            <div v-if="isTop" class="mt-4">
+              <FormItem label="置顶过期时间 (到期后自动取消置顶)">
+                <DatePicker
+                  v-model:value="topExpireTime"
+                  show-time
+                  class="w-full"
+                  placeholder="可选，留空为永久置顶"
+                />
+              </FormItem>
+            </div>
+          </Tabs.TabPane>
+        </Tabs>
       </div>
     </Spin>
   </Modal>

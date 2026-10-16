@@ -1,10 +1,11 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   ContentSourceCreateDto,
   ContentSourceDto,
   ContentSourceGetListInput,
   ContentSourceUpdateDto,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

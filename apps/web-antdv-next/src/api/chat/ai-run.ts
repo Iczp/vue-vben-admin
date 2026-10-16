@@ -152,13 +152,9 @@ export async function retryAiRunApi(id: string) {
  * 取消任务 (POST /api/chat/ai-run/{id}/cancel)
  */
 export async function cancelAiRunApi(id: string, reason?: string) {
-  return requestClient.post<AiRunDetailDto>(
-    `/chat/ai-run/${id}/cancel`,
-    null,
-    {
-      params: { reason },
-    },
-  );
+  return requestClient.post<AiRunDetailDto>(`/chat/ai-run/${id}/cancel`, null, {
+    params: { reason },
+  });
 }
 
 /**

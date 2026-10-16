@@ -40,57 +40,66 @@ defineProps<{ items: ArticleMessageItem[] }>();
   width: 100%;
   max-width: 340px;
   overflow: hidden;
+  background: var(--background, white);
   border: 1px solid #ddd;
   border-radius: 12px;
-  background: var(--background, white);
 }
+
 .article-row {
   display: flex;
   flex-direction: row-reverse;
   gap: 12px;
   padding: 12px;
-  border-top: 1px solid #ddd;
   color: inherit;
   text-decoration: none;
+  border-top: 1px solid #ddd;
 }
+
 .article-row img,
 .cover-placeholder {
+  flex-shrink: 0;
   width: 56px;
   height: 56px;
-  flex-shrink: 0;
   object-fit: cover;
 }
+
 .cover-placeholder {
   display: grid;
   place-items: center;
-  background: #eee;
   color: #888;
+  background: #eee;
 }
+
 .headline {
   flex-direction: column;
   gap: 0;
   padding: 0;
   border-top: 0;
 }
+
 .headline img,
 .headline .cover-placeholder {
   width: 100%;
   height: 156px;
 }
+
 .headline .article-text {
   padding: 12px;
 }
+
 .article-text {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
+
 .article-text strong {
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+
 .article-text p {
   margin: 8px 0;
   color: #777;

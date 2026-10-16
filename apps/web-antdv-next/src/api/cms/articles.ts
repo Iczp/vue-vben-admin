@@ -1,4 +1,3 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   AdminArticleBatchCategoriesInput,
   AdminArticleBatchIdsInput,
@@ -6,14 +5,16 @@ import type {
   AdminArticleBatchTagsInput,
   AdminArticleCreateInput,
   AdminArticleDetailDto,
-  AdminArticleListItemDto,
   AdminArticleListInput,
+  AdminArticleListItemDto,
   AdminArticleRejectInput,
   AdminArticleRevisionCreateInput,
   AdminArticleScheduleInput,
   AdminArticleUpdateInput,
   ArticleRevisionDto,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 
@@ -44,8 +45,14 @@ export async function createArticleApi(data: AdminArticleCreateInput) {
 /**
  * 更新文章
  */
-export async function updateArticleApi(id: string, data: AdminArticleUpdateInput) {
-  return requestClient.put<AdminArticleDetailDto>(`/cms/admin/articles/${id}`, data);
+export async function updateArticleApi(
+  id: string,
+  data: AdminArticleUpdateInput,
+) {
+  return requestClient.put<AdminArticleDetailDto>(
+    `/cms/admin/articles/${id}`,
+    data,
+  );
 }
 
 /**
@@ -76,7 +83,10 @@ export async function getArticleRevisionApi(id: string, revisionId: string) {
 /**
  * 回滚恢复至指定版本
  */
-export async function rollbackArticleRevisionApi(id: string, revisionId: string) {
+export async function rollbackArticleRevisionApi(
+  id: string,
+  revisionId: string,
+) {
   return requestClient.post<ArticleRevisionDto>(
     `/cms/admin/articles/${id}/revisions/${revisionId}/rollback`,
   );
@@ -164,7 +174,9 @@ export async function archiveArticleApi(id: string) {
 /**
  * 批量设置分类
  */
-export async function batchSetArticleCategoriesApi(data: AdminArticleBatchCategoriesInput) {
+export async function batchSetArticleCategoriesApi(
+  data: AdminArticleBatchCategoriesInput,
+) {
   return requestClient.post<void>('/cms/admin/articles/batch/categories', data);
 }
 
@@ -178,7 +190,9 @@ export async function batchSetArticleTagsApi(data: AdminArticleBatchTagsInput) {
 /**
  * 批量设置状态
  */
-export async function batchSetArticleStatusApi(data: AdminArticleBatchStatusInput) {
+export async function batchSetArticleStatusApi(
+  data: AdminArticleBatchStatusInput,
+) {
   return requestClient.post<void>('/cms/admin/articles/batch/status', data);
 }
 
@@ -231,4 +245,3 @@ export function getArticleWebUrl(article: {
   const key = article.code || article.slug || article.id || '';
   return key ? `${baseUrl}/articles/${key}` : `${baseUrl}/articles`;
 }
-

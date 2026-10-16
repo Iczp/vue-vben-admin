@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import type { CreateSensitiveWordInput, SensitiveWordDto, UpdateSensitiveWordInput } from '#/api/cms';
+import type {
+  CreateSensitiveWordInput,
+  SensitiveWordDto,
+  UpdateSensitiveWordInput,
+} from '#/api/cms';
 
 import { computed, ref } from 'vue';
 
@@ -25,7 +29,12 @@ import {
   updateSensitiveWordApi,
 } from '#/api/cms';
 
-import { actionOptions, categoryOptions, riskLevelOptions, sceneOptions } from '../data';
+import {
+  actionOptions,
+  categoryOptions,
+  riskLevelOptions,
+  sceneOptions,
+} from '../data';
 
 const emit = defineEmits(['success']);
 
@@ -179,10 +188,14 @@ const [Modal, modalApi] = useVbenModal<SensitiveWordDto | undefined>({
           </FormItem>
         </div>
 
-        <div class="flex items-center justify-between p-3 border rounded bg-muted/20 mb-4">
+        <div
+          class="flex items-center justify-between p-3 border rounded bg-muted/20 mb-4"
+        >
           <div>
             <div class="font-medium text-sm">正则表达式匹配</div>
-            <div class="text-xs text-muted-foreground">若开启，将按正则 Pattern 进行文本匹配评估</div>
+            <div class="text-xs text-muted-foreground">
+              若开启，将按正则 Pattern 进行文本匹配评估
+            </div>
           </div>
           <Switch v-model:checked="isRegex" />
         </div>

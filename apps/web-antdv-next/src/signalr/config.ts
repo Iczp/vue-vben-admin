@@ -4,13 +4,13 @@
 
 function parseReconnectDelays(delaysStr?: string): number[] {
   if (!delaysStr) {
-    return [0, 2000, 10000, 30000];
+    return [0, 2000, 10_000, 30_000];
   }
   const parsed = delaysStr
     .split(',')
     .map((item) => Number(item.trim()))
     .filter((n) => !Number.isNaN(n));
-  return parsed.length > 0 ? parsed : [0, 2000, 10000, 30000];
+  return parsed.length > 0 ? parsed : [0, 2000, 10_000, 30_000];
 }
 
 /** SignalR 通用基础配置 */

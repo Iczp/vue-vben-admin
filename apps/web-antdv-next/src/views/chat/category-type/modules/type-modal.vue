@@ -115,25 +115,39 @@ defineExpose({ modalApi });
         <div class="mb-1 font-medium text-sm">
           类型名称 <span class="text-red-500">*</span>
         </div>
-        <Input v-model:value="name" placeholder="如：个人号、群聊群组、在线客服" />
+        <Input
+          v-model:value="name"
+          placeholder="如：个人号、群聊群组、在线客服"
+        />
       </div>
 
       <div class="flex items-center justify-between py-1">
         <div>
           <div class="font-medium text-sm">允许树级子对象 (isHasChild)</div>
-          <div class="text-xs text-muted-foreground">是否允许该类型建立下级子实体</div>
+          <div class="text-xs text-muted-foreground">
+            是否允许该类型建立下级子实体
+          </div>
         </div>
         <Switch v-model:checked="isHasChild" />
       </div>
 
       <div v-if="isHasChild">
         <div class="mb-1 font-medium text-sm">最大层级深度 (MaxDepth)</div>
-        <InputNumber v-model:value="maxDepth" class="w-full" :min="0" :max="100" />
+        <InputNumber
+          v-model:value="maxDepth"
+          class="w-full"
+          :min="0"
+          :max="100"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">类型说明</div>
-        <Input.TextArea v-model:value="description" :rows="3" placeholder="可选填该类型的说明" />
+        <Input.TextArea
+          v-model:value="description"
+          :rows="3"
+          placeholder="可选填该类型的说明"
+        />
       </div>
     </div>
   </Modal>

@@ -16,6 +16,7 @@ import { $t } from '#/locales';
 import { useColumns } from './data';
 import ApplicationModal from './modules/application-modal.vue';
 import SecretModal from './modules/secret-modal.vue';
+import PermissionModal from '#/views/permission/permission-modal.vue';
 
 const keyword = ref('');
 const clientTypeFilter = ref<string | undefined>(undefined);
@@ -28,6 +29,11 @@ const [AppFormModal, appFormModalApi] = useVbenModal({
 
 const [SecretFormModal, secretFormModalApi] = useVbenModal({
   connectedComponent: SecretModal,
+  destroyOnClose: true,
+});
+
+const [PermissionFormModal, permissionFormModalApi] = useVbenModal({
+  connectedComponent: PermissionModal,
   destroyOnClose: true,
 });
 
@@ -59,13 +65,7 @@ function onDelete(row: ApplicationDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: ApplicationDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: ApplicationDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -73,6 +73,16 @@ function onActionClick({
     }
     case 'edit': {
       onEdit(row);
+      break;
+    }
+    case 'permissions': {
+      permissionFormModalApi
+        .setData({
+          displayName: row.displayName || row.clientId || '',
+          providerKey: row.clientId || '',
+          providerName: 'C',
+        })
+        .open();
       break;
     }
     case 'set-secret': {
@@ -137,6 +147,7 @@ function refreshGrid() {
   <Page auto-content-height>
     <AppFormModal @success="refreshGrid" />
     <SecretFormModal @success="refreshGrid" />
+    <PermissionFormModal />
     <Grid>
       <!-- 第一行左侧：面包屑与标题 -->
       <template #table-title>
@@ -189,10 +200,7 @@ function refreshGrid() {
             />
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              type="primary"
-              @click="onCreate"
-            >
+            <Button type="primary" @click="onCreate">
               <Plus class="size-4 mr-1" />
               {{ $t('common.create', '新建应用') }}
             </Button>

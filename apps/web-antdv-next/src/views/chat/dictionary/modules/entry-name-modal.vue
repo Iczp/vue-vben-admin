@@ -136,18 +136,29 @@ defineExpose({ modalApi });
 <template>
   <Modal :title="modalTitle" class="w-[520px]">
     <div class="space-y-3 p-4">
-      <div v-if="parentItem" class="rounded bg-muted/50 p-2 text-xs text-muted-foreground">
+      <div
+        v-if="parentItem"
+        class="rounded bg-muted/50 p-2 text-xs text-muted-foreground"
+      >
         上级键：<strong>{{ parentItem.name }}</strong>
       </div>
 
       <div>
-        <div class="mb-1 font-medium text-sm">字典键名称 <span class="text-red-500">*</span></div>
-        <Input v-model:value="name" placeholder="如：行业分类、客户等级、群标签" />
+        <div class="mb-1 font-medium text-sm">
+          字典键名称 <span class="text-red-500">*</span>
+        </div>
+        <Input
+          v-model:value="name"
+          placeholder="如：行业分类、客户等级、群标签"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">编码 (Code)</div>
-        <Input v-model:value="code" placeholder="如：IndustryType, CustomerLevel" />
+        <Input
+          v-model:value="code"
+          placeholder="如：IndustryType, CustomerLevel"
+        />
       </div>
 
       <div class="grid grid-cols-2 gap-3">
@@ -161,33 +172,50 @@ defineExpose({ modalApi });
               { label: '单行文本 (Text)', value: EntryInputTypeEnums.Text },
               { label: '数值 (Number)', value: EntryInputTypeEnums.Number },
               { label: '日期 (Date)', value: EntryInputTypeEnums.Date },
-              { label: '日期时间 (DateTime)', value: EntryInputTypeEnums.DateTime },
+              {
+                label: '日期时间 (DateTime)',
+                value: EntryInputTypeEnums.DateTime,
+              },
               { label: '布尔值 (Boolean)', value: EntryInputTypeEnums.Boolean },
             ]"
           />
         </div>
         <div>
           <div class="mb-1 font-medium text-sm">排序号</div>
-          <InputNumber v-model:value="sorting" class="w-full" :min="0" :max="9999" />
+          <InputNumber
+            v-model:value="sorting"
+            class="w-full"
+            :min="0"
+            :max="9999"
+          />
         </div>
       </div>
 
       <div class="flex items-center justify-between py-1">
         <div>
           <div class="font-medium text-sm">是否为选项字典 (isChoice)</div>
-          <div class="text-xs text-muted-foreground">为 true 时可在右侧配置下拉可选项 (EntryValue)</div>
+          <div class="text-xs text-muted-foreground">
+            为 true 时可在右侧配置下拉可选项 (EntryValue)
+          </div>
         </div>
         <Switch v-model:checked="isChoice" />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">字段帮助提示 (Help)</div>
-        <Input v-model:value="help" placeholder="表单输入框下方的辅助提示信息" />
+        <Input
+          v-model:value="help"
+          placeholder="表单输入框下方的辅助提示信息"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">描述说明</div>
-        <Input.TextArea v-model:value="description" :rows="2" placeholder="可选填字典说明" />
+        <Input.TextArea
+          v-model:value="description"
+          :rows="2"
+          placeholder="可选填字典说明"
+        />
       </div>
     </div>
   </Modal>

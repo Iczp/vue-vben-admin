@@ -46,7 +46,11 @@ const [Modal, modalApi] = useVbenModal({
       message.success('模拟扫描已触发并执行完毕');
       emit('success');
     } catch (error: any) {
-      resultJson.value = JSON.stringify(error?.response?.data || error?.message || error, null, 2);
+      resultJson.value = JSON.stringify(
+        error?.response?.data || error?.message || error,
+        null,
+        2,
+      );
     } finally {
       modalApi.lock(false);
     }
@@ -94,7 +98,9 @@ defineExpose({ modalApi });
 
       <div v-if="resultJson">
         <div class="mb-1 text-sm font-medium text-primary">执行响应结果：</div>
-        <pre class="p-3 bg-muted/40 rounded text-xs font-mono max-h-48 overflow-y-auto border">{{ resultJson }}</pre>
+        <pre
+          class="p-3 bg-muted/40 rounded text-xs font-mono max-h-48 overflow-y-auto border"
+          >{{ resultJson }}</pre>
       </div>
     </div>
   </Modal>

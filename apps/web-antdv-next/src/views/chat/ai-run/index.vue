@@ -6,14 +6,7 @@ import { ref } from 'vue';
 
 import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import {
-  Button,
-  Input,
-  message,
-  Modal,
-  Select,
-  Tabs,
-} from 'antdv-next';
+import { Button, Input, message, Modal, Select, Tabs } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -55,7 +48,7 @@ const [CancelModalComp, cancelModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
-function onTabChange(key: string | number) {
+function onTabChange(key: number | string) {
   const strKey = String(key);
   if (strKey === 'all') {
     filterStatus.value = undefined;
@@ -65,40 +58,10 @@ function onTabChange(key: string | number) {
   gridApi.query();
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: AiRunDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: AiRunDto }) {
   switch (code) {
-    case 'detail': {
-      detailDrawerApi.setData({ id: row.id }).open();
-      break;
-    }
-    case 'edit': {
-      formModalApi.setData({ record: row }).open();
-      break;
-    }
     case 'cancel': {
       cancelModalApi.setData({ id: row.id }).open();
-      break;
-    }
-    case 'retry': {
-      Modal.confirm({
-        content: `确定重试 AI 任务 [${row.id}] 吗？`,
-        onOk: async () => {
-          try {
-            await retryAiRunApi(row.id);
-            message.success('已触发人工重试');
-            gridApi.query();
-          } catch (error) {
-            console.error('Failed to retry ai run', error);
-          }
-        },
-        title: '人工重试确认',
-      });
       break;
     }
     case 'delete': {
@@ -115,6 +78,30 @@ function onActionClick({
           }
         },
         title: '删除任务确认',
+      });
+      break;
+    }
+    case 'detail': {
+      detailDrawerApi.setData({ id: row.id }).open();
+      break;
+    }
+    case 'edit': {
+      formModalApi.setData({ record: row }).open();
+      break;
+    }
+    case 'retry': {
+      Modal.confirm({
+        content: `确定重试 AI 任务 [${row.id}] 吗？`,
+        onOk: async () => {
+          try {
+            await retryAiRunApi(row.id);
+            message.success('已触发人工重试');
+            gridApi.query();
+          } catch (error) {
+            console.error('Failed to retry ai run', error);
+          }
+        },
+        title: '人工重试确认',
       });
       break;
     }
@@ -206,16 +193,15 @@ async function onBatchDelete() {
 
     <div class="h-full flex flex-col bg-background rounded-lg p-2">
       <!-- 状态快捷筛选 Tab -->
-      <Tabs
-        v-model:active-key="activeTab"
-        class="px-2"
-        @change="onTabChange"
-      >
+      <Tabs v-model:active-key="activeTab" class="px-2" @change="onTabChange">
         <Tabs.TabPane key="all" tab="全部任务" />
         <Tabs.TabPane :key="String(AiRunStatus.Queued)" tab="排队中" />
         <Tabs.TabPane :key="String(AiRunStatus.Running)" tab="执行中" />
         <Tabs.TabPane :key="String(AiRunStatus.Completed)" tab="已完成" />
-        <Tabs.TabPane :key="String(AiRunStatus.RetryScheduled)" tab="等待重试" />
+        <Tabs.TabPane
+          :key="String(AiRunStatus.RetryScheduled)"
+          tab="等待重试"
+        />
         <Tabs.TabPane :key="String(AiRunStatus.Failed)" tab="执行失败" />
         <Tabs.TabPane :key="String(AiRunStatus.TimedOut)" tab="执行超时" />
         <Tabs.TabPane :key="String(AiRunStatus.Cancelled)" tab="已取消" />
@@ -231,7 +217,9 @@ async function onBatchDelete() {
         </template>
 
         <template #top>
-          <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
+          <div
+            class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1"
+          >
             <div class="flex items-center gap-2 flex-wrap">
               <Input.Search
                 v-model:value="filterKeyword"
@@ -277,12 +265,8 @@ async function onBatchDelete() {
               </Button>
             </div>
             <div class="flex items-center gap-2">
-              <Button @click="() => formModalApi.open()">
-                新建任务
-              </Button>
-              <Button danger @click="onBatchDelete">
-                批量删除
-              </Button>
+              <Button @click="() => formModalApi.open()"> 新建任务 </Button>
+              <Button danger @click="onBatchDelete"> 批量删除 </Button>
             </div>
           </div>
         </template>
@@ -290,4 +274,3 @@ async function onBatchDelete() {
     </div>
   </Page>
 </template>
-

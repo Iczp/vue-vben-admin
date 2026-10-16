@@ -1,6 +1,6 @@
 export * from './articles';
-export * from './assets';
 export * from './asset-folders';
+export * from './assets';
 export * from './categories';
 export * from './comments';
 export * from './daily-stats';
@@ -9,14 +9,13 @@ export * from './moderations';
 export * from './promotions';
 export * from './recommendations';
 export * from './redirects';
-export * from './sensitive-word-whitelists';
-export * from './sensitive-words';
-export * from './sensitive-word-sources';
 export * from './sensitive-word-mapping-profiles';
-export * from './sensitive-word-sync-batches';
 export * from './sensitive-word-rule-versions';
 export * from './sensitive-word-runtime';
+export * from './sensitive-word-sources';
+export * from './sensitive-word-sync-batches';
+export * from './sensitive-word-whitelists';
+export * from './sensitive-words';
 export * from './sources';
 export * from './tags';
 export * from './types';
-

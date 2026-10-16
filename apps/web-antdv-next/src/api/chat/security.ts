@@ -56,8 +56,7 @@ export interface UrlSecurityRuleDto {
 /**
  * 安全规则列表查询参数
  */
-export interface UrlSecurityRuleGetListInput
-  extends PagedAndSortedResultRequestDto {
+export interface UrlSecurityRuleGetListInput extends PagedAndSortedResultRequestDto {
   category?: UrlRiskCategory;
   isEnabled?: boolean;
   keyword?: string;
@@ -128,8 +127,7 @@ export interface SecurityReportDto {
 /**
  * 举报列表查询参数
  */
-export interface SecurityReportGetListInput
-  extends PagedAndSortedResultRequestDto {
+export interface SecurityReportGetListInput extends PagedAndSortedResultRequestDto {
   keyword?: string;
   status?: SecurityReportStatus;
   targetType?: string;
@@ -221,7 +219,9 @@ export async function checkUrlSecurityApi(data: UrlCheckInput) {
 /**
  * 分页查询用户举报记录 (GET /api/chat/security/reports)
  */
-export async function getSecurityReportsApi(params: SecurityReportGetListInput) {
+export async function getSecurityReportsApi(
+  params: SecurityReportGetListInput,
+) {
   return requestClient.get<PagedResultDto<SecurityReportDto>>(
     '/chat/security/reports',
     { params },

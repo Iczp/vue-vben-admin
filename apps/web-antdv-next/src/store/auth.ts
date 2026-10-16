@@ -40,8 +40,8 @@ export const useAuthStore = defineStore('auth', () => {
     // 加载 ABP 全局应用配置与权限
     try {
       await abpStore.fetchApplicationConfiguration();
-    } catch (e) {
-      console.warn('Fetch ABP application configuration error:', e);
+    } catch (error) {
+      console.warn('Fetch ABP application configuration error:', error);
     }
 
     // 获取用户信息
@@ -54,9 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
         desc: '',
         homePath: preferences.app.defaultHomePath || '/dashboard',
         realName:
-          abpStore.currentUser?.name ||
-          abpStore.currentUser?.userName ||
-          '',
+          abpStore.currentUser?.name || abpStore.currentUser?.userName || '',
         roles: abpStore.currentUser?.roles || [],
         token: accessToken,
         userId: abpStore.currentUser?.id || '',
@@ -174,9 +172,7 @@ export const useAuthStore = defineStore('auth', () => {
         desc: '',
         homePath: preferences.app.defaultHomePath || '/dashboard',
         realName:
-          abpStore.currentUser?.name ||
-          abpStore.currentUser?.userName ||
-          '',
+          abpStore.currentUser?.name || abpStore.currentUser?.userName || '',
         roles: abpStore.currentUser?.roles || [],
         token: accessStore.accessToken || '',
         userId: abpStore.currentUser?.id || '',

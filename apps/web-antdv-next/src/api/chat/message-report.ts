@@ -109,7 +109,9 @@ export async function getMessageReportListApi(params: GetMessageReportInput) {
 /**
  * 分页获取消息统计汇总 (GET /api/chat/message-report/summary)
  */
-export async function getMessageReportSummaryApi(params: GetMessageSummaryInput) {
+export async function getMessageReportSummaryApi(
+  params: GetMessageSummaryInput,
+) {
   return requestClient.get<PagedResultDto<MessageSummaryDto>>(
     '/chat/message-report/summary',
     { params },
@@ -120,7 +122,9 @@ export async function getMessageReportSummaryApi(params: GetMessageSummaryInput)
  * 获取消息报表选项配置 (GET /api/chat/message-report/options)
  */
 export async function getMessageReportOptionsApi() {
-  return requestClient.get<MessageReportOptions>('/chat/message-report/options');
+  return requestClient.get<MessageReportOptions>(
+    '/chat/message-report/options',
+  );
 }
 
 /**

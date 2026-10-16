@@ -2,8 +2,6 @@
 
 ## 项目说明
 
-
-
 本项目后台管理系统采用：
 
 - 后端：ASP.NET Core + ABP Framework
@@ -22,11 +20,9 @@ ABP 后端位于：
 
 F:\Dev\abpvnext\Rctea.IM
 
-
-
 abpvnext 后端已经做好，使用vben admin 5 做后台管理，UI使用antdv next，
 
-## 
+##
 
 ---
 
@@ -42,8 +38,8 @@ abpvnext 后端已经做好，使用vben admin 5 做后台管理，UI使用antdv
 8. TypeScript 禁止无必要地使用 any。
 9. 不允许在页面组件中直接调用 axios。
 10. 所有 HTTP 请求必须通过统一 API 层。
-10. 只能修改端项目：F:\Dev\abpvnext\abp-admin-vben\vue-vben-admin
-10. 不得修改后端项目
+11. 只能修改端项目：F:\Dev\abpvnext\abp-admin-vben\vue-vben-admin
+12. 不得修改后端项目
 
 ---
 
@@ -62,8 +58,8 @@ AUTH_SCOPE="IM offline_access roles profile phone email address"
 
 AUTH_USER_INFO_PATH=/connect/userinfo
 #"password"
-# AUTH_LOGIN_GRANT_TYPE="erp-token" 
-AUTH_LOGIN_GRANT_TYPE="password" 
+# AUTH_LOGIN_GRANT_TYPE="erp-token"
+AUTH_LOGIN_GRANT_TYPE="password"
 
 
 SIGNALR_BASE_URL="http://10.0.5.20:8044"
@@ -88,19 +84,15 @@ DEEP_LINK_ALLOWED_HOSTS="gotoim.com"
 
 ```
 
-
-
 ## API 规范
 
-### swagger 
+### swagger
 
 ```
 /swagger/swagger.json
 ```
 
-认证服务器: 
-
-
+认证服务器:
 
 API 地址必须来自环境变量：
 
@@ -120,8 +112,7 @@ src/api/modules/
 
 src/api/generated/
 
-页面组件不得直接依赖 OpenAPI Generator 生成的复杂实现，
-需要通过 modules 层进行适当封装。
+页面组件不得直接依赖 OpenAPI Generator 生成的复杂实现，需要通过 modules 层进行适当封装。
 
 ---
 
@@ -135,10 +126,7 @@ ABP 常规分页参数：
 
 分页返回：
 
-{
-  items: T[],
-  totalCount: number
-}
+{ items: T[], totalCount: number }
 
 不要转换成另一套后端分页协议。
 
@@ -162,10 +150,7 @@ auth.grantedPolicies
 
 例如：
 
-AbpIdentity.Users
-AbpIdentity.Users.Create
-AbpIdentity.Users.Update
-AbpIdentity.Users.Delete
+AbpIdentity.Users AbpIdentity.Users.Create AbpIdentity.Users.Update AbpIdentity.Users.Delete
 
 实现统一：
 
@@ -220,12 +205,7 @@ Authorization Code + PKCE
 
 统一处理：
 
-400
-401
-403
-404
-409
-500
+400 401 403 404 409 500
 
 识别 ABP RemoteServiceErrorResponse。
 
@@ -254,9 +234,7 @@ views/{module}/{entity}/
 
 建议结构：
 
-index.vue
-data.ts
-modules/form.vue
+index.vue data.ts modules/form.vue
 
 其中：
 
@@ -289,14 +267,11 @@ form.vue
 
 例如：
 
-Create:
-AbpIdentity.Users.Create
+Create: AbpIdentity.Users.Create
 
-Update:
-AbpIdentity.Users.Update
+Update: AbpIdentity.Users.Update
 
-Delete:
-AbpIdentity.Users.Delete
+Delete: AbpIdentity.Users.Delete
 
 没有权限时按钮不显示。
 
@@ -335,15 +310,7 @@ AbpIdentity.Users.Delete
 
 执行任务时按照：
 
-分析
-→ 查找相关后端 Contract
-→ 查找 Swagger
-→ 查找已有 Vben 实现
-→ 设计
-→ 实现
-→ typecheck
-→ lint
-→ 汇报
+分析 → 查找相关后端 Contract → 查找 Swagger → 查找已有 Vben 实现 → 设计 → 实现 → typecheck → lint → 汇报
 
 不要直接从写代码开始。
 

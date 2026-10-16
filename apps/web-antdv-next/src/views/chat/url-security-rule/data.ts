@@ -29,14 +29,14 @@ export const CATEGORY_OPTIONS = [
 
 export function getLevelTag(level: UrlSecurityLevel) {
   switch (level) {
+    case UrlSecurityLevel.Blocked: {
+      return h(Tag, { color: 'error' }, () => '阻断 (黑名单)');
+    }
     case UrlSecurityLevel.Safe: {
       return h(Tag, { color: 'success' }, () => '安全 (白名单)');
     }
     case UrlSecurityLevel.Warning: {
       return h(Tag, { color: 'warning' }, () => '警告 (提示)');
-    }
-    case UrlSecurityLevel.Blocked: {
-      return h(Tag, { color: 'error' }, () => '阻断 (黑名单)');
     }
     default: {
       return h(Tag, {}, () => '未知');
@@ -46,14 +46,17 @@ export function getLevelTag(level: UrlSecurityLevel) {
 
 export function getCategoryTag(category: UrlRiskCategory) {
   switch (category) {
-    case UrlRiskCategory.OfficialOrWhitelisted: {
-      return h(Tag, { color: 'cyan' }, () => '官方/白名单');
-    }
-    case UrlRiskCategory.UnknownThirdParty: {
-      return h(Tag, { color: 'default' }, () => '未认证第三方');
-    }
     case UrlRiskCategory.Fraud: {
       return h(Tag, { color: 'red' }, () => '电信诈骗');
+    }
+    case UrlRiskCategory.IllegalGambling: {
+      return h(Tag, { color: 'purple' }, () => '非法赌博');
+    }
+    case UrlRiskCategory.Malware: {
+      return h(Tag, { color: 'orange' }, () => '病毒木马');
+    }
+    case UrlRiskCategory.OfficialOrWhitelisted: {
+      return h(Tag, { color: 'cyan' }, () => '官方/白名单');
     }
     case UrlRiskCategory.Phishing: {
       return h(Tag, { color: 'volcano' }, () => '仿冒钓鱼');
@@ -61,11 +64,8 @@ export function getCategoryTag(category: UrlRiskCategory) {
     case UrlRiskCategory.Porn: {
       return h(Tag, { color: 'magenta' }, () => '色情低俗');
     }
-    case UrlRiskCategory.IllegalGambling: {
-      return h(Tag, { color: 'purple' }, () => '非法赌博');
-    }
-    case UrlRiskCategory.Malware: {
-      return h(Tag, { color: 'orange' }, () => '病毒木马');
+    case UrlRiskCategory.UnknownThirdParty: {
+      return h(Tag, { color: 'default' }, () => '未认证第三方');
     }
     default: {
       return h(Tag, {}, () => '其它');

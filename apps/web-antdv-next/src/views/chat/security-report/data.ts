@@ -20,11 +20,11 @@ export function getReportStatusTag(status: SecurityReportStatus) {
     case SecurityReportStatus.Pending: {
       return h(Tag, { color: 'processing' }, () => '待审核');
     }
-    case SecurityReportStatus.Resolved: {
-      return h(Tag, { color: 'success' }, () => '已核实处置');
-    }
     case SecurityReportStatus.Rejected: {
       return h(Tag, { color: 'default' }, () => '已驳回/忽略');
+    }
+    case SecurityReportStatus.Resolved: {
+      return h(Tag, { color: 'success' }, () => '已核实处置');
     }
     default: {
       return h(Tag, {}, () => '未知');
@@ -107,9 +107,7 @@ export function useColumns(
           usePopconfirm: false,
         },
         name: 'CellOperation',
-        options: [
-          { code: 'audit', text: '审核处置' },
-        ],
+        options: [{ code: 'audit', text: '审核处置' }],
       },
       field: 'operation',
       fixed: 'right',

@@ -5,11 +5,7 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Card,
-  Tabs,
-  Tag,
-} from 'antdv-next';
+import { Card, Tabs, Tag } from 'antdv-next';
 
 import { getAuditLogApi } from '#/api/logmanagement';
 import { $t } from '#/locales';
@@ -18,7 +14,7 @@ const auditLog = ref<AuditLogDto | null>(null);
 const loading = ref(false);
 const activeTab = ref('basic');
 
-const [Modal, modalApi] = useVbenModal<{ id: string } | null>({
+const [Modal, modalApi] = useVbenModal<null | { id: string }>({
   fullscreenButton: true,
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -61,9 +57,13 @@ defineExpose({ modalApi });
               <span class="text-muted-foreground mr-2">请求方法:</span>
               <Tag color="blue">{{ auditLog?.httpMethod }}</Tag>
             </div>
-            <div class="col-span-2 border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
+            <div
+              class="col-span-2 border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50"
+            >
               <span class="text-muted-foreground block mb-1">请求 URL:</span>
-              <code class="text-xs break-all bg-gray-100 dark:bg-gray-800 p-1 rounded block">{{ auditLog?.url }}</code>
+              <code
+                class="text-xs break-all bg-gray-100 dark:bg-gray-800 p-1 rounded block"
+                >{{ auditLog?.url }}</code>
             </div>
             <div class="border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
               <span class="text-muted-foreground mr-2">执行耗时:</span>
@@ -79,7 +79,8 @@ defineExpose({ modalApi });
             </div>
             <div class="border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
               <span class="text-muted-foreground mr-2">操作用户:</span>
-              <span>{{ auditLog?.userName || '-' }} (ID: {{ auditLog?.userId || '-' }})</span>
+              <span>{{ auditLog?.userName || '-' }} (ID:
+                {{ auditLog?.userId || '-' }})</span>
             </div>
             <div class="border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
               <span class="text-muted-foreground mr-2">所属租户:</span>
@@ -89,9 +90,13 @@ defineExpose({ modalApi });
               <span class="text-muted-foreground mr-2">应用标识:</span>
               <span>{{ auditLog?.applicationName || '-' }}</span>
             </div>
-            <div class="col-span-2 border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50">
+            <div
+              class="col-span-2 border p-2.5 rounded bg-gray-50/50 dark:bg-gray-900/50"
+            >
               <span class="text-muted-foreground block mb-1">客户端/浏览器信息:</span>
-              <span class="text-xs text-muted-foreground">{{ auditLog?.browserInfo }}</span>
+              <span class="text-xs text-muted-foreground">{{
+                auditLog?.browserInfo
+              }}</span>
             </div>
           </div>
         </Tabs.TabPane>
@@ -115,9 +120,7 @@ defineExpose({ modalApi });
               class="border border-gray-100 dark:border-gray-800"
             >
               <template #title>
-                <span class="font-mono text-sm"
-                  >{{ act.serviceName }} -> {{ act.methodName }}</span
-                >
+                <span class="font-mono text-sm">{{ act.serviceName }} -> {{ act.methodName }}</span>
               </template>
               <template #extra>
                 <Tag color="cyan">{{ act.executionDuration }} ms</Tag>
@@ -126,8 +129,7 @@ defineExpose({ modalApi });
                 <div class="text-xs font-semibold mb-1">请求参数:</div>
                 <pre
                   class="bg-gray-50 dark:bg-gray-900 p-2 rounded text-xs overflow-x-auto max-h-48 font-mono"
-                  >{{ act.parameters }}</pre
-                >
+                  >{{ act.parameters }}</pre>
               </div>
             </Card>
           </div>
@@ -140,7 +142,9 @@ defineExpose({ modalApi });
         >
           <div class="space-y-4 mt-2">
             <div
-              v-if="!auditLog?.entityChanges || auditLog.entityChanges.length === 0"
+              v-if="
+                !auditLog?.entityChanges || auditLog.entityChanges.length === 0
+              "
               class="text-center py-6 text-muted-foreground"
             >
               无实体变更记录
@@ -151,7 +155,9 @@ defineExpose({ modalApi });
               size="small"
             >
               <template #title>
-                <span class="font-mono text-xs">{{ ec.entityTypeFullName }}</span>
+                <span class="font-mono text-xs">{{
+                  ec.entityTypeFullName
+                }}</span>
               </template>
               <template #extra>
                 <Tag color="purple">ID: {{ ec.entityId }}</Tag>
@@ -196,8 +202,7 @@ defineExpose({ modalApi });
           <div class="mt-2">
             <pre
               class="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 p-3 rounded text-xs font-mono overflow-x-auto max-h-[50vh]"
-              >{{ auditLog?.exceptions }}</pre
-            >
+              >{{ auditLog?.exceptions }}</pre>
           </div>
         </Tabs.TabPane>
       </Tabs>

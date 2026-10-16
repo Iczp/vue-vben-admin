@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { SensitiveWordDto, SensitiveWordRulePreviewDto } from '#/api/cms';
-
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -19,14 +17,21 @@ import {
   type ModerationScene,
   previewSensitiveWordRuleVersionApi,
   type SensitiveRiskLevel,
+  type SensitiveWordDto,
+  type SensitiveWordRulePreviewDto,
 } from '#/api/cms';
 
-import { categoryOptions, riskLevelOptions, sceneOptions, useColumns } from './data';
+import {
+  categoryOptions,
+  riskLevelOptions,
+  sceneOptions,
+  useColumns,
+} from './data';
 import ImportModal from './modules/import-modal.vue';
 import WordModal from './modules/word-modal.vue';
 
 const router = useRouter();
-const preview = ref<SensitiveWordRulePreviewDto | null>(null);
+const preview = ref<null | SensitiveWordRulePreviewDto>(null);
 
 const filters = reactive<{
   category?: string;
@@ -104,7 +109,7 @@ async function onExport() {
           ? undefined
           : filters.enabledFilter === 1,
       keyword: filters.keyword.trim() || undefined,
-      maxResultCount: 10000,
+      maxResultCount: 10_000,
       riskLevel: filters.riskLevel,
       scene: filters.scene,
     });
@@ -114,15 +119,23 @@ async function onExport() {
       return;
     }
 
-    const headers = ['关键词', '风险分类', '风险等级', '处置动作', '生效场景', '状态', '备注'];
+    const headers = [
+      '关键词',
+      '风险分类',
+      '风险等级',
+      '处置动作',
+      '生效场景',
+      '状态',
+      '备注',
+    ];
     const rows = list.map((item) => [
-      `"${item.word.replace(/"/g, '""')}"`,
+      `"${item.word.replaceAll(/"/g, '""')}"`,
       `"${item.category}"`,
       `"${item.riskLevel}"`,
       `"${item.action}"`,
       `"${item.scene || '全局通用'}"`,
       item.isEnabled ? '启用' : '禁用',
-      `"${(item.remark || '').replace(/"/g, '""')}"`,
+      `"${(item.remark || '').replaceAll(/"/g, '""')}"`,
     ]);
 
     const csvContent = `\uFEFF${[headers.join(','), ...rows.map((r) => r.join(','))].join('\n')}`;
@@ -130,8 +143,11 @@ async function onExport() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `SensitiveWords_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
+    link.setAttribute(
+      'download',
+      `SensitiveWords_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+    document.body.append(link);
     link.click();
     document.body.removeChild(link);
     message.success(`成功导出 ${list.length} 条敏感词`);
@@ -141,13 +157,7 @@ async function onExport() {
   }
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: SensitiveWordDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: SensitiveWordDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -248,9 +258,15 @@ function onFilterChange() {
         <template #message>
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="text-sm font-medium">
-              敏感词库当前存在未发布草稿修改（修订号 #{{ preview?.currentDraftRevision }}）。线上业务仍在使用版本 v{{ preview?.activeVersion || '1' }}。
+              敏感词库当前存在未发布草稿修改（修订号 #{{
+                preview?.currentDraftRevision
+              }}）。线上业务仍在使用版本 v{{ preview?.activeVersion || '1' }}。
             </span>
-            <Button size="small" type="primary" @click="router.push('/cms/sensitive-word-rule-versions')">
+            <Button
+              size="small"
+              type="primary"
+              @click="router.push('/cms/sensitive-word-rule-versions')"
+            >
               前往版本发布中心
             </Button>
           </div>
@@ -258,7 +274,11 @@ function onFilterChange() {
       </Alert>
 
       <!-- 过滤搜索栏 -->
-      <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
+      <Card
+        variant="borderless"
+        class="shrink-0 shadow-sm"
+        :body-style="{ padding: '12px 16px' }"
+      >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-3">
             <Input.Search
@@ -343,7 +363,9 @@ function onFilterChange() {
       </Card>
 
       <!-- 敏感词数据列表 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>

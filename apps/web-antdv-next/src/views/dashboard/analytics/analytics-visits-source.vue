@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
+
 import type { MessageReportDto } from '#/api/chat/message-report';
 
 import { onMounted, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import { Empty, Spin } from 'antdv-next';
 
 import {
@@ -56,7 +58,7 @@ async function loadTypeDistribution() {
       typeCountMap.set(type, (typeCountMap.get(type) || 0) + count);
     });
 
-    const pieData = Array.from(typeCountMap.entries())
+    const pieData = [...typeCountMap.entries()]
       .map(([type, value]) => ({
         name: typeLabelMap.get(type) || `类型 ${type}`,
         value,
@@ -151,7 +153,10 @@ onMounted(() => {
 <template>
   <div class="relative h-[300px] w-full">
     <Spin :spinning="loading" class="h-full w-full">
-      <div v-if="!hasData && !loading" class="flex h-[280px] items-center justify-center">
+      <div
+        v-if="!hasData && !loading"
+        class="flex h-[280px] items-center justify-center"
+      >
         <Empty description="暂无消息类型数据" />
       </div>
       <EchartsUI v-else ref="chartRef" />

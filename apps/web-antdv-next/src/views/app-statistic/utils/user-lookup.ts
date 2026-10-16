@@ -1,14 +1,15 @@
 import type { UserDataDto } from '#/api/identity/user-lookup';
+
 import { getUserLookupByIdApi } from '#/api/identity/user-lookup';
 
 // 内存用户缓存
-const userCache = new Map<string, UserDataDto | null>();
-const pendingPromises = new Map<string, Promise<UserDataDto | null>>();
+const userCache = new Map<string, null | UserDataDto>();
+const pendingPromises = new Map<string, Promise<null | UserDataDto>>();
 
 /**
  * 根据 UserId 获取用户信息（带内存缓存与去重）
  */
-export async function lookupUser(userId?: string): Promise<UserDataDto | null> {
+export async function lookupUser(userId?: string): Promise<null | UserDataDto> {
   if (!userId || userId === '00000000-0000-0000-0000-000000000000') {
     return null;
   }
@@ -43,7 +44,10 @@ export async function lookupUser(userId?: string): Promise<UserDataDto | null> {
 /**
  * 格式化用户展示名称
  */
-export function formatUserDisplayName(user: UserDataDto | null, fallbackId?: string): string {
+export function formatUserDisplayName(
+  user: null | UserDataDto,
+  fallbackId?: string,
+): string {
   if (user) {
     const fullName = [user.name, user.surname].filter(Boolean).join(' ').trim();
     if (fullName && user.userName && fullName !== user.userName) {

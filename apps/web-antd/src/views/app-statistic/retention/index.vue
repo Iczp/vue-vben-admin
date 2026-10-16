@@ -1,15 +1,16 @@
 <script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  RetentionDto,
+  StatisticTrendDto,
+} from '#/api/app-statistic/types';
+
 import { computed, onMounted, ref } from 'vue';
 
 import { Button as AButton } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { getRetentionApi } from '#/api/app-statistic/retention';
-import type {
-  AppStatisticQueryInput,
-  RetentionDto,
-  StatisticTrendDto,
-} from '#/api/app-statistic/types';
 
 import {
   MetricCard,
@@ -104,7 +105,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">留存分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          留存分析
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           通过同期群（Cohort）矩阵与长期衰退曲线评估产品健康度与用户忠诚度
         </p>

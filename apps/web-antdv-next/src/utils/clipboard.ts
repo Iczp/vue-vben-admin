@@ -19,7 +19,7 @@ export async function copyToClipboard(text: string): Promise<void> {
       textArea.style.left = '-999999px';
       textArea.style.top = '-999999px';
       textArea.setAttribute('readonly', '');
-      document.body.appendChild(textArea);
+      document.body.append(textArea);
       textArea.focus();
       textArea.select();
       const successful = document.execCommand('copy');
@@ -29,8 +29,8 @@ export async function copyToClipboard(text: string): Promise<void> {
       } else {
         reject(new Error('execCommand failed'));
       }
-    } catch (err) {
-      reject(err);
+    } catch (error) {
+      reject(error);
     }
   });
 }

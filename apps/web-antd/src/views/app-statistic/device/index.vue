@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  DeviceAnalysisDto,
+} from '#/api/app-statistic/types';
+
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -13,10 +18,6 @@ import {
 import dayjs from 'dayjs';
 
 import { getDeviceAnalysisApi } from '#/api/app-statistic/device';
-import type {
-  AppStatisticQueryInput,
-  DeviceAnalysisDto,
-} from '#/api/app-statistic/types';
 
 import {
   DimensionBarChart,
@@ -38,7 +39,7 @@ const query = ref<AppStatisticQueryInput>({
   endDate: dayjs().format('YYYY-MM-DD'),
 });
 
-const selectedManufacturer = ref<string | null>(null);
+const selectedManufacturer = ref<null | string>(null);
 
 const activeFilterTags = computed(() => {
   const tags: { key: string; label: string; value: string }[] = [];
@@ -53,7 +54,11 @@ const activeFilterTags = computed(() => {
     });
   }
   if (query.value.appVersion) {
-    tags.push({ key: 'appVersion', label: '版本', value: query.value.appVersion });
+    tags.push({
+      key: 'appVersion',
+      label: '版本',
+      value: query.value.appVersion,
+    });
   }
   if (query.value.channel) {
     tags.push({ key: 'channel', label: '渠道', value: query.value.channel });
@@ -136,7 +141,8 @@ const modelColumns = [
     dataIndex: 'percentage',
     key: 'percentage',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => `${Number(text ?? 0).toFixed(1)}%`,
+    customRender: ({ text }: { text: number }) =>
+      `${Number(text ?? 0).toFixed(1)}%`,
   },
 ];
 
@@ -153,7 +159,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">设备分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          设备分析
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           全面分析应用在各种操作系统、终端品牌、设备型号及系统版本的覆盖分布
         </p>
@@ -162,7 +170,9 @@ onMounted(() => {
         <AButton size="small" type="primary" @click="goToDeviceList">
           查看设备明细列表 →
         </AButton>
-        <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+        <AButton :loading="loading" size="small" @click="loadData">
+刷新
+</AButton>
       </div>
     </div>
 

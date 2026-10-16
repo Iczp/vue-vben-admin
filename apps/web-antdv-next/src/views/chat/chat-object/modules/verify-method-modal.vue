@@ -7,10 +7,7 @@ import { useVbenModal } from '@vben/common-ui';
 
 import { Input, message, Radio, RadioGroup } from 'antdv-next';
 
-import {
-  setVerificationMethodApi,
-  VerificationMethodEnums,
-} from '#/api/chat';
+import { setVerificationMethodApi, VerificationMethodEnums } from '#/api/chat';
 
 const emit = defineEmits(['success']);
 
@@ -67,12 +64,17 @@ defineExpose({ modalApi });
   <Modal title="设置加好友/加群验证方式" class="w-[460px]">
     <div class="space-y-4 p-4">
       <div class="rounded bg-muted/50 p-2.5 text-xs text-muted-foreground">
-        目标对象：<strong>{{ currentRecord?.name }}</strong> ({{ currentRecord?.displayName || '无昵称' }})
+        目标对象：<strong>{{ currentRecord?.name }}</strong> ({{
+          currentRecord?.displayName || '无昵称'
+        }})
       </div>
 
       <div>
         <div class="mb-2 font-medium text-sm">验证方式</div>
-        <RadioGroup v-model:value="verificationMethod" class="flex flex-col gap-2">
+        <RadioGroup
+          v-model:value="verificationMethod"
+          class="flex flex-col gap-2"
+        >
           <Radio :value="VerificationMethodEnums.Free">
             自由加入（无需审核或密码即可加入）
           </Radio>
@@ -86,8 +88,13 @@ defineExpose({ modalApi });
       </div>
 
       <div v-if="verificationMethod === VerificationMethodEnums.Password">
-        <div class="mb-1 font-medium text-sm">设置新密码 <span class="text-red-500">*</span></div>
-        <Input.Password v-model:value="password" placeholder="请输入加群或进房密码" />
+        <div class="mb-1 font-medium text-sm">
+          设置新密码 <span class="text-red-500">*</span>
+        </div>
+        <Input.Password
+          v-model:value="password"
+          placeholder="请输入加群或进房密码"
+        />
       </div>
     </div>
   </Modal>

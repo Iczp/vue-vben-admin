@@ -1,18 +1,22 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { ConnectionPoolDto, OnlineHostDto } from '#/api/chat';
+import type {
+  ChatObjectDto,
+  ConnectionPoolDto,
+  OnlineHostDto,
+} from '#/api/chat';
 
 import { onMounted, ref } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 
 import {
+  Avatar,
   Button,
   Card,
   Input,
   InputNumber,
   message,
-  Avatar,
   Modal,
   Select,
   Statistic,
@@ -35,18 +39,21 @@ import {
   getOnlineHostsApi,
   getOnlineTotalCountApi,
 } from '#/api/chat';
-import type { ChatObjectDto } from '#/api/chat';
 import {
-  getObjectTypeName,
   getObjectTypeColor,
+  getObjectTypeName,
 } from '#/views/chat/chat-object/data';
 
-import { useConnectionColumns, useHostColumns, useLastOnlineColumns } from './data';
+import {
+  useConnectionColumns,
+  useHostColumns,
+  useLastOnlineColumns,
+} from './data';
 import AbortModal from './modules/abort-modal.vue';
 import DetailModal from './modules/detail-modal.vue';
 
 // 当前活动的 Tab: 'hosts' | 'users' | 'owners' | 'all'
-const activeTab = ref<'hosts' | 'users' | 'owners' | 'all'>('hosts');
+const activeTab = ref<'all' | 'hosts' | 'owners' | 'users'>('hosts');
 
 // 全局统计数据
 const totalOnlineCount = ref(0);
@@ -222,7 +229,7 @@ const [HostGrid, hostGridApi] = useVbenVxeGrid({
 // 2. 用户视角 (User View)
 // ==========================================
 const searchUserId = ref('');
-const userOnlineCount = ref<number | null>(null);
+const userOnlineCount = ref<null | number>(null);
 
 function onUserConnActionClick({
   code,
@@ -271,10 +278,13 @@ const [UserGrid, userGridApi] = useVbenVxeGrid({
               userOnlineCount.value = 0;
             });
 
-          return await getOnlineConnectionsByUserApi(searchUserId.value.trim(), {
-            maxResultCount,
-            skipCount,
-          });
+          return await getOnlineConnectionsByUserApi(
+            searchUserId.value.trim(),
+            {
+              maxResultCount,
+              skipCount,
+            },
+          );
         },
       },
     },
@@ -298,15 +308,15 @@ function onSearchUser() {
 // ==========================================
 // 3. 聊天对象视角 (ChatObject / Owner View)
 const searchOwnerId = ref<number | undefined>(undefined);
-const ownerOnlineCount = ref<number | null>(null);
-const ownerFriendsCount = ref<number | null>(null);
+const ownerOnlineCount = ref<null | number>(null);
+const ownerFriendsCount = ref<null | number>(null);
 const ownerChatObject = ref<ChatObjectDto | null>(null);
 
 async function fetchOwnerChatObject(id: number) {
   try {
     ownerChatObject.value = await getChatObjectApi(id);
-  } catch (err) {
-    console.warn(`Failed to fetch owner chat object id=${id}`, err);
+  } catch (error) {
+    console.warn(`Failed to fetch owner chat object id=${id}`, error);
     ownerChatObject.value = null;
   }
 }
@@ -547,7 +557,12 @@ onMounted(() => {
           <div class="text-xs text-muted-foreground mb-1">全局运维操作</div>
           <div class="text-xs text-red-500 font-medium">清空所有节点长连接</div>
         </div>
-        <Button danger type="primary" size="small" @click="() => onClearAllConnections()">
+        <Button
+          danger
+          type="primary"
+          size="small"
+          @click="() => onClearAllConnections()"
+        >
           清空所有连接
         </Button>
       </Card>
@@ -557,10 +572,18 @@ onMounted(() => {
     <Card
       size="small"
       class="flex-1 flex flex-col h-full shadow-sm overflow-hidden"
-      :styles="{ body: { padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } }"
+      :styles="{
+        body: {
+          padding: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden',
+        },
+      }"
     >
       <Tabs
-        v-model:activeKey="activeTab"
+        v-model:active-key="activeTab"
         type="card"
         class="h-full flex flex-col"
         @change="onTabChange"
@@ -579,7 +602,9 @@ onMounted(() => {
                     size="small"
                     @search="() => hostGridApi.query()"
                   />
-                  <Button size="small" @click="hostGridApi.query">刷新主机</Button>
+                  <Button size="small" @click="hostGridApi.query">
+刷新主机
+</Button>
                 </div>
               </template>
             </HostGrid>
@@ -603,7 +628,11 @@ onMounted(() => {
                   <Button type="primary" size="small" @click="onSearchUser">
                     查询用户连接
                   </Button>
-                  <Tag v-if="userOnlineCount !== null" color="blue" class="ml-2">
+                  <Tag
+                    v-if="userOnlineCount !== null"
+                    color="blue"
+                    class="ml-2"
+                  >
                     该用户当前在线连接: <strong>{{ userOnlineCount }}</strong>
                   </Tag>
                 </div>
@@ -633,18 +662,35 @@ onMounted(() => {
                 class="flex items-center gap-2 p-1 px-2.5 rounded-md bg-muted/40 border border-border shrink-0 ml-1"
               >
                 <Avatar
-                  :src="getChatObjectAvatarUrl(ownerChatObject.id, ownerChatObject.portrait, ownerChatObject.thumbnail)"
+                  :src="
+                    getChatObjectAvatarUrl(
+                      ownerChatObject.id,
+                      ownerChatObject.portrait,
+                      ownerChatObject.thumbnail,
+                    )
+                  "
                   shape="square"
                   :size="26"
                   class="rounded"
                   :style="{ backgroundColor: '#3b82f6' }"
                 >
-                  {{ (ownerChatObject.displayName || ownerChatObject.name || '客').slice(0, 1) }}
+                  {{
+                    (
+                      ownerChatObject.displayName ||
+                      ownerChatObject.name ||
+                      '客'
+                    ).slice(0, 1)
+                  }}
                 </Avatar>
-                <span class="text-xs font-semibold text-foreground max-w-[140px] truncate">
+                <span
+                  class="text-xs font-semibold text-foreground max-w-[140px] truncate"
+                >
                   {{ ownerChatObject.displayName || ownerChatObject.name }}
                 </span>
-                <Tag :color="getObjectTypeColor(ownerChatObject.objectType)" class="text-[10px] px-1 py-0 mr-0">
+                <Tag
+                  :color="getObjectTypeColor(ownerChatObject.objectType)"
+                  class="text-[10px] px-1 py-0 mr-0"
+                >
                   {{ getObjectTypeName(ownerChatObject.objectType) }}
                 </Tag>
               </div>
@@ -658,16 +704,22 @@ onMounted(() => {
             </div>
 
             <!-- 拆分为当前连接列表与最近在线记录 -->
-            <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-2 overflow-hidden">
+            <div
+              class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-2 overflow-hidden"
+            >
               <div class="lg:col-span-2 flex flex-col h-full overflow-hidden">
-                <div class="text-xs font-semibold mb-1 text-muted-foreground">当前在线连接列表</div>
+                <div class="text-xs font-semibold mb-1 text-muted-foreground">
+                  当前在线连接列表
+                </div>
                 <div class="flex-1 overflow-hidden">
                   <OwnerGrid />
                 </div>
               </div>
 
               <div class="flex flex-col h-full overflow-hidden border-l pl-2">
-                <div class="text-xs font-semibold mb-1 text-muted-foreground">最近在线记录 (Last Online)</div>
+                <div class="text-xs font-semibold mb-1 text-muted-foreground">
+                  最近在线记录 (Last Online)
+                </div>
                 <div class="flex-1 overflow-hidden">
                   <LastOnlineGrid />
                 </div>

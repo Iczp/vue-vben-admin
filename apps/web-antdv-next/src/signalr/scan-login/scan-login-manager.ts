@@ -24,8 +24,8 @@ export interface ScanLoginEventCallbacks {
 }
 
 export class ScanLoginManager {
-  private client: HubConnectionClient;
   private callbacks: ScanLoginEventCallbacks = {};
+  private client: HubConnectionClient;
   private isSubscribed = false;
 
   constructor(callbacks?: ScanLoginEventCallbacks) {
@@ -47,70 +47,11 @@ export class ScanLoginManager {
   }
 
   /**
-   * 注册 Hub 事件监听
-   * 必须在 Generate 调用前完成订阅
+   * 销毁并断开连接
    */
-  private registerEventListeners(): void {
-    if (this.isSubscribed) return;
-
-    this.client.on('ReceivedMessage', (envelope: ScanLoginEnvelope) => {
-      if (!envelope || !envelope.command) {
-        return;
-      }
-
-      const command = envelope.command;
-      const payload = envelope.payload || {};
-
-      switch (command) {
-        case 'scanned': {
-          this.callbacks.onScanned?.({
-            scanUserId: payload.scanUserId,
-            scanUserName: payload.scanUserName || payload.userName,
-            userName: payload.userName || payload.scanUserName,
-          });
-          break;
-        }
-        case 'granted': {
-          if (payload.scanToken) {
-            this.callbacks.onGranted?.({
-              expiredTime: payload.expiredTime,
-              scanToken: payload.scanToken,
-              userId: payload.userId,
-              userName: payload.userName,
-            });
-          } else {
-            console.warn(
-              '[ScanLogin] Received granted command without scanToken, ignored.',
-            );
-          }
-          break;
-        }
-        case 'rejected': {
-          this.callbacks.onRejected?.({
-            reason: payload.reason,
-          });
-          break;
-        }
-        case 'cancelled': {
-          this.callbacks.onCancelled?.({
-            reason: payload.reason,
-          });
-          break;
-        }
-        case 'welcome':
-        case 'generated':
-        default: {
-          // 兼容保留，不影响流程
-          break;
-        }
-      }
-    });
-
-    this.client.onError((err) => {
-      this.callbacks.onError?.(err);
-    });
-
-    this.isSubscribed = true;
+  public async dispose(): Promise<void> {
+    this.callbacks = {};
+    await this.client.dispose();
   }
 
   /**
@@ -135,13 +76,6 @@ export class ScanLoginManager {
   }
 
   /**
-   * 设置回调函数
-   */
-  public setCallbacks(callbacks: Partial<ScanLoginEventCallbacks>): void {
-    this.callbacks = { ...this.callbacks, ...callbacks };
-  }
-
-  /**
    * 获取底层连接客户端
    */
   public getClient(): HubConnectionClient {
@@ -149,10 +83,76 @@ export class ScanLoginManager {
   }
 
   /**
-   * 销毁并断开连接
+   * 设置回调函数
    */
-  public async dispose(): Promise<void> {
-    this.callbacks = {};
-    await this.client.dispose();
+  public setCallbacks(callbacks: Partial<ScanLoginEventCallbacks>): void {
+    this.callbacks = { ...this.callbacks, ...callbacks };
+  }
+
+  /**
+   * 注册 Hub 事件监听
+   * 必须在 Generate 调用前完成订阅
+   */
+  private registerEventListeners(): void {
+    if (this.isSubscribed) return;
+
+    this.client.on('ReceivedMessage', (envelope: ScanLoginEnvelope) => {
+      if (!envelope || !envelope.command) {
+        return;
+      }
+
+      const command = envelope.command;
+      const payload = envelope.payload || {};
+
+      switch (command) {
+        case 'cancelled': {
+          this.callbacks.onCancelled?.({
+            reason: payload.reason,
+          });
+          break;
+        }
+        case 'granted': {
+          if (payload.scanToken) {
+            this.callbacks.onGranted?.({
+              expiredTime: payload.expiredTime,
+              scanToken: payload.scanToken,
+              userId: payload.userId,
+              userName: payload.userName,
+            });
+          } else {
+            console.warn(
+              '[ScanLogin] Received granted command without scanToken, ignored.',
+            );
+          }
+          break;
+        }
+        case 'rejected': {
+          this.callbacks.onRejected?.({
+            reason: payload.reason,
+          });
+          break;
+        }
+        case 'scanned': {
+          this.callbacks.onScanned?.({
+            scanUserId: payload.scanUserId,
+            scanUserName: payload.scanUserName || payload.userName,
+            userName: payload.userName || payload.scanUserName,
+          });
+          break;
+        }
+        case 'generated':
+        case 'welcome':
+        default: {
+          // 兼容保留，不影响流程
+          break;
+        }
+      }
+    });
+
+    this.client.onError((err) => {
+      this.callbacks.onError?.(err);
+    });
+
+    this.isSubscribed = true;
   }
 }

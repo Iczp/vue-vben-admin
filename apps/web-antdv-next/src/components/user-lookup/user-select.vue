@@ -5,7 +5,10 @@ import { onMounted, ref, watch } from 'vue';
 
 import { Select, Spin } from 'antdv-next';
 
-import { getUserLookupByIdApi, searchUserLookupApi } from '#/api/identity/user-lookup';
+import {
+  getUserLookupByIdApi,
+  searchUserLookupApi,
+} from '#/api/identity/user-lookup';
 
 const props = withDefaults(
   defineProps<{

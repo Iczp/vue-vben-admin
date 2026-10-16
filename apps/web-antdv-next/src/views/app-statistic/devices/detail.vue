@@ -8,10 +8,10 @@ import {
   Button as AButton,
   Card as ACard,
   Descriptions as ADescriptions,
+  DescriptionsItem as ADescriptionsItem,
   Spin as ASpin,
   Tag as ATag,
 } from 'antdv-next';
-import { DescriptionsItem as ADescriptionsItem } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getDeviceDetailApi } from '#/api/app-statistic/device';
@@ -176,7 +176,7 @@ watch(() => route.params.id, loadDetail, { immediate: true });
             </ADescriptionsItem>
 
             <ADescriptionsItem :label="$t('appStatistic.text112')" :span="2">
-              <UserDisplay :userId="deviceDetail.device.lastUserId" />
+              <UserDisplay :user-id="deviceDetail.device.lastUserId" />
             </ADescriptionsItem>
 
             <ADescriptionsItem :label="$t('appStatistic.text113')">
@@ -243,7 +243,7 @@ watch(() => route.params.id, loadDetail, { immediate: true });
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'userId'">
-                <UserDisplay :userId="record.userId" />
+                <UserDisplay :user-id="record.userId" />
               </template>
             </template>
           </ATable>

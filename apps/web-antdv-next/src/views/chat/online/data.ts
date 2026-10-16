@@ -1,5 +1,9 @@
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
-import type { ConnectionPoolDto, LastOnlineDto, OnlineHostDto } from '#/api/chat';
+import type {
+  ConnectionPoolDto,
+  LastOnlineDto,
+  OnlineHostDto,
+} from '#/api/chat';
 
 /**
  * 1. 在线连接池表格列定义 (ConnectionPoolDto)

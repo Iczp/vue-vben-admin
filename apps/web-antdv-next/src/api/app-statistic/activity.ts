@@ -1,6 +1,6 @@
-import { requestClient } from '#/api/request';
-
 import type { ActivityAnalysisDto, AppStatisticQueryInput } from './types';
+
+import { requestClient } from '#/api/request';
 
 /**
  * 获取活跃分析数据

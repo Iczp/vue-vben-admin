@@ -95,8 +95,8 @@ function setupAccessGuard(router: Router) {
     if (!abpStore.applicationConfig) {
       try {
         await abpStore.fetchApplicationConfiguration();
-      } catch (e) {
-        console.warn('Fetch ABP config in guard failed:', e);
+      } catch (error) {
+        console.warn('Fetch ABP config in guard failed:', error);
       }
     }
 
@@ -109,8 +109,8 @@ function setupAccessGuard(router: Router) {
     );
     const accessCodes = accessStore.accessCodes || [];
 
-    const combinedRoles = Array.from(
-      new Set([
+    const combinedRoles = [
+      ...new Set([
         ...userRoles,
         ...abpPolicies,
         ...accessCodes,
@@ -120,7 +120,7 @@ function setupAccessGuard(router: Router) {
           ? ['*']
           : []),
       ]),
-    );
+    ];
 
     // 生成菜单和路由
     const { accessibleMenus, accessibleRoutes } = await generateAccess({

@@ -156,10 +156,7 @@ const [Modal, modalApi] = useVbenModal<ContentSourceDto | undefined>({
         <Row :gutter="16">
           <Col :span="12">
             <FormItem label="来源渠道类型" required>
-              <Select
-                v-model:value="sourceType"
-                :options="sourceTypeOptions"
-              />
+              <Select v-model:value="sourceType" :options="sourceTypeOptions" />
             </FormItem>
           </Col>
           <Col :span="12">

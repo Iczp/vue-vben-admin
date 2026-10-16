@@ -81,7 +81,8 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
         }
         return res;
       },
-      successCode: (code: any) => code === 0 || code === 200 || code === undefined,
+      successCode: (code: any) =>
+        code === 0 || code === 200 || code === undefined,
     }),
   );
 
@@ -105,7 +106,9 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       const errorMessage =
         responseData?.error?.message ??
         responseData?.error?.details ??
-        (typeof responseData?.error === 'string' ? responseData?.error : null) ??
+        (typeof responseData?.error === 'string'
+          ? responseData?.error
+          : null) ??
         responseData?.message ??
         '';
       // 如果没有错误信息，则会根据状态码进行提示

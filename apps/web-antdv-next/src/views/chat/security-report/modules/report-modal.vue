@@ -30,7 +30,7 @@ const emit = defineEmits<{
   (e: 'success'): void;
 }>();
 
-const currentRecord = ref<SecurityReportDto | null>(null);
+const currentRecord = ref<null | SecurityReportDto>(null);
 
 const formState = reactive({
   addBlacklist: true,
@@ -52,7 +52,10 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.setState({ confirmLoading: true });
     try {
       await handleSecurityReportApi(currentRecord.value.id, {
-        addBlacklist: formState.status === SecurityReportStatus.Resolved ? formState.addBlacklist : false,
+        addBlacklist:
+          formState.status === SecurityReportStatus.Resolved
+            ? formState.addBlacklist
+            : false,
         auditRemark: formState.auditRemark.trim(),
         status: formState.status,
       });
@@ -71,7 +74,10 @@ const [Modal, modalApi] = useVbenModal({
       const data = modalApi.getData() as SecurityReportDto;
       if (data) {
         currentRecord.value = data;
-        formState.status = data.status === SecurityReportStatus.Pending ? SecurityReportStatus.Resolved : data.status;
+        formState.status =
+          data.status === SecurityReportStatus.Pending
+            ? SecurityReportStatus.Resolved
+            : data.status;
         formState.auditRemark = data.auditRemark || '';
         formState.addBlacklist = true;
       }
@@ -114,13 +120,17 @@ const [Modal, modalApi] = useVbenModal({
           </span>
         </DescriptionsItem>
         <DescriptionsItem label="举报人 ID">
-          <span class="font-mono text-xs">{{ currentRecord.reporterSessionUnitId || '匿名/未提供' }}</span>
+          <span class="font-mono text-xs">{{
+            currentRecord.reporterSessionUnitId || '匿名/未提供'
+          }}</span>
         </DescriptionsItem>
         <DescriptionsItem label="提交时间">
           <span class="text-xs">{{ currentRecord.creationTime }}</span>
         </DescriptionsItem>
         <DescriptionsItem label="补充描述" :span="2">
-          <span class="text-sm text-foreground/80">{{ currentRecord.description || '无补充描述' }}</span>
+          <span class="text-sm text-foreground/80">{{
+            currentRecord.description || '无补充描述'
+          }}</span>
         </DescriptionsItem>
       </Descriptions>
 
@@ -144,7 +154,9 @@ const [Modal, modalApi] = useVbenModal({
             label="联动处置"
           >
             <Checkbox v-model:checked="formState.addBlacklist">
-              自动将违规域名/URL 写入安全风控<span class="font-bold text-red-500">【阻断黑名单】</span>并刷新 Redis
+              自动将违规域名/URL 写入安全风控<span
+                class="font-bold text-red-500"
+                >【阻断黑名单】</span>并刷新 Redis
             </Checkbox>
           </FormItem>
 

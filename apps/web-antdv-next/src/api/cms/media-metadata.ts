@@ -171,7 +171,7 @@ export async function extractVideoFrame(
     const timer = setTimeout(() => {
       cleanup();
       reject(new Error('提取视频封面超时'));
-    }, 12000);
+    }, 12_000);
 
     video.onerror = (e) => {
       clearTimeout(timer);
@@ -313,8 +313,14 @@ export async function readMediaUploadMetadata(
                 360 / image.naturalWidth,
                 360 / image.naturalHeight,
               );
-              const thumbW = Math.max(1, Math.round(image.naturalWidth * scale));
-              const thumbH = Math.max(1, Math.round(image.naturalHeight * scale));
+              const thumbW = Math.max(
+                1,
+                Math.round(image.naturalWidth * scale),
+              );
+              const thumbH = Math.max(
+                1,
+                Math.round(image.naturalHeight * scale),
+              );
               const canvas = document.createElement('canvas');
               canvas.width = thumbW;
               canvas.height = thumbH;
@@ -333,8 +339,8 @@ export async function readMediaUploadMetadata(
                 }
               }
             }
-          } catch (e) {
-            console.error('图片缩略图生成失败', e);
+          } catch (error) {
+            console.error('图片缩略图生成失败', error);
           }
           finish();
         };
@@ -359,7 +365,7 @@ export async function readMediaUploadMetadata(
         if (
           Number.isFinite(media.duration) &&
           media.duration >= 0 &&
-          media.duration <= 31536000
+          media.duration <= 31_536_000
         )
           result.duration = media.duration;
         if (!video) {
@@ -384,8 +390,8 @@ export async function readMediaUploadMetadata(
             result.thumbnail = thumb.file;
             result.thumbnailWidth = thumb.width;
             result.thumbnailHeight = thumb.height;
-          } catch (e) {
-            console.error('处理自定义封面失败，使用自动提取封面', e);
+          } catch (error) {
+            console.error('处理自定义封面失败，使用自动提取封面', error);
           }
           if (result.thumbnail) {
             finish();

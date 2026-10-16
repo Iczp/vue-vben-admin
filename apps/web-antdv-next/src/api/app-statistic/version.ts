@@ -1,6 +1,6 @@
-import { requestClient } from '#/api/request';
-
 import type { AppStatisticQueryInput, VersionAnalysisDto } from './types';
+
+import { requestClient } from '#/api/request';
 
 /**
  * 获取版本分析统计

@@ -8,7 +8,6 @@ import { createIconifyIcon } from '@vben/icons';
 import {
   Button,
   Checkbox,
-  Divider,
   Empty,
   Input,
   InputSearch,
@@ -53,25 +52,6 @@ import {
 } from './media';
 import MediaPreview from './MediaPreview.vue';
 
-const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
-const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
-const UploadIcon = markRaw(createIconifyIcon('lucide:upload-cloud'));
-
-interface SelectorQueueItem {
-  captureTime: number;
-  coverMode: 'auto' | 'custom';
-  errorMsg?: string;
-  extracting: boolean;
-  file: File;
-  id: string;
-  isVideo: boolean;
-  result?: AssetDto;
-  status: 'error' | 'extracting' | 'pending' | 'success' | 'uploading';
-  thumbnailFile: File | null;
-  thumbnailUrl: string;
-  videoDuration: number;
-}
-
 const props = withDefaults(
   defineProps<{
     assetTypes?: AssetType[];
@@ -97,6 +77,25 @@ const emit = defineEmits<{
   'update:value': [value: string];
   'update:values': [value: string[]];
 }>();
+const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
+const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
+const UploadIcon = markRaw(createIconifyIcon('lucide:upload-cloud'));
+
+interface SelectorQueueItem {
+  captureTime: number;
+  coverMode: 'auto' | 'custom';
+  errorMsg?: string;
+  extracting: boolean;
+  file: File;
+  id: string;
+  isVideo: boolean;
+  result?: AssetDto;
+  status: 'error' | 'extracting' | 'pending' | 'success' | 'uploading';
+  thumbnailFile: File | null;
+  thumbnailUrl: string;
+  videoDuration: number;
+}
+
 const modelValue = computed({
   get: () => props.value,
   set: (value: string) => emit('update:value', value),
@@ -104,11 +103,12 @@ const modelValue = computed({
 const limit = computed(() => selectionLimit(props.multiple, props.maxCount));
 const allowedTypes = computed(() =>
   mediaTypes.filter(
-    (item) => !props.assetTypes.length || props.assetTypes.includes(item.value),
+    (item) =>
+      props.assetTypes.length === 0 || props.assetTypes.includes(item.value),
   ),
 );
 const accept = computed(() =>
-  props.assetTypes.length && !props.assetTypes.includes(AssetType.File)
+  props.assetTypes.length > 0 && !props.assetTypes.includes(AssetType.File)
     ? props.assetTypes
         .map(
           (type) =>
@@ -147,7 +147,7 @@ const includeSubFolders = ref<boolean>(true);
 
 // 多文件上传队列状态
 const uploadQueue = ref<SelectorQueueItem[]>([]);
-const activeVideoItemId = ref<string | null>(null);
+const activeVideoItemId = ref<null | string>(null);
 
 const activeVideoItem = computed(() =>
   uploadQueue.value.find((i) => i.id === activeVideoItemId.value),
@@ -155,7 +155,9 @@ const activeVideoItem = computed(() =>
 
 const queueStats = computed(() => {
   const total = uploadQueue.value.length;
-  const success = uploadQueue.value.filter((i) => i.status === 'success').length;
+  const success = uploadQueue.value.filter(
+    (i) => i.status === 'success',
+  ).length;
   const error = uploadQueue.value.filter((i) => i.status === 'error').length;
   const pending = uploadQueue.value.filter(
     (i) => i.status === 'pending' || i.status === 'extracting',
@@ -206,7 +208,7 @@ async function loadAssets() {
   loading.value = true;
   loadError.value = false;
   try {
-    let folderParam: string | undefined = undefined;
+    let folderParam: string | undefined;
     if (currentFolderId.value === '') {
       folderParam = '00000000-0000-0000-0000-000000000000';
     } else if (currentFolderId.value) {
@@ -256,9 +258,8 @@ function openSelectorModal() {
   selectedUrls.value = [
     ...new Set(committedUrls.value.map(toRelativeAssetUrl)),
   ].slice(0, limit.value);
-  typeFilter.value = props.assetTypes.length
-    ? allowedTypes.value[0]?.value
-    : undefined;
+  typeFilter.value =
+    props.assetTypes.length > 0 ? allowedTypes.value[0]?.value : undefined;
   page.value = 1;
   activeTab.value = 'library';
   uploadQueue.value = [];
@@ -313,7 +314,7 @@ function handleSelectAsset(asset: AssetDto) {
 
 function confirmSelection() {
   if (props.disabled || uploading.value) return;
-  if (!selectedUrls.value.length) {
+  if (selectedUrls.value.length === 0) {
     message.warning('请选择素材');
     return;
   }
@@ -365,7 +366,7 @@ function beforeUpload(file: File) {
       : file.type.startsWith('audio/')
         ? AssetType.Audio
         : AssetType.File;
-  if (props.assetTypes.length && !props.assetTypes.includes(type)) {
+  if (props.assetTypes.length > 0 && !props.assetTypes.includes(type)) {
     message.warning(`文件【${file.name}】不在允许的素材类型中`);
     return false;
   }
@@ -412,7 +413,10 @@ async function generateSelectorImageThumbnail(item: SelectorQueueItem) {
   }
 }
 
-async function extractQueueVideoFrame(item: SelectorQueueItem, timeSec: number) {
+async function extractQueueVideoFrame(
+  item: SelectorQueueItem,
+  timeSec: number,
+) {
   const target = uploadQueue.value.find((i) => i.id === item.id);
   if (!target || !target.isVideo) return;
 
@@ -530,10 +534,10 @@ async function startSelectorQueueUpload() {
           selectedUrls.value = [...selectedUrls.value, relUrl];
         }
       }
-    } catch (err: any) {
+    } catch (error: any) {
       item.status = 'error';
       item.errorMsg =
-        err?.response?.data?.error?.message || err?.message || '上传失败';
+        error?.response?.data?.error?.message || error?.message || '上传失败';
     }
   }
 
@@ -545,7 +549,9 @@ async function startSelectorQueueUpload() {
     void loadAssets();
   }
 
-  const failedCount = uploadQueue.value.filter((i) => i.status === 'error').length;
+  const failedCount = uploadQueue.value.filter(
+    (i) => i.status === 'error',
+  ).length;
   if (failedCount === 0 && successCount > 0) {
     message.success(`成功队列上传 ${successCount} 个文件并加入选择`);
     uploadQueue.value = [];
@@ -651,7 +657,9 @@ defineExpose({
     >
       <div class="flex h-[540px] gap-3">
         <!-- 左侧复用 FolderTree 目录树组件 (is-selector 模式) -->
-        <div class="w-[240px] shrink-0 h-full border rounded-lg overflow-hidden">
+        <div
+          class="w-[240px] shrink-0 h-full border rounded-lg overflow-hidden"
+        >
           <FolderTree
             ref="folderTreeRef"
             is-selector
@@ -716,7 +724,10 @@ defineExpose({
                 />
               </div>
 
-              <div v-if="selectedUrls.length" class="mb-2 flex flex-wrap gap-1.5">
+              <div
+                v-if="selectedUrls.length"
+                class="mb-2 flex flex-wrap gap-1.5"
+              >
                 <Button
                   v-for="url in selectedUrls"
                   :key="url"
@@ -793,7 +804,10 @@ defineExpose({
                         </span>
                       </div>
                       <div class="space-y-1 p-2 text-xs">
-                        <div class="truncate font-medium" :title="asset.fileName">
+                        <div
+                          class="truncate font-medium"
+                          :title="asset.fileName"
+                        >
                           {{ asset.fileName }}
                         </div>
                         <div>
@@ -831,7 +845,11 @@ defineExpose({
                     </Button>
                   </div>
                 </div>
-                <Empty v-else description="当前目录下暂无符合条件的素材" class="py-8" />
+                <Empty
+                  v-else
+                  description="当前目录下暂无符合条件的素材"
+                  class="py-8"
+                />
                 <Pagination
                   v-if="totalCount > pageSize"
                   v-model:current="page"
@@ -847,11 +865,21 @@ defineExpose({
 
             <Tabs.TabPane key="upload" tab="批量队列上传">
               <div class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                <div class="flex items-center justify-between text-xs text-muted-foreground">
+                <div
+                  class="flex items-center justify-between text-xs text-muted-foreground"
+                >
                   <div>
-                    上传目标目录：<Tag color="blue" class="!m-0 font-mono text-xs">{{ currentFolderPath }}</Tag>
+                    上传目标目录：<Tag
+                      color="blue"
+                      class="!m-0 font-mono text-xs"
+                      >
+{{ currentFolderPath }}
+</Tag>
                   </div>
-                  <div v-if="uploadQueue.length > 0" class="flex items-center gap-2">
+                  <div
+                    v-if="uploadQueue.length > 0"
+                    class="flex items-center gap-2"
+                  >
                     <Button
                       v-if="!uploading"
                       size="small"
@@ -865,7 +893,9 @@ defineExpose({
                       type="primary"
                       size="small"
                       :loading="uploading"
-                      :disabled="queueStats.pending === 0 && queueStats.error === 0"
+                      :disabled="
+                        queueStats.pending === 0 && queueStats.error === 0
+                      "
                       @click="startSelectorQueueUpload"
                     >
                       开始队列上传 ({{ queueStats.pending + queueStats.error }})
@@ -884,7 +914,9 @@ defineExpose({
                   <p class="flex justify-center py-1">
                     <UploadIcon class="size-8 text-primary" />
                   </p>
-                  <p class="text-sm font-medium">点击或将多个文件拖拽至此区域加入队列</p>
+                  <p class="text-sm font-medium">
+                    点击或将多个文件拖拽至此区域加入队列
+                  </p>
                   <p class="pb-1 text-xs text-muted-foreground">
                     支持一次选择多个文件排队上传，上传完成后自动归档至当前选中目录并加入已选列表。
                   </p>
@@ -898,27 +930,39 @@ defineExpose({
                     size="small"
                   />
 
-                  <div class="max-h-[160px] overflow-y-auto border rounded divide-y bg-muted/10">
+                  <div
+                    class="max-h-[160px] overflow-y-auto border rounded divide-y bg-muted/10"
+                  >
                     <div
                       v-for="(item, idx) in uploadQueue"
                       :key="item.id"
                       class="flex items-center justify-between px-3 py-1.5 text-xs"
                     >
                       <div class="flex items-center gap-2 min-w-0 flex-1">
-                        <span class="text-muted-foreground font-mono w-5 shrink-0">
+                        <span
+                          class="text-muted-foreground font-mono w-5 shrink-0"
+                        >
                           #{{ idx + 1 }}
                         </span>
-                        <div class="w-8 h-6 rounded border bg-black/80 overflow-hidden flex items-center justify-center shrink-0">
+                        <div
+                          class="w-8 h-6 rounded border bg-black/80 overflow-hidden flex items-center justify-center shrink-0"
+                        >
                           <img
                             v-if="item.thumbnailUrl"
                             :src="item.thumbnailUrl"
                             class="w-full h-full object-cover"
                             alt=""
                           />
-                          <VideoIcon v-else-if="item.isVideo" class="size-3.5 text-white" />
+                          <VideoIcon
+                            v-else-if="item.isVideo"
+                            class="size-3.5 text-white"
+                          />
                           <ImageIcon v-else class="size-3.5 text-white/70" />
                         </div>
-                        <span class="truncate font-medium" :title="item.file.name">
+                        <span
+                          class="truncate font-medium"
+                          :title="item.file.name"
+                        >
                           {{ item.file.name }}
                         </span>
                         <span class="text-muted-foreground shrink-0">
@@ -930,7 +974,9 @@ defineExpose({
                         <Button
                           v-if="item.isVideo && item.status !== 'success'"
                           size="small"
-                          :type="activeVideoItemId === item.id ? 'primary' : 'dashed'"
+                          :type="
+                            activeVideoItemId === item.id ? 'primary' : 'dashed'
+                          "
                           ghost
                           class="!text-xs !px-1.5 !h-5"
                           @click="
@@ -940,19 +986,39 @@ defineExpose({
                         >
                           🎞️ 封面
                         </Button>
-                        <Tag v-if="item.status === 'extracting'" color="orange" class="!m-0">
+                        <Tag
+                          v-if="item.status === 'extracting'"
+                          color="orange"
+                          class="!m-0"
+                        >
                           提取帧
                         </Tag>
-                        <Tag v-else-if="item.status === 'pending'" color="default" class="!m-0">
+                        <Tag
+                          v-else-if="item.status === 'pending'"
+                          color="default"
+                          class="!m-0"
+                        >
                           排队中
                         </Tag>
-                        <Tag v-else-if="item.status === 'uploading'" color="processing" class="!m-0">
+                        <Tag
+                          v-else-if="item.status === 'uploading'"
+                          color="processing"
+                          class="!m-0"
+                        >
                           上传中
                         </Tag>
-                        <Tag v-else-if="item.status === 'success'" color="success" class="!m-0">
+                        <Tag
+                          v-else-if="item.status === 'success'"
+                          color="success"
+                          class="!m-0"
+                        >
                           ✓ 完成
                         </Tag>
-                        <Tag v-else-if="item.status === 'error'" color="error" class="!m-0">
+                        <Tag
+                          v-else-if="item.status === 'error'"
+                          color="error"
+                          class="!m-0"
+                        >
                           失败
                         </Tag>
                         <Button
@@ -974,7 +1040,9 @@ defineExpose({
                     v-if="activeVideoItem"
                     class="border rounded p-2.5 bg-background space-y-2"
                   >
-                    <div class="flex items-center justify-between border-b pb-1.5">
+                    <div
+                      class="flex items-center justify-between border-b pb-1.5"
+                    >
                       <span class="font-medium text-xs truncate">
                         🎬 视频封面：{{ activeVideoItem.file.name }}
                       </span>
@@ -989,7 +1057,9 @@ defineExpose({
                     </div>
                     <Spin :spinning="activeVideoItem.extracting">
                       <div class="flex gap-3 items-start">
-                        <div class="w-[120px] h-[72px] border rounded bg-black/90 overflow-hidden flex items-center justify-center shrink-0">
+                        <div
+                          class="w-[120px] h-[72px] border rounded bg-black/90 overflow-hidden flex items-center justify-center shrink-0"
+                        >
                           <img
                             v-if="activeVideoItem.thumbnailUrl"
                             :src="activeVideoItem.thumbnailUrl"
@@ -1006,7 +1076,9 @@ defineExpose({
                             :min="0"
                             :max="
                               activeVideoItem.videoDuration > 0
-                                ? Number(activeVideoItem.videoDuration.toFixed(1))
+                                ? Number(
+                                    activeVideoItem.videoDuration.toFixed(1),
+                                  )
                                 : 10
                             "
                             :step="0.5"

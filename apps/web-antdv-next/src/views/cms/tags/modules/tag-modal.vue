@@ -147,10 +147,14 @@ const [Modal, modalApi] = useVbenModal<TagDto | undefined>({
           />
         </FormItem>
 
-        <div class="flex items-center justify-between p-3 border rounded bg-muted/20">
+        <div
+          class="flex items-center justify-between p-3 border rounded bg-muted/20"
+        >
           <div>
             <div class="font-medium text-sm">启用状态</div>
-            <div class="text-xs text-muted-foreground">停用后，文章发布时将不可选该标签</div>
+            <div class="text-xs text-muted-foreground">
+              停用后，文章发布时将不可选该标签
+            </div>
           </div>
           <Switch v-model:checked="isEnabled" />
         </div>

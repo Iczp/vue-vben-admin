@@ -202,7 +202,10 @@ function refreshTypeGrid() {
     <div class="h-full flex flex-col bg-background rounded-md p-3">
       <Tabs v-model:active-key="activeTab" class="flex-1 flex flex-col">
         <!-- 分类树管理 Tab -->
-        <Tabs.TabPane key="category" tab="聊天对象分类管理 (ChatObject Categories)">
+        <Tabs.TabPane
+          key="category"
+          tab="聊天对象分类管理 (ChatObject Categories)"
+        >
           <div class="h-full flex flex-col">
             <CategoryGrid>
               <template #top>
@@ -226,7 +229,8 @@ function refreshTypeGrid() {
               <template #top>
                 <div class="flex items-center justify-between py-2 px-1 mb-1">
                   <div class="text-xs text-muted-foreground">
-                    定义基础聊天对象实体分类规范（如 Personal, Room, CustomerService 等）及层级深度限制
+                    定义基础聊天对象实体分类规范（如 Personal, Room,
+                    CustomerService 等）及层级深度限制
                   </div>
                   <Button type="primary" @click="onAddType">
                     新建对象类型

@@ -76,16 +76,56 @@ export function useColumns(
       cellRender: {
         name: 'CellTag',
         options: [
-          { color: 'default', label: '匿名', value: ChatObjectTypeEnums.Anonymous },
-          { color: 'blue', label: '个人号', value: ChatObjectTypeEnums.Personal },
-          { color: 'cyan', label: '群组/房间', value: ChatObjectTypeEnums.Room },
-          { color: 'purple', label: '官方服务号', value: ChatObjectTypeEnums.Official },
-          { color: 'orange', label: '订阅号', value: ChatObjectTypeEnums.Subscription },
-          { color: 'magenta', label: '广场', value: ChatObjectTypeEnums.Square },
-          { color: 'geekblue', label: '机器人', value: ChatObjectTypeEnums.Robot },
-          { color: 'gold', label: '店长', value: ChatObjectTypeEnums.ShopKeeper },
-          { color: 'lime', label: '店员', value: ChatObjectTypeEnums.ShopWaiter },
-          { color: 'green', label: '客户', value: ChatObjectTypeEnums.Customer },
+          {
+            color: 'default',
+            label: '匿名',
+            value: ChatObjectTypeEnums.Anonymous,
+          },
+          {
+            color: 'blue',
+            label: '个人号',
+            value: ChatObjectTypeEnums.Personal,
+          },
+          {
+            color: 'cyan',
+            label: '群组/房间',
+            value: ChatObjectTypeEnums.Room,
+          },
+          {
+            color: 'purple',
+            label: '官方服务号',
+            value: ChatObjectTypeEnums.Official,
+          },
+          {
+            color: 'orange',
+            label: '订阅号',
+            value: ChatObjectTypeEnums.Subscription,
+          },
+          {
+            color: 'magenta',
+            label: '广场',
+            value: ChatObjectTypeEnums.Square,
+          },
+          {
+            color: 'geekblue',
+            label: '机器人',
+            value: ChatObjectTypeEnums.Robot,
+          },
+          {
+            color: 'gold',
+            label: '店长',
+            value: ChatObjectTypeEnums.ShopKeeper,
+          },
+          {
+            color: 'lime',
+            label: '店员',
+            value: ChatObjectTypeEnums.ShopWaiter,
+          },
+          {
+            color: 'green',
+            label: '客户',
+            value: ChatObjectTypeEnums.Customer,
+          },
         ],
       },
       field: 'objectType',
@@ -96,9 +136,21 @@ export function useColumns(
       cellRender: {
         name: 'CellTag',
         options: [
-          { color: 'green', label: '自由加入', value: VerificationMethodEnums.Free },
-          { color: 'orange', label: '密码加群', value: VerificationMethodEnums.Password },
-          { color: 'blue', label: '需管理员验证', value: VerificationMethodEnums.Verify },
+          {
+            color: 'green',
+            label: '自由加入',
+            value: VerificationMethodEnums.Free,
+          },
+          {
+            color: 'orange',
+            label: '密码加群',
+            value: VerificationMethodEnums.Password,
+          },
+          {
+            color: 'blue',
+            label: '需管理员验证',
+            value: VerificationMethodEnums.Verify,
+          },
         ],
       },
       field: 'verificationMethod',

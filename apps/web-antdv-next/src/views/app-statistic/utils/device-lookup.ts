@@ -1,4 +1,5 @@
 import type { DeviceDto } from '#/api/app-statistic/types';
+
 import { getDeviceDetailApi } from '#/api/app-statistic/device';
 
 // 内存设备详情缓存
@@ -9,14 +10,17 @@ const pendingDevicePromises = new Map<string, Promise<DeviceDto | null>>();
  * 获取设备的友好展示名称
  * 优先读取 extraProperties 中的 deviceName，次选 Manufacturer + Model，再次为 Platform，最后为 DeviceKey
  */
-export function getDeviceDisplayName(device?: Partial<DeviceDto> | null): string {
+export function getDeviceDisplayName(
+  device?: null | Partial<DeviceDto>,
+): string {
   if (!device) return '未知设备';
 
   // 1. 尝试从附加属性中解析明确的设备名称 (如 iOS/Android 客户端采集的 deviceName)
   if (device.extraPropertiesJson) {
     try {
       const extra = JSON.parse(device.extraPropertiesJson);
-      const customName = extra.deviceName || extra.device_name || extra.name || extra.modelName;
+      const customName =
+        extra.deviceName || extra.device_name || extra.name || extra.modelName;
       if (customName && typeof customName === 'string' && customName.trim()) {
         return customName.trim();
       }
@@ -46,7 +50,9 @@ export function getDeviceDisplayName(device?: Partial<DeviceDto> | null): string
 
   // 4. 退化使用 DeviceKey 或 ID
   if (device.deviceKey) {
-    return device.deviceKey.length > 12 ? `${device.deviceKey.slice(0, 12)}...` : device.deviceKey;
+    return device.deviceKey.length > 12
+      ? `${device.deviceKey.slice(0, 12)}...`
+      : device.deviceKey;
   }
 
   return '未知设备';
@@ -55,7 +61,9 @@ export function getDeviceDisplayName(device?: Partial<DeviceDto> | null): string
 /**
  * 根据 DeviceId 查询设备信息（带内存缓存与去重）
  */
-export async function lookupDevice(deviceId?: string): Promise<DeviceDto | null> {
+export async function lookupDevice(
+  deviceId?: string,
+): Promise<DeviceDto | null> {
   if (!deviceId || deviceId === '00000000-0000-0000-0000-000000000000') {
     return null;
   }

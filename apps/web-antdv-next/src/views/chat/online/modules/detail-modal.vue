@@ -21,8 +21,8 @@ import {
   getOnlineConnectionApi,
 } from '#/api/chat';
 import {
-  getObjectTypeName,
   getObjectTypeColor,
+  getObjectTypeName,
 } from '#/views/chat/chat-object/data';
 
 const loading = ref(false);
@@ -51,8 +51,8 @@ async function fetchBoundChatObjects(idList: number[]) {
           chatObjectCache.set(id, obj);
           return obj;
         }
-      } catch (err) {
-        console.warn(`Failed to fetch chat object id=${id}`, err);
+      } catch (error) {
+        console.warn(`Failed to fetch chat object id=${id}`, error);
       }
       return {
         displayName: `Owner #${id}`,
@@ -112,7 +112,9 @@ defineExpose({ modalApi });
       <div v-if="detailData" class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
         <Descriptions title="网络通道信息" bordered size="small" :column="2">
           <DescriptionsItem label="连接 ID (ConnectionId)" :span="2">
-            <span class="font-mono text-xs select-all">{{ detailData.connectionId }}</span>
+            <span class="font-mono text-xs select-all">{{
+              detailData.connectionId
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="宿主主机 (Host)">
             <Tag color="blue">{{ detailData.host || '-' }}</Tag>
@@ -140,18 +142,29 @@ defineExpose({ modalApi });
           </DescriptionsItem>
         </Descriptions>
 
-        <Descriptions title="关联用户与聊天对象" bordered size="small" :column="2">
+        <Descriptions
+          title="关联用户与聊天对象"
+          bordered
+          size="small"
+          :column="2"
+        >
           <DescriptionsItem label="用户 ID">
-            <span class="font-mono text-xs">{{ detailData.userId || '-' }}</span>
+            <span class="font-mono text-xs">{{
+              detailData.userId || '-'
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="用户登录名">
             <span class="font-medium">{{ detailData.userName || '-' }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="设备唯一 ID" :span="2">
-            <span class="font-mono text-xs">{{ detailData.deviceId || '-' }}</span>
+            <span class="font-mono text-xs">{{
+              detailData.deviceId || '-'
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="推送客户端 ID (PushClientId)" :span="2">
-            <span class="font-mono text-xs">{{ detailData.pushClientId || '-' }}</span>
+            <span class="font-mono text-xs">{{
+              detailData.pushClientId || '-'
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="绑定聊天对象 (ChatObjects)" :span="2">
             <!-- 加载状态 -->
@@ -171,13 +184,23 @@ defineExpose({ modalApi });
               >
                 <!-- 显示头像 -->
                 <Avatar
-                  :src="getChatObjectAvatarUrl(item.id, item.portrait, item.thumbnail)"
+                  :src="
+                    getChatObjectAvatarUrl(
+                      item.id,
+                      item.portrait,
+                      item.thumbnail,
+                    )
+                  "
                   shape="square"
                   :size="42"
                   class="shrink-0 rounded-md border border-border/60 font-bold"
                   :style="{ backgroundColor: '#3b82f6' }"
                 >
-                  {{ (item.displayName || item.name || '客').slice(0, 1).toUpperCase() }}
+                  {{
+                    (item.displayName || item.name || '客')
+                      .slice(0, 1)
+                      .toUpperCase()
+                  }}
                 </Avatar>
 
                 <!-- 对象详情 -->
@@ -196,9 +219,12 @@ defineExpose({ modalApi });
                       {{ getObjectTypeName(item.objectType) }}
                     </Tag>
                   </div>
-                  <div class="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <div
+                    class="flex items-center justify-between text-[11px] text-muted-foreground"
+                  >
                     <span class="font-mono">
-                      OwnerId: <strong class="text-foreground">{{ item.id }}</strong>
+                      OwnerId:
+                      <strong class="text-foreground">{{ item.id }}</strong>
                     </span>
                     <Tag
                       :color="item.isEnabled ? 'success' : 'error'"

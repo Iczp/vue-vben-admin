@@ -1,10 +1,11 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   ContentPromotionCreateDto,
   ContentPromotionDto,
   ContentPromotionGetListInput,
   ContentPromotionUpdateDto,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 
@@ -29,10 +30,7 @@ export async function getPromotionApi(id: string) {
  * 创建推广推荐
  */
 export async function createPromotionApi(data: ContentPromotionCreateDto) {
-  return requestClient.post<ContentPromotionDto>(
-    '/cms/admin/promotions',
-    data,
-  );
+  return requestClient.post<ContentPromotionDto>('/cms/admin/promotions', data);
 }
 
 /**

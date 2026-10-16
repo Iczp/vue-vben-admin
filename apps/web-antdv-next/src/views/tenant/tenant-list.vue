@@ -87,13 +87,7 @@ function onDelete(row: TenantDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: TenantDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: TenantDto }) {
   switch (code) {
     case 'connection-string': {
       onConnectionString(row);
@@ -196,10 +190,7 @@ function refreshGrid() {
             />
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              type="primary"
-              @click="onCreate"
-            >
+            <Button type="primary" @click="onCreate">
               <Plus class="size-4 mr-1" />
               {{ $t('common.create', '新建租户') }}
             </Button>

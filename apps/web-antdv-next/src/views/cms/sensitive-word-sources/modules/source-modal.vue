@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-import type { SensitiveWordMappingProfileDto, SensitiveWordSourceDto } from '#/api/cms';
+import type {
+  SensitiveWordMappingProfileDto,
+  SensitiveWordSourceDto,
+} from '#/api/cms';
 
 import { reactive, ref } from 'vue';
 
@@ -37,7 +40,7 @@ const mappingProfiles = ref<SensitiveWordMappingProfileDto[]>([]);
 const formState = reactive({
   autoSync: false,
   branch: 'main',
-  checkIntervalSeconds: 86400,
+  checkIntervalSeconds: 86_400,
   code: '',
   fileManifestJson: '',
   isEnabled: true,
@@ -51,7 +54,9 @@ const formState = reactive({
 
 async function loadMappingProfiles() {
   try {
-    const res = await getSensitiveWordMappingProfilesApi({ maxResultCount: 100 });
+    const res = await getSensitiveWordMappingProfilesApi({
+      maxResultCount: 100,
+    });
     mappingProfiles.value = res.items || [];
   } catch (error) {
     console.error('加载分类映射失败', error);
@@ -120,7 +125,8 @@ const [Modal, modalApi] = useVbenModal({
           formState.priority = detail.priority;
           formState.syncMode = detail.syncMode;
           formState.autoSync = detail.autoSync;
-          formState.checkIntervalSeconds = detail.checkIntervalSeconds || 86400;
+          formState.checkIntervalSeconds =
+            detail.checkIntervalSeconds || 86_400;
           formState.mappingProfileId = detail.mappingProfileId;
           formState.fileManifestJson = detail.fileManifestJson || '';
         });
@@ -136,7 +142,7 @@ const [Modal, modalApi] = useVbenModal({
         formState.priority = 100;
         formState.syncMode = SensitiveWordSyncMode.ReviewBeforeApply;
         formState.autoSync = false;
-        formState.checkIntervalSeconds = 86400;
+        formState.checkIntervalSeconds = 86_400;
         formState.mappingProfileId = undefined;
         formState.fileManifestJson = '';
       }
@@ -182,14 +188,21 @@ const [Modal, modalApi] = useVbenModal({
         </FormItem>
       </div>
 
-      <FormItem label="源地址 URI" required extra="支持 Git Clone 地址、HTTP(S) 文本链接或服务器受信本地路径">
+      <FormItem
+        label="源地址 URI"
+        required
+        extra="支持 Git Clone 地址、HTTP(S) 文本链接或服务器受信本地路径"
+      >
         <Input
           v-model:value="formState.sourceUri"
           placeholder="https://github.com/example/sensitive-words.git"
         />
       </FormItem>
 
-      <div v-if="formState.sourceType === SensitiveWordSourceType.Git" class="grid grid-cols-2 gap-4">
+      <div
+        v-if="formState.sourceType === SensitiveWordSourceType.Git"
+        class="grid grid-cols-2 gap-4"
+      >
         <FormItem label="Git 分支">
           <Input
             v-model:value="formState.branch"
@@ -219,7 +232,12 @@ const [Modal, modalApi] = useVbenModal({
             v-model:value="formState.mappingProfileId"
             allow-clear
             placeholder="可选分类映射配置"
-            :options="mappingProfiles.map(p => ({ label: `${p.name} (${p.code})`, value: p.id }))"
+            :options="
+              mappingProfiles.map((p) => ({
+                label: `${p.name} (${p.code})`,
+                value: p.id,
+              }))
+            "
           />
         </FormItem>
       </div>
@@ -231,11 +249,14 @@ const [Modal, modalApi] = useVbenModal({
         </div>
       </div>
 
-      <FormItem label="文件清单配置 (Manifest JSON)" extra="若不填将使用根目录下的默认识别规则">
+      <FormItem
+        label="文件清单配置 (Manifest JSON)"
+        extra="若不填将使用根目录下的默认识别规则"
+      >
         <Input.TextArea
           v-model:value="formState.fileManifestJson"
           :rows="4"
-          placeholder='{"files": [{"filePath": "dict.txt", "category": "Political", "parser": "LineByLine"}]}'
+          placeholder="{&quot;files&quot;: [{&quot;filePath&quot;: &quot;dict.txt&quot;, &quot;category&quot;: &quot;Political&quot;, &quot;parser&quot;: &quot;LineByLine&quot;}]}"
         />
       </FormItem>
     </Form>

@@ -46,8 +46,16 @@ export function useColumns(
       cellRender: {
         name: 'CellTag',
         options: [
-          { color: 'success', label: $t('common.enabled', '启用'), value: true },
-          { color: 'error', label: $t('common.disabled', '禁用'), value: false },
+          {
+            color: 'success',
+            label: $t('common.enabled', '启用'),
+            value: true,
+          },
+          {
+            color: 'error',
+            label: $t('common.disabled', '禁用'),
+            value: false,
+          },
         ],
       },
       field: 'isActive',
@@ -58,8 +66,16 @@ export function useColumns(
       cellRender: {
         name: 'CellTag',
         options: [
-          { color: 'warning', label: $t('common.enabled', '开启'), value: true },
-          { color: 'default', label: $t('common.disabled', '关闭'), value: false },
+          {
+            color: 'warning',
+            label: $t('common.enabled', '开启'),
+            value: true,
+          },
+          {
+            color: 'default',
+            label: $t('common.disabled', '关闭'),
+            value: false,
+          },
         ],
       },
       field: 'lockoutEnabled',

@@ -37,8 +37,8 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  'update:value': [val: any];
   change: [val: any];
+  'update:value': [val: any];
 }>();
 
 const internalTreeData = ref<any[]>([]);

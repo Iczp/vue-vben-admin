@@ -5,7 +5,15 @@ import { reactive, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Form, FormItem, Input, InputNumber, message, Spin, TreeSelect } from 'antdv-next';
+import {
+  Form,
+  FormItem,
+  Input,
+  InputNumber,
+  message,
+  Spin,
+  TreeSelect,
+} from 'antdv-next';
 
 import {
   createAssetFolderApi,
@@ -52,14 +60,12 @@ function buildTreeSelectData(
       item.id === disabledId ||
       Boolean(
         disabledFolder?.fullPath &&
-          item.fullPath?.startsWith(disabledFolder.fullPath),
+        item.fullPath?.startsWith(disabledFolder.fullPath),
       );
     map.set(item.id, {
       disabled: isSelfOrDescendant,
       key: item.id,
-      title: isSelfOrDescendant
-        ? `${item.name} (当前目录或子目录)`
-        : item.name,
+      title: isSelfOrDescendant ? `${item.name} (当前目录或子目录)` : item.name,
       value: item.id,
       children: [],
     });
@@ -123,7 +129,8 @@ async function handleConfirm() {
     emit('success');
     modalApi.close();
   } catch (error: any) {
-    const msg = error?.response?.data?.error?.message || error?.message || '操作失败';
+    const msg =
+      error?.response?.data?.error?.message || error?.message || '操作失败';
     message.error(msg);
   } finally {
     loading.value = false;

@@ -33,7 +33,9 @@ const emit = defineEmits(['success']);
 const loading = ref(false);
 const recordId = ref<null | string>(null);
 const isEdit = computed(() => Boolean(recordId.value));
-const modalTitle = computed(() => (isEdit.value ? '编辑推荐规则' : '新建推荐规则'));
+const modalTitle = computed(() =>
+  isEdit.value ? '编辑推荐规则' : '新建推荐规则',
+);
 
 const name = ref('');
 const scene = ref('');
@@ -284,10 +286,14 @@ const [Modal, modalApi] = useVbenModal<RecommendationRuleDto | undefined>({
           </Col>
         </Row>
 
-        <div class="flex items-center justify-between p-3 border rounded bg-muted/20 mt-2">
+        <div
+          class="flex items-center justify-between p-3 border rounded bg-muted/20 mt-2"
+        >
           <div>
             <div class="font-medium text-sm">启用该推荐规则</div>
-            <div class="text-xs text-muted-foreground">停用后对应场景将降级为默认时间线推荐</div>
+            <div class="text-xs text-muted-foreground">
+              停用后对应场景将降级为默认时间线推荐
+            </div>
           </div>
           <Switch v-model:checked="isEnabled" />
         </div>

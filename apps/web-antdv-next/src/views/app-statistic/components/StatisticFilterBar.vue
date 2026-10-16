@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { LocationQueryRaw } from 'vue-router';
 
+import type { FormattedAppItem } from '../utils/app-storage';
+
 import type { AppStatisticQueryInput } from '#/api/app-statistic/types';
 
 import { computed, onMounted, ref, watch } from 'vue';
@@ -12,21 +14,20 @@ import {
   Col as ACol,
   Input as AInput,
   Alert,
+  RadioButton as ARadioButton,
+  RadioGroup as ARadioGroup,
   Row as ARow,
   Select as ASelect,
   Space as ASpace,
 } from 'antdv-next';
-import { RadioButton as ARadioButton } from 'antdv-next';
-import { RadioGroup as ARadioGroup } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { $t } from '#/locales';
 
-import type { FormattedAppItem } from '../utils/app-storage';
 import {
   getStoredAppId,
-  loadApplicationsWithAliases,
   onAppChange as listenAppChange,
+  loadApplicationsWithAliases,
   setStoredAppId,
 } from '../utils/app-storage';
 import StatisticDateRange from './StatisticDateRange.vue';
@@ -96,8 +97,7 @@ onMounted(async () => {
     applications.value = await loadApplicationsWithAliases();
     const storedAppId = getStoredAppId();
     const validStoredApp =
-      storedAppId &&
-      applications.value.some((app) => app.appId === storedAppId)
+      storedAppId && applications.value.some((app) => app.appId === storedAppId)
         ? storedAppId
         : undefined;
     const initialAppId =
@@ -132,16 +132,24 @@ const currentShortcut = ref<string>('7d');
 const initialStoredAppId = getStoredAppId();
 const internalQuery = ref<AppStatisticQueryInput>({
   appId:
-    (typeof route.query.appId === 'string' && route.query.appId !== 'default' ? route.query.appId : undefined) ||
-    (props.modelValue.appId && props.modelValue.appId !== 'default' ? props.modelValue.appId : undefined) ||
+    (typeof route.query.appId === 'string' && route.query.appId !== 'default'
+      ? route.query.appId
+      : undefined) ||
+    (props.modelValue.appId && props.modelValue.appId !== 'default'
+      ? props.modelValue.appId
+      : undefined) ||
     initialStoredAppId ||
     undefined,
   startDate:
-    (typeof route.query.startDate === 'string' ? route.query.startDate : undefined) ||
+    (typeof route.query.startDate === 'string'
+      ? route.query.startDate
+      : undefined) ||
     props.modelValue.startDate ||
     dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
   endDate:
-    (typeof route.query.endDate === 'string' ? route.query.endDate : undefined) ||
+    (typeof route.query.endDate === 'string'
+      ? route.query.endDate
+      : undefined) ||
     props.modelValue.endDate ||
     dayjs().format('YYYY-MM-DD'),
   platform: props.modelValue.platform || undefined,
@@ -164,7 +172,10 @@ function onShortcutChange(e: { target: { value?: unknown } }) {
 
 function setDateShortcut(shortcut: string) {
   currentShortcut.value = shortcut;
-  const today = dayjs(applications.value.find(app => app.appId === internalQuery.value.appId)?.today);
+  const today = dayjs(
+    applications.value.find((app) => app.appId === internalQuery.value.appId)
+      ?.today,
+  );
   let start: ReturnType<typeof dayjs>;
   let end: ReturnType<typeof dayjs>;
 
@@ -243,8 +254,12 @@ function syncToUrl(query: AppStatisticQueryInput) {
   if (query.manufacturer) nextQuery.manufacturer = query.manufacturer;
   else delete nextQuery.manufacturer;
 
-  const currentParams = new URLSearchParams(route.query as Record<string, string>).toString();
-  const nextParams = new URLSearchParams(nextQuery as Record<string, string>).toString();
+  const currentParams = new URLSearchParams(
+    route.query as Record<string, string>,
+  ).toString();
+  const nextParams = new URLSearchParams(
+    nextQuery as Record<string, string>,
+  ).toString();
 
   if (currentParams !== nextParams) {
     router.replace({ query: nextQuery });
@@ -291,7 +306,10 @@ function handleSearch() {
 
 function handleReset() {
   currentShortcut.value = '7d';
-  const today = dayjs(applications.value.find(app => app.appId === internalQuery.value.appId)?.today);
+  const today = dayjs(
+    applications.value.find((app) => app.appId === internalQuery.value.appId)
+      ?.today,
+  );
   internalQuery.value = {
     appId: internalQuery.value.appId,
     startDate: today.subtract(6, 'day').format('YYYY-MM-DD'),
@@ -399,15 +417,32 @@ watch(
       type="warning"
       class="mb-2"
     />
-    <Alert v-if="applicationsFailed" :message="$t('appStatistic.applicationsFailed')" type="warning" class="mb-2" />
-    <div class="mb-2 text-xs text-muted-foreground">{{ $t('appStatistic.statisticsTimeZone', { zone: timeZone }) }}</div>
+    <Alert
+      v-if="applicationsFailed"
+      :message="$t('appStatistic.applicationsFailed')"
+      type="warning"
+      class="mb-2"
+    />
+    <div class="mb-2 text-xs text-muted-foreground">
+      {{ $t('appStatistic.statisticsTimeZone', { zone: timeZone }) }}
+    </div>
     <ARow :gutter="[16, 12]" align="middle">
       <!-- App ID -->
       <ACol v-if="showAppId" :lg="4" :md="6" :sm="12" :xs="24">
         <div class="flex items-center space-x-2">
           <span class="text-muted-foreground whitespace-nowrap text-xs">App:</span>
-          <ASelect v-if="applications.length" v-model:value="internalQuery.appId" :options="appOptions" show-search option-filter-prop="label" size="small" class="w-full" @change="onAppChange" />
-          <AInput v-else
+          <ASelect
+            v-if="applications.length"
+            v-model:value="internalQuery.appId"
+            :options="appOptions"
+            show-search
+            option-filter-prop="label"
+            size="small"
+            class="w-full"
+            @change="onAppChange"
+          />
+          <AInput
+            v-else
             v-model:value="internalQuery.appId"
             allow-clear
             placeholder="AppId"

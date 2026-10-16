@@ -98,8 +98,7 @@ export function useColumns(
           },
           {
             code: 'hide',
-            show: (row: CommentDto) =>
-              row.status === CommentStatus.Approved,
+            show: (row: CommentDto) => row.status === CommentStatus.Approved,
             text: '隐藏',
           },
           {

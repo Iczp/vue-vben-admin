@@ -98,8 +98,11 @@ async function run(action: () => Promise<void>) {
   error.value = '';
   try {
     await action();
-  } catch (cause) {
-    const failure = getRequestErrorMessage(cause, '操作失败，请检查服务端返回信息。');
+  } catch (error) {
+    const failure = getRequestErrorMessage(
+      error,
+      '操作失败，请检查服务端返回信息。',
+    );
     error.value = [failure.message, failure.details].filter(Boolean).join('\n');
   } finally {
     busy.value = false;
@@ -396,8 +399,8 @@ onMounted(() => {
           @press-enter="run(() => loadAccounts())"
         />
         <Button :disabled="busy" @click="run(() => loadAccounts())">
-搜索主体
-</Button>
+          搜索主体
+        </Button>
         <Select
           v-model:value="accountId"
           :disabled="busy"
@@ -414,48 +417,48 @@ onMounted(() => {
           v-if="accounts.length < accountsTotal"
           :disabled="busy"
           @click="run(() => loadAccounts(true))"
-          >
-更多主体
-</Button>
+        >
+          更多主体
+        </Button>
         <template v-if="isSubscription">
           <span v-if="sessionId" class="text-muted-foreground">
             已自动选定会话，可直接发送。
           </span>
         </template>
         <template v-else>
-        <Select
-          v-model:value="sessionId"
-          :disabled="busy || !accountId"
-          style="width: 310px"
-          placeholder="选择实际发送会话"
-          :options="
-            sessions.map((unit) => ({
-              label: `${unit.destination?.displayName || unit.destination?.name || '会话'} · ${unit.id.slice(0, 8)}`,
-              value: unit.id,
-              disabled: unit.setting?.isInputEnabled === false,
-            }))
-          "
-        />
-        <Input
-          v-model:value="sessionKeyword"
-          :disabled="busy || !accountId"
-          style="width: 150px"
-          placeholder="搜索目标会话"
-          @press-enter="run(() => loadSessions())"
-        />
-        <Button
-          :disabled="busy || !accountId"
-          @click="run(() => loadSessions())"
+          <Select
+            v-model:value="sessionId"
+            :disabled="busy || !accountId"
+            style="width: 310px"
+            placeholder="选择实际发送会话"
+            :options="
+              sessions.map((unit) => ({
+                label: `${unit.destination?.displayName || unit.destination?.name || '会话'} · ${unit.id.slice(0, 8)}`,
+                value: unit.id,
+                disabled: unit.setting?.isInputEnabled === false,
+              }))
+            "
+          />
+          <Input
+            v-model:value="sessionKeyword"
+            :disabled="busy || !accountId"
+            style="width: 150px"
+            placeholder="搜索目标会话"
+            @press-enter="run(() => loadSessions())"
+          />
+          <Button
+            :disabled="busy || !accountId"
+            @click="run(() => loadSessions())"
           >
-搜索会话
-</Button>
-        <Button
-          v-if="sessions.length < sessionsTotal"
-          :disabled="busy"
-          @click="run(() => loadSessions(true))"
+            搜索会话
+          </Button>
+          <Button
+            v-if="sessions.length < sessionsTotal"
+            :disabled="busy"
+            @click="run(() => loadSessions(true))"
           >
-更多会话
-</Button>
+            更多会话
+          </Button>
         </template>
       </div>
       <p class="mt-3 text-muted-foreground">
@@ -471,15 +474,15 @@ onMounted(() => {
                 <Button
                   :disabled="items.length >= 8 || busy"
                   @click="addArticle()"
-                  >
-添加外部文章
-</Button>
+                >
+                  添加外部文章
+                </Button>
                 <Button
                   :disabled="items.length >= 8 || busy"
                   @click="cmsOpen = true"
-                  >
-从 CMS 选择
-</Button>
+                >
+                  从 CMS 选择
+                </Button>
               </div>
               <div
                 v-for="(item, index) in items"
@@ -491,71 +494,71 @@ onMounted(() => {
                   <strong class="min-w-0 flex-1">
                     第 {{ index + 1 }} 篇{{ index === 0 ? ' · 头条' : '' }}
                   </strong>
-                <Button
-                  size="small"
-                  :disabled="index === 0 || busy"
-                  @click="moveArticle(index, -1)"
+                  <Button
+                    size="small"
+                    :disabled="index === 0 || busy"
+                    @click="moveArticle(index, -1)"
                   >
-上移
-</Button>
-                <Button
-                  size="small"
-                  :disabled="index === items.length - 1 || busy"
-                  @click="moveArticle(index, 1)"
+                    上移
+                  </Button>
+                  <Button
+                    size="small"
+                    :disabled="index === items.length - 1 || busy"
+                    @click="moveArticle(index, 1)"
                   >
-下移
-</Button>
-                <Button
-                  size="small"
-                  danger
-                  :disabled="busy"
-                  @click="removeArticle(index)"
+                    下移
+                  </Button>
+                  <Button
+                    size="small"
+                    danger
+                    :disabled="busy"
+                    @click="removeArticle(index)"
                   >
-移除
-</Button>
+                    移除
+                  </Button>
                 </div>
-              <div class="grid gap-3">
-                <label>标题<Input
-                    v-model:value="item.title"
-                    :maxlength="256"
-                    :disabled="busy"
-                    placeholder="文章标题"
-                /></label>
-                <label>阅读地址<Input
-                    v-model:value="item.originalUrl"
-                    :maxlength="500"
-                    :disabled="busy"
-                    placeholder="https://…"
-                /></label>
-                <label>摘要<Input.TextArea
-                    v-model:value="item.description"
-                    :maxlength="256"
-                    :disabled="busy"
-                    :rows="3"
-                /></label>
-                <div>
-                  <span>封面地址</span>
-                  <MediaSelector
-                    :value="item.coverImageUrl"
-                    :asset-types="[AssetType.Image]"
-                    :max-count="1"
-                    :disabled="busy"
-                    placeholder="输入图片地址或从 CMS 素材库选择封面"
-                    @update:value="updateCover(item, $event)"
-                  />
+                <div class="grid gap-3">
+                  <label>标题<Input
+                      v-model:value="item.title"
+                      :maxlength="256"
+                      :disabled="busy"
+                      placeholder="文章标题"
+                  /></label>
+                  <label>阅读地址<Input
+                      v-model:value="item.originalUrl"
+                      :maxlength="500"
+                      :disabled="busy"
+                      placeholder="https://…"
+                  /></label>
+                  <label>摘要<Input.TextArea
+                      v-model:value="item.description"
+                      :maxlength="256"
+                      :disabled="busy"
+                      :rows="3"
+                  /></label>
+                  <div>
+                    <span>封面地址</span>
+                    <MediaSelector
+                      :value="item.coverImageUrl"
+                      :asset-types="[AssetType.Image]"
+                      :max-count="1"
+                      :disabled="busy"
+                      placeholder="输入图片地址或从 CMS 素材库选择封面"
+                      @update:value="updateCover(item, $event)"
+                    />
+                  </div>
+                  <label>作者<Input
+                      v-model:value="item.author"
+                      :maxlength="50"
+                      :disabled="busy"
+                  /></label>
+                  <a
+                    v-if="webUrl(item.originalUrl)"
+                    :href="webUrl(item.originalUrl)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >打开原文预览</a>
                 </div>
-                <label>作者<Input
-                    v-model:value="item.author"
-                    :maxlength="50"
-                    :disabled="busy"
-                /></label>
-                <a
-                  v-if="webUrl(item.originalUrl)"
-                  :href="webUrl(item.originalUrl)"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >打开原文预览</a>
-              </div>
               </div>
               <p v-if="items.length === 0" class="py-6 text-muted-foreground">
                 点击“添加外部文章”或“从 CMS 选择”开始组合文章，最多 8 篇。
@@ -564,11 +567,13 @@ onMounted(() => {
                 <Button
                   type="primary"
                   :loading="busy"
-                  :disabled="!sessionId || !canManage || busy || items.length === 0"
+                  :disabled="
+                    !sessionId || !canManage || busy || items.length === 0
+                  "
                   @click="run(() => submit(false))"
-                  >
-立即发送
-</Button>
+                >
+                  立即发送
+                </Button>
                 <label>计划时间（{{ timezone }}）<input
                     v-model="scheduleAt"
                     class="rounded border p-2"
@@ -576,20 +581,22 @@ onMounted(() => {
                     :disabled="busy"
                 /></label>
                 <Button
-                  :disabled="!sessionId || !canManage || busy || items.length === 0"
+                  :disabled="
+                    !sessionId || !canManage || busy || items.length === 0
+                  "
                   @click="run(() => submit(true))"
-                  >
-定时发送
-</Button>
+                >
+                  定时发送
+                </Button>
               </div>
             </fieldset>
           </Card>
           <Card title="实时预览">
-<ArticlePreview :items="items" />
+            <ArticlePreview :items="items" />
             <p class="mt-4 text-muted-foreground">
               修改标题、摘要、封面或顺序会立即更新。点击各篇可预览原文。
             </p>
-</Card>
+          </Card>
         </div>
       </Tabs.TabPane>
       <Tabs.TabPane key="history" tab="聊天消息历史">
@@ -598,11 +605,15 @@ onMounted(() => {
             :loading="busy"
             :disabled="!sessionId"
             @click="run(() => loadHistory())"
-            >
-刷新历史
-</Button>
+          >
+            刷新历史
+          </Button>
           <p v-if="!sessionId" class="py-6">
-            {{ isSubscription ? '请先选择发送主体，等待会话查询完成。' : '请先选择发送主体和目标会话。' }}
+            {{
+              isSubscription
+                ? '请先选择发送主体，等待会话查询完成。'
+                : '请先选择发送主体和目标会话。'
+            }}
           </p>
           <p v-else-if="history.length === 0" class="py-6">暂无消息。</p>
           <div
@@ -627,24 +638,24 @@ onMounted(() => {
               <Tag v-if="row.isRollbacked">已撤回</Tag>
               <div v-if="row.messageType === 11" class="mt-3 flex gap-2">
                 <Button size="small" @click="showPreview(row.content)">
-查看文章组
-</Button>
+                  查看文章组
+                </Button>
                 <Button
                   size="small"
                   :disabled="busy"
                   @click="copyDraft(row.content)"
-                  >
-复制为新草稿
-</Button>
+                >
+                  复制为新草稿
+                </Button>
                 <Button
                   v-if="!row.isRollbacked && String(row.senderId) === accountId"
                   size="small"
                   danger
                   :disabled="!canManage || busy"
                   @click="recall(row)"
-                  >
-撤回
-</Button>
+                >
+                  撤回
+                </Button>
               </div>
             </div>
           </div>
@@ -652,9 +663,9 @@ onMounted(() => {
             v-if="historyMore"
             :loading="busy"
             @click="run(() => loadHistory(true))"
-            >
-加载更早消息
-</Button>
+          >
+            加载更早消息
+          </Button>
         </Card>
       </Tabs.TabPane>
       <Tabs.TabPane key="schedules" tab="定时任务">
@@ -663,9 +674,9 @@ onMounted(() => {
             :loading="busy"
             :disabled="!sessionId"
             @click="run(loadSchedules)"
-            >
-刷新任务
-</Button>
+          >
+            刷新任务
+          </Button>
           <p class="mt-2 text-muted-foreground">
             定时发送需服务端启用；取消作用于未发送任务，已发送消息请在聊天历史撤回。
           </p>
@@ -678,10 +689,10 @@ onMounted(() => {
             <ArticlePreview :items="task.content.items" />
             <div>
               <Tag>
-{{
-                ['待发送', '执行中', '已发送', '失败', '已取消'][task.status]
-              }}
-</Tag>
+                {{
+                  ['待发送', '执行中', '已发送', '失败', '已取消'][task.status]
+                }}
+              </Tag>
               <p>计划：{{ dateText(task.scheduledAt) }}</p>
               <p>
                 实际：{{ dateText(task.sentAt) }} · 尝试 {{ task.attempts }} 次
@@ -692,46 +703,46 @@ onMounted(() => {
               </p>
               <div class="mt-3 flex flex-wrap gap-2">
                 <Button size="small" @click="showPreview(task.content)">
-预览
+                  预览
 </Button><Button
                   size="small"
                   :disabled="busy"
                   @click="copyDraft(task.content)"
-                  >
-复制为新草稿
-</Button>
+                >
+                  复制为新草稿
+                </Button>
                 <template v-if="task.status === 0 || task.status === 3">
-<Button
+                  <Button
                     size="small"
                     :disabled="busy || !canManage"
                     @click="
                       changeTask = task;
                       changeAt = localDate(task.scheduledAt);
                     "
-                    >
-修改时间
+                  >
+                    修改时间
 </Button><Button
                     size="small"
                     :disabled="busy || !canManage"
                     @click="taskAction(task, 'execute-now')"
-                    >
-{{ task.status === 3 ? '重试' : '立即执行' }}
+                  >
+                    {{ task.status === 3 ? '重试' : '立即执行' }}
 </Button><Button
                     size="small"
                     danger
                     :disabled="busy || !canManage"
                     @click="taskAction(task, 'cancel')"
-                    >
-取消
-</Button>
-</template>
+                  >
+                    取消
+                  </Button>
+                </template>
                 <Button
                   v-if="task.messageId"
                   size="small"
                   @click="tab = 'history'"
-                  >
-查看聊天历史
-</Button>
+                >
+                  查看聊天历史
+                </Button>
               </div>
             </div>
           </div>
@@ -742,17 +753,17 @@ onMounted(() => {
                 schedulePage--;
                 run(loadSchedules);
               "
-              >
-上一页
+            >
+              上一页
 </Button><span>第 {{ schedulePage }} 页 · 共 {{ schedulesTotal }} 条</span><Button
               :disabled="busy || schedulePage * 20 >= schedulesTotal"
               @click="
                 schedulePage++;
                 run(loadSchedules);
               "
-              >
-下一页
-</Button>
+            >
+              下一页
+            </Button>
           </div>
         </Card>
       </Tabs.TabPane>
@@ -767,20 +778,20 @@ onMounted(() => {
       @confirm="selectCms"
     />
     <Modal v-model:open="previewOpen" title="文章组预览" :footer="null">
-<ArticlePreview :items="previewItems" />
-</Modal>
+      <ArticlePreview :items="previewItems" />
+    </Modal>
     <Modal
       :open="!!changeTask"
       title="修改计划时间"
       :confirm-loading="busy"
       @cancel="changeTask = undefined"
       @ok="run(changeTime)"
-      >
-<label>发送时间（{{ timezone }}）<input
+    >
+      <label>发送时间（{{ timezone }}）<input
           v-model="changeAt"
           class="ml-2 rounded border p-2"
           type="datetime-local"
-/></label>
-</Modal>
+      /></label>
+    </Modal>
   </Page>
 </template>

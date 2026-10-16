@@ -37,6 +37,17 @@ const props = withDefaults(
   },
 );
 
+const emit = defineEmits<{
+  createFolder: [scope: AssetScope, parentId?: string];
+  editFolder: [folder: AssetFolderDto];
+  select: [
+    folderId: string | undefined,
+    scope: AssetScope,
+    folder?: AssetFolderDto,
+    fullPathText?: string,
+  ];
+}>();
+
 interface TreeItem {
   children?: TreeItem[];
   depth: number;
@@ -51,17 +62,6 @@ interface TreeItem {
   title: string;
   totalFileCount: number;
 }
-
-const emit = defineEmits<{
-  createFolder: [scope: AssetScope, parentId?: string];
-  editFolder: [folder: AssetFolderDto];
-  select: [
-    folderId: string | undefined,
-    scope: AssetScope,
-    folder?: AssetFolderDto,
-    fullPathText?: string,
-  ];
-}>();
 
 const loading = ref(false);
 const activeScope = ref<AssetScope>(AssetScope.Private);
@@ -262,9 +262,9 @@ function handleDeleteDirect(folder: AssetFolderDto, e?: Event) {
         message.success('文件夹删除成功');
         selectedKeys.value = ['__all__'];
         await loadTree();
-      } catch (err: any) {
+      } catch (error: any) {
         const msg =
-          err?.response?.data?.error?.message || err?.message || '删除失败';
+          error?.response?.data?.error?.message || error?.message || '删除失败';
         message.error(msg);
       }
     },
@@ -284,9 +284,9 @@ function handleDeleteAndMoveToParent(folder: AssetFolderDto, e?: Event) {
         message.success('已清空并删除该文件夹');
         selectedKeys.value = ['__all__'];
         await loadTree();
-      } catch (err: any) {
+      } catch (error: any) {
         const msg =
-          err?.response?.data?.error?.message || err?.message || '操作失败';
+          error?.response?.data?.error?.message || error?.message || '操作失败';
         message.error(msg);
       }
     },
@@ -320,7 +320,7 @@ onMounted(() => {
     <!-- Scope 切换选项卡 -->
     <div class="shrink-0 mb-3">
       <Tabs
-        v-model:activeKey="activeScopeKey"
+        v-model:active-key="activeScopeKey"
         size="small"
         class="w-full"
         :items="[
@@ -348,12 +348,7 @@ onMounted(() => {
             <template #icon><Plus class="size-3.5 mr-0.5" /></template>
             新建目录
           </Button>
-          <Button
-            type="text"
-            size="small"
-            title="刷新树"
-            @click="loadTree"
-          >
+          <Button type="text" size="small" title="刷新树" @click="loadTree">
             <template #icon><RotateCw class="size-3.5" /></template>
           </Button>
         </div>
@@ -365,7 +360,7 @@ onMounted(() => {
       <Spin :spinning="loading">
         <Tree
           v-if="treeData.length > 0"
-          v-model:selectedKeys="selectedKeys"
+          v-model:selected-keys="selectedKeys"
           :tree-data="treeData"
           block-node
           default-expand-all
@@ -376,7 +371,10 @@ onMounted(() => {
               <div
                 class="flex items-center justify-between group py-0.5 pr-1 w-full"
               >
-                <span class="truncate text-sm" :title="node.fullPathText || node.title">
+                <span
+                  class="truncate text-sm"
+                  :title="node.fullPathText || node.title"
+                >
                   {{ node.title }}
                 </span>
 
@@ -473,7 +471,11 @@ onMounted(() => {
                     ✏️ 重命名 / 编辑
                   </MenuItem>
                   <MenuDivider />
-                  <MenuItem key="del" danger @click="handleDeleteDirect(node.raw)">
+                  <MenuItem
+                    key="del"
+                    danger
+                    @click="handleDeleteDirect(node.raw)"
+                  >
                     🗑️ 删除空文件夹
                   </MenuItem>
                   <MenuItem
@@ -484,7 +486,7 @@ onMounted(() => {
                     📦 删除并移出素材到父级
                   </MenuItem>
                 </Menu>
-                <div v-else class="hidden" />
+                <div v-else class="hidden"></div>
               </template>
             </Dropdown>
           </template>

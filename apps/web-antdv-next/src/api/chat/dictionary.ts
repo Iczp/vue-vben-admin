@@ -107,7 +107,9 @@ export interface GetEntryValueInput extends PagedAndSortedResultRequestDto {
 /**
  * 分页获取字典键列表
  */
-export async function getEntryNamesApi(params?: PagedAndSortedResultRequestDto) {
+export async function getEntryNamesApi(
+  params?: PagedAndSortedResultRequestDto,
+) {
   return requestClient.get<PagedResultDto<EntryNameDto>>('/chat/entry-name', {
     params,
   });
@@ -150,7 +152,10 @@ export async function updateEntryNameApi(
   id: string,
   data: EntryNameUpdateInput,
 ) {
-  return requestClient.post<EntryNameDto>(`/chat/entry-name/${id}/update`, data);
+  return requestClient.post<EntryNameDto>(
+    `/chat/entry-name/${id}/update`,
+    data,
+  );
 }
 
 /**

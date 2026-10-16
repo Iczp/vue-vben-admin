@@ -5,7 +5,15 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Alert, Button, Card, Descriptions, DescriptionsItem, Input, message } from 'antdv-next';
+import {
+  Alert,
+  Button,
+  Card,
+  Descriptions,
+  DescriptionsItem,
+  Input,
+  message,
+} from 'antdv-next';
 
 import {
   checkUrlSecurityApi,
@@ -19,14 +27,14 @@ const checkResult = ref<null | UrlCheckOutput>(null);
 
 function getLevelBadge(level: UrlSecurityLevel) {
   switch (level) {
+    case UrlSecurityLevel.Blocked: {
+      return { text: '阻断 (黑名单拦截)', type: 'error' as const };
+    }
     case UrlSecurityLevel.Safe: {
       return { text: '安全 (白名单)', type: 'success' as const };
     }
     case UrlSecurityLevel.Warning: {
       return { text: '警告 (提示中转)', type: 'warning' as const };
-    }
-    case UrlSecurityLevel.Blocked: {
-      return { text: '阻断 (黑名单拦截)', type: 'error' as const };
     }
     default: {
       return { text: '未知', type: 'info' as const };
@@ -36,14 +44,17 @@ function getLevelBadge(level: UrlSecurityLevel) {
 
 function getCategoryName(category: UrlRiskCategory) {
   switch (category) {
-    case UrlRiskCategory.OfficialOrWhitelisted: {
-      return '平台官方/白名单';
-    }
-    case UrlRiskCategory.UnknownThirdParty: {
-      return '未认证第三方';
-    }
     case UrlRiskCategory.Fraud: {
       return '电信诈骗';
+    }
+    case UrlRiskCategory.IllegalGambling: {
+      return '非法赌博';
+    }
+    case UrlRiskCategory.Malware: {
+      return '病毒木马';
+    }
+    case UrlRiskCategory.OfficialOrWhitelisted: {
+      return '平台官方/白名单';
     }
     case UrlRiskCategory.Phishing: {
       return '仿冒钓鱼';
@@ -51,11 +62,8 @@ function getCategoryName(category: UrlRiskCategory) {
     case UrlRiskCategory.Porn: {
       return '色情低俗';
     }
-    case UrlRiskCategory.IllegalGambling: {
-      return '非法赌博';
-    }
-    case UrlRiskCategory.Malware: {
-      return '病毒木马';
+    case UrlRiskCategory.UnknownThirdParty: {
+      return '未认证第三方';
     }
     default: {
       return '其它违规';
@@ -114,7 +122,11 @@ defineExpose({ modalApi });
       <div v-if="checkResult" class="space-y-3 pt-2">
         <Alert
           :message="`安全评估结论：${getLevelBadge(checkResult.level).text}`"
-          :description="checkResult.message || checkResult.interceptReason || '该链接允许正常访问'"
+          :description="
+            checkResult.message ||
+            checkResult.interceptReason ||
+            '该链接允许正常访问'
+          "
           :type="getLevelBadge(checkResult.level).type"
           show-icon
         />

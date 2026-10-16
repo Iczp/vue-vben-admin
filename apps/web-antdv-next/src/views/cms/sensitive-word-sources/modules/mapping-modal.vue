@@ -26,7 +26,11 @@ import {
   validateSensitiveWordMappingProfileApi,
 } from '#/api/cms';
 
-import { actionOptions, riskLevelOptions, sceneOptions } from '../../sensitive-words/data';
+import {
+  actionOptions,
+  riskLevelOptions,
+  sceneOptions,
+} from '../../sensitive-words/data';
 
 const emit = defineEmits<{
   success: [];
@@ -39,7 +43,8 @@ const validationMessage = ref<string>();
 const validationStatus = ref<'error' | 'success' | null>(null);
 
 const formState = reactive({
-  categoryMappingsJson: '{\n  "politics": "Political",\n  "porn": "Sexual",\n  "violence": "Violence",\n  "ad": "Advertisement"\n}',
+  categoryMappingsJson:
+    '{\n  "politics": "Political",\n  "porn": "Sexual",\n  "violence": "Violence",\n  "ad": "Advertisement"\n}',
   code: '',
   defaultAction: SensitiveWordAction.Reject,
   defaultRiskLevel: SensitiveRiskLevel.High,
@@ -99,7 +104,8 @@ const [Modal, modalApi] = useVbenModal({
       modalApi.setState({ confirmLoading: true });
       if (isUpdate.value && recordId.value) {
         await updateSensitiveWordMappingProfileApi(recordId.value, {
-          categoryMappingsJson: formState.categoryMappingsJson.trim() || undefined,
+          categoryMappingsJson:
+            formState.categoryMappingsJson.trim() || undefined,
           defaultAction: formState.defaultAction,
           defaultRiskLevel: formState.defaultRiskLevel,
           defaultScene: formState.defaultScene,
@@ -109,7 +115,8 @@ const [Modal, modalApi] = useVbenModal({
         message.success('分类映射配置更新成功');
       } else {
         await createSensitiveWordMappingProfileApi({
-          categoryMappingsJson: formState.categoryMappingsJson.trim() || undefined,
+          categoryMappingsJson:
+            formState.categoryMappingsJson.trim() || undefined,
           code: formState.code,
           defaultAction: formState.defaultAction,
           defaultRiskLevel: formState.defaultRiskLevel,
@@ -130,7 +137,9 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange: async (isOpen) => {
     if (isOpen) {
-      const data = modalApi.getData() as SensitiveWordMappingProfileDto | undefined;
+      const data = modalApi.getData() as
+        | SensitiveWordMappingProfileDto
+        | undefined;
       validationStatus.value = null;
       validationMessage.value = undefined;
       if (data?.id) {
@@ -158,7 +167,8 @@ const [Modal, modalApi] = useVbenModal({
         formState.defaultRiskLevel = SensitiveRiskLevel.High;
         formState.defaultAction = SensitiveWordAction.Reject;
         formState.defaultScene = ModerationScene.General;
-        formState.categoryMappingsJson = '{\n  "politics": "Political",\n  "porn": "Sexual",\n  "violence": "Violence",\n  "ad": "Advertisement"\n}';
+        formState.categoryMappingsJson =
+          '{\n  "politics": "Political",\n  "porn": "Sexual",\n  "violence": "Violence",\n  "ad": "Advertisement"\n}';
         formState.remark = '';
       }
     }
@@ -211,7 +221,9 @@ const [Modal, modalApi] = useVbenModal({
       </div>
 
       <FormItem label="分类映射规则 (JSON Key-Value)">
-        <div class="flex items-center justify-between pb-1 text-xs text-muted-foreground">
+        <div
+          class="flex items-center justify-between pb-1 text-xs text-muted-foreground"
+        >
           <span>键为外部词库分类名，值为系统内置分类枚举字符串</span>
           <div class="flex items-center gap-2">
             <Button size="small" type="link" @click="handleFormatJson">
@@ -232,7 +244,7 @@ const [Modal, modalApi] = useVbenModal({
           v-model:value="formState.categoryMappingsJson"
           :rows="8"
           class="font-mono text-xs"
-          placeholder='{\n  "politics": "Political",\n  "porn": "Sexual"\n}'
+          placeholder="{\n  &quot;politics&quot;: &quot;Political&quot;,\n  &quot;porn&quot;: &quot;Sexual&quot;\n}"
         />
       </FormItem>
 

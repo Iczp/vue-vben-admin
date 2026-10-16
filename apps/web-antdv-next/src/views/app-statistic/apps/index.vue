@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+import type { FormattedAppItem } from '../utils/app-storage';
+
+import type { OverviewDto } from '#/api/app-statistic/types';
+
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -8,7 +12,6 @@ import {
   Col as ACol,
   Empty as AEmpty,
   Input as AInput,
-  message,
   Modal as AModal,
   RadioButton as ARadioButton,
   RadioGroup as ARadioGroup,
@@ -16,18 +19,15 @@ import {
   Spin as ASpin,
   Tag as ATag,
   Tooltip as ATooltip,
+  message,
 } from 'antdv-next';
 
 import {
   createStatisticApplicationApi,
   updateStatisticApplicationApi,
 } from '#/api/app-statistic/applications';
-
 import { getOverviewApi } from '#/api/app-statistic/dashboard';
-import type { OverviewDto } from '#/api/app-statistic/types';
 
-
-import type { FormattedAppItem } from '../utils/app-storage';
 import {
   addCustomApp,
   generateAppAlias,
@@ -55,7 +55,7 @@ const searchKeyword = ref('');
 const viewMode = ref<'grid' | 'table'>('grid');
 
 // 概览指标缓存：Map<AppId, OverviewDto>
-const overviewMap = ref<Record<string, OverviewDto | null>>({});
+const overviewMap = ref<Record<string, null | OverviewDto>>({});
 const overviewLoading = ref<Record<string, boolean>>({});
 
 // 弹窗状态
@@ -81,15 +81,24 @@ const filteredApps = computed(() => {
 
 // 汇总数据
 const totalDau = computed(() => {
-  return Object.values(overviewMap.value).reduce((sum, item) => sum + (item?.todayDau || 0), 0);
+  return Object.values(overviewMap.value).reduce(
+    (sum, item) => sum + (item?.todayDau || 0),
+    0,
+  );
 });
 
 const totalNewUsers = computed(() => {
-  return Object.values(overviewMap.value).reduce((sum, item) => sum + (item?.todayNewUsers || 0), 0);
+  return Object.values(overviewMap.value).reduce(
+    (sum, item) => sum + (item?.todayNewUsers || 0),
+    0,
+  );
 });
 
 const totalActiveDevices = computed(() => {
-  return Object.values(overviewMap.value).reduce((sum, item) => sum + (item?.todayActiveDevices || 0), 0);
+  return Object.values(overviewMap.value).reduce(
+    (sum, item) => sum + (item?.todayActiveDevices || 0),
+    0,
+  );
 });
 
 // 加载单个 App 的今日指标
@@ -176,7 +185,7 @@ async function handleSaveAlias() {
       removeAppAlias(editingAppId.value);
       message.success(`已恢复 ${editingAppId.value} 为推荐名称`);
     }
-  } catch (error) {
+  } catch {
     // 即使离线或后端返回错误，也先更新本地别名保证可用性
     if (alias) {
       setAppAlias(editingAppId.value, alias);
@@ -214,7 +223,7 @@ async function handleSaveAddApp() {
     newAppId.value = '';
     newAppAlias.value = '';
     await loadData();
-  } catch (error) {
+  } catch {
     // 若后端已存在或接口未通，兜底本地添加
     addCustomApp(id, aliasName);
     message.success(`已登记应用: ${id}`);
@@ -222,7 +231,6 @@ async function handleSaveAddApp() {
     await loadData();
   }
 }
-
 
 // 获取应用头像渐变色
 function getAppAvatarBg(name: string) {
@@ -258,24 +266,38 @@ function getAppInitials(name: string) {
 <template>
   <div class="p-4 space-y-4">
     <!-- 顶部概览 Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 bg-card p-5 rounded-lg border border-border shadow-xs">
+    <div
+      class="flex flex-wrap items-center justify-between gap-3 bg-card p-5 rounded-lg border border-border shadow-xs"
+    >
       <div>
         <div class="flex items-center gap-2">
           <GridIcon class="text-2xl text-primary size-6" />
-          <h1 class="text-xl font-bold tracking-tight text-foreground">App 统计分析中心</h1>
+          <h1 class="text-xl font-bold tracking-tight text-foreground">
+            App 统计分析中心
+          </h1>
           <ATag color="blue" class="ml-1 text-xs">AppId 主维度</ATag>
         </div>
         <p class="text-xs text-muted-foreground mt-1.5 max-w-2xl">
-          以 AppId 为核心维度统一管理与分析所有接入的应用运行、活跃与事件数据。选择下方任意 App 即可查看数据概览并可在各分析页右上角随时切换。
+          以 AppId
+          为核心维度统一管理与分析所有接入的应用运行、活跃与事件数据。选择下方任意
+          App 即可查看数据概览并可在各分析页右上角随时切换。
         </p>
       </div>
 
       <div class="flex items-center gap-2">
-        <AButton type="primary" class="flex items-center gap-1" @click="addModalVisible = true">
+        <AButton
+          type="primary"
+          class="flex items-center gap-1"
+          @click="addModalVisible = true"
+        >
           <PlusIcon class="size-3.5" />
           <span>添加应用</span>
         </AButton>
-        <AButton :loading="loading" class="flex items-center gap-1" @click="loadData">
+        <AButton
+          :loading="loading"
+          class="flex items-center gap-1"
+          @click="loadData"
+        >
           <ReloadIcon class="size-3.5" />
           <span>刷新</span>
         </AButton>
@@ -287,51 +309,73 @@ function getAppInitials(name: string) {
       <ACol :xs="24" :sm="12" :md="6">
         <ACard :bordered="false" class="shadow-2xs">
           <div class="text-xs text-muted-foreground">接入应用总数</div>
-          <div class="text-2xl font-bold text-foreground mt-1">{{ applications.length }}</div>
-          <div class="text-[11px] text-muted-foreground mt-1">包含配置与自发现应用</div>
+          <div class="text-2xl font-bold text-foreground mt-1">
+            {{ applications.length }}
+          </div>
+          <div class="text-[11px] text-muted-foreground mt-1">
+            包含配置与自发现应用
+          </div>
         </ACard>
       </ACol>
 
       <ACol :xs="24" :sm="12" :md="6">
         <ACard :bordered="false" class="shadow-2xs">
           <div class="text-xs text-muted-foreground">今日总活跃用户 (DAU)</div>
-          <div class="text-2xl font-bold text-primary mt-1">{{ totalDau.toLocaleString() }}</div>
-          <div class="text-[11px] text-muted-foreground mt-1">所有应用今日去重用户</div>
+          <div class="text-2xl font-bold text-primary mt-1">
+            {{ totalDau.toLocaleString() }}
+          </div>
+          <div class="text-[11px] text-muted-foreground mt-1">
+            所有应用今日去重用户
+          </div>
         </ACard>
       </ACol>
 
       <ACol :xs="24" :sm="12" :md="6">
         <ACard :bordered="false" class="shadow-2xs">
           <div class="text-xs text-muted-foreground">今日总新增用户</div>
-          <div class="text-2xl font-bold text-emerald-600 mt-1">{{ totalNewUsers.toLocaleString() }}</div>
-          <div class="text-[11px] text-muted-foreground mt-1">首次访问并上报事实</div>
+          <div class="text-2xl font-bold text-emerald-600 mt-1">
+            {{ totalNewUsers.toLocaleString() }}
+          </div>
+          <div class="text-[11px] text-muted-foreground mt-1">
+            首次访问并上报事实
+          </div>
         </ACard>
       </ACol>
 
       <ACol :xs="24" :sm="12" :md="6">
         <ACard :bordered="false" class="shadow-2xs">
           <div class="text-xs text-muted-foreground">今日活跃设备总数</div>
-          <div class="text-2xl font-bold text-indigo-600 mt-1">{{ totalActiveDevices.toLocaleString() }}</div>
-          <div class="text-[11px] text-muted-foreground mt-1">在线与上报活跃设备</div>
+          <div class="text-2xl font-bold text-indigo-600 mt-1">
+            {{ totalActiveDevices.toLocaleString() }}
+          </div>
+          <div class="text-[11px] text-muted-foreground mt-1">
+            在线与上报活跃设备
+          </div>
         </ACard>
       </ACol>
     </ARow>
 
     <!-- 筛选与展示模式切换栏 -->
-    <div class="flex flex-wrap items-center justify-between gap-3 bg-card p-3 rounded-md border border-border">
+    <div
+      class="flex flex-wrap items-center justify-between gap-3 bg-card p-3 rounded-md border border-border"
+    >
       <div class="flex items-center gap-2 flex-1 max-w-md">
         <AInput
           v-model:value="searchKeyword"
           placeholder="搜索应用名称、别名或 AppId..."
           allow-clear
         >
-          <template #prefix><SearchIcon class="text-muted-foreground size-4" /></template>
+          <template #prefix>
+<SearchIcon class="text-muted-foreground size-4" />
+</template>
         </AInput>
       </div>
 
       <div class="flex items-center gap-3">
         <span class="text-xs text-muted-foreground">
-          共找到 <strong class="text-foreground">{{ filteredApps.length }}</strong> 个应用
+          共找到
+          <strong class="text-foreground">{{ filteredApps.length }}</strong>
+          个应用
         </span>
         <ARadioGroup v-model:value="viewMode" size="small">
           <ARadioButton value="grid">
@@ -351,14 +395,25 @@ function getAppInitials(name: string) {
     </div>
 
     <!-- 骨架/加载中状态 -->
-    <div v-if="loading && applications.length === 0" class="py-12 flex justify-center">
+    <div
+      v-if="loading && applications.length === 0"
+      class="py-12 flex justify-center"
+    >
       <ASpin tip="正在加载应用列表..." />
     </div>
 
     <!-- 空数据提示 -->
-    <ACard v-else-if="filteredApps.length === 0" :bordered="false" class="py-12 text-center">
+    <ACard
+      v-else-if="filteredApps.length === 0"
+      :bordered="false"
+      class="py-12 text-center"
+    >
       <AEmpty description="未找到符合条件的应用">
-        <AButton type="primary" class="flex items-center gap-1 mx-auto" @click="addModalVisible = true">
+        <AButton
+          type="primary"
+          class="flex items-center gap-1 mx-auto"
+          @click="addModalVisible = true"
+        >
           <PlusIcon class="size-3.5" />
           <span>手动添加应用</span>
         </AButton>
@@ -366,7 +421,10 @@ function getAppInitials(name: string) {
     </ACard>
 
     <!-- 卡片视图模式 (Card Grid) -->
-    <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div
+      v-else-if="viewMode === 'grid'"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+    >
       <div
         v-for="app in filteredApps"
         :key="app.appId"
@@ -401,9 +459,24 @@ function getAppInitials(name: string) {
                 </div>
 
                 <div class="flex items-center gap-1 mt-0.5">
-                  <ATag v-if="app.isCustom" color="blue" class="text-[10px] scale-90 origin-left !m-0">自定义别名</ATag>
-                  <ATag v-else color="default" class="text-[10px] scale-90 origin-left !m-0">自动生成别名</ATag>
-                  <span class="text-[11px] text-muted-foreground/80 truncate font-mono" :title="app.appId">
+                  <ATag
+                    v-if="app.isCustom"
+                    color="blue"
+                    class="text-[10px] scale-90 origin-left !m-0"
+                    >
+自定义别名
+</ATag>
+                  <ATag
+                    v-else
+                    color="default"
+                    class="text-[10px] scale-90 origin-left !m-0"
+                    >
+自动生成别名
+</ATag>
+                  <span
+                    class="text-[11px] text-muted-foreground/80 truncate font-mono"
+                    :title="app.appId"
+                  >
                     {{ app.appId }}
                   </span>
                   <CopyIcon
@@ -428,25 +501,41 @@ function getAppInitials(name: string) {
             <div class="bg-card/70 p-2 rounded border border-border/40">
               <div class="text-[11px] text-muted-foreground">今日新增</div>
               <div class="text-sm font-bold text-emerald-600 mt-0.5">
-                {{ overviewMap[app.appId]?.todayNewUsers?.toLocaleString() ?? '-' }}
+                {{
+                  overviewMap[app.appId]?.todayNewUsers?.toLocaleString() ?? '-'
+                }}
               </div>
             </div>
             <div class="bg-card/70 p-2 rounded border border-border/40">
               <div class="text-[11px] text-muted-foreground">活跃设备</div>
               <div class="text-sm font-bold text-indigo-600 mt-0.5">
-                {{ overviewMap[app.appId]?.todayActiveDevices?.toLocaleString() ?? '-' }}
+                {{
+                  overviewMap[
+                    app.appId
+                  ]?.todayActiveDevices?.toLocaleString() ?? '-'
+                }}
               </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-[11px] text-muted-foreground mt-3 px-1">
-            <span>启动次数: <strong class="text-foreground font-mono">{{ overviewMap[app.appId]?.todayLaunchCount ?? '-' }}</strong></span>
-            <span>PV: <strong class="text-foreground font-mono">{{ overviewMap[app.appId]?.todayPageViewCount ?? '-' }}</strong></span>
+          <div
+            class="flex items-center justify-between text-[11px] text-muted-foreground mt-3 px-1"
+          >
+            <span>启动次数:
+              <strong class="text-foreground font-mono">{{
+                overviewMap[app.appId]?.todayLaunchCount ?? '-'
+              }}</strong></span>
+            <span>PV:
+              <strong class="text-foreground font-mono">{{
+                overviewMap[app.appId]?.todayPageViewCount ?? '-'
+              }}</strong></span>
           </div>
         </div>
 
         <!-- 卡片底部快捷操作 -->
-        <div class="p-3 bg-card border-t border-border/40 flex items-center justify-between gap-2">
+        <div
+          class="p-3 bg-card border-t border-border/40 flex items-center justify-between gap-2"
+        >
           <AButton
             type="primary"
             size="small"
@@ -459,17 +548,26 @@ function getAppInitials(name: string) {
 
           <div class="flex items-center gap-1">
             <ATooltip title="活跃分析">
-              <AButton size="small" @click="viewAnalysis(app.appId, '/app-statistic/activity')">
+              <AButton
+                size="small"
+                @click="viewAnalysis(app.appId, '/app-statistic/activity')"
+              >
                 活跃
               </AButton>
             </ATooltip>
             <ATooltip title="设备明细">
-              <AButton size="small" @click="viewAnalysis(app.appId, '/app-statistic/devices')">
+              <AButton
+                size="small"
+                @click="viewAnalysis(app.appId, '/app-statistic/devices')"
+              >
                 设备
               </AButton>
             </ATooltip>
             <ATooltip title="事件日志">
-              <AButton size="small" @click="viewAnalysis(app.appId, '/app-statistic/events')">
+              <AButton
+                size="small"
+                @click="viewAnalysis(app.appId, '/app-statistic/events')"
+              >
                 事件
               </AButton>
             </ATooltip>
@@ -483,7 +581,9 @@ function getAppInitials(name: string) {
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
-            <tr class="border-b border-border bg-muted/40 text-muted-foreground font-medium">
+            <tr
+              class="border-b border-border bg-muted/40 text-muted-foreground font-medium"
+            >
               <th class="p-3">应用名称 / 别名</th>
               <th class="p-3">应用标识 (AppId)</th>
               <th class="p-3 text-right">今日活跃 (DAU)</th>
@@ -502,8 +602,12 @@ function getAppInitials(name: string) {
             >
               <td class="p-3">
                 <div class="flex items-center gap-2">
-                  <span class="font-semibold text-foreground text-sm">{{ app.name }}</span>
-                  <ATag v-if="app.isCustom" color="blue" class="text-[10px]">自定义</ATag>
+                  <span class="font-semibold text-foreground text-sm">{{
+                    app.name
+                  }}</span>
+                  <ATag v-if="app.isCustom" color="blue" class="text-[10px]">
+自定义
+</ATag>
                   <ATooltip title="修改别名">
                     <EditIcon
                       class="text-xs text-muted-foreground/60 hover:text-primary cursor-pointer size-3.5"
@@ -525,10 +629,16 @@ function getAppInitials(name: string) {
                 {{ overviewMap[app.appId]?.todayDau?.toLocaleString() ?? '-' }}
               </td>
               <td class="p-3 text-right font-medium text-emerald-600">
-                {{ overviewMap[app.appId]?.todayNewUsers?.toLocaleString() ?? '-' }}
+                {{
+                  overviewMap[app.appId]?.todayNewUsers?.toLocaleString() ?? '-'
+                }}
               </td>
               <td class="p-3 text-right font-medium text-indigo-600">
-                {{ overviewMap[app.appId]?.todayActiveDevices?.toLocaleString() ?? '-' }}
+                {{
+                  overviewMap[
+                    app.appId
+                  ]?.todayActiveDevices?.toLocaleString() ?? '-'
+                }}
               </td>
               <td class="p-3 text-right font-mono text-foreground">
                 {{ overviewMap[app.appId]?.todayLaunchCount ?? '-' }}
@@ -576,13 +686,17 @@ function getAppInitials(name: string) {
       <div class="py-2 space-y-3">
         <div>
           <div class="text-xs text-muted-foreground mb-1">应用标识 (AppId)</div>
-          <div class="font-mono text-sm font-semibold text-foreground bg-muted/40 p-2 rounded border border-border/50">
+          <div
+            class="font-mono text-sm font-semibold text-foreground bg-muted/40 p-2 rounded border border-border/50"
+          >
             {{ editingAppId }}
           </div>
         </div>
 
         <div>
-          <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <div
+            class="flex items-center justify-between text-xs text-muted-foreground mb-1"
+          >
             <span>应用别名 / 显示名称</span>
             <span
               class="text-primary cursor-pointer hover:underline"
@@ -598,7 +712,9 @@ function getAppInitials(name: string) {
           />
           <div class="text-[11px] text-muted-foreground mt-1">
             当前根据 AppId 自动生成的推荐别名为：
-            <span class="font-medium text-foreground">{{ generateAppAlias(editingAppId) }}</span>
+            <span class="font-medium text-foreground">{{
+              generateAppAlias(editingAppId)
+            }}</span>
           </div>
         </div>
       </div>
@@ -614,7 +730,9 @@ function getAppInitials(name: string) {
     >
       <div class="py-2 space-y-3">
         <div>
-          <div class="text-xs text-muted-foreground mb-1">应用标识 (AppId) *</div>
+          <div class="text-xs text-muted-foreground mb-1">
+            应用标识 (AppId) *
+          </div>
           <AInput
             v-model:value="newAppId"
             placeholder="例如: com.rctea.im 或 gotoim-app"
@@ -626,7 +744,9 @@ function getAppInitials(name: string) {
         </div>
 
         <div>
-          <div class="text-xs text-muted-foreground mb-1">应用别名 / 显示名称 (选填)</div>
+          <div class="text-xs text-muted-foreground mb-1">
+            应用别名 / 显示名称 (选填)
+          </div>
           <AInput
             v-model:value="newAppAlias"
             placeholder="留空则自动按规范生成"

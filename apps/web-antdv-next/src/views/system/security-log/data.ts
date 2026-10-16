@@ -17,7 +17,11 @@ export function useColumns(): VxeTableGridColumns<SecurityLogDto> {
       cellRender: {
         name: 'CellTag',
         options: [
-          { color: 'success', label: 'LoginSucceeded', value: 'LoginSucceeded' },
+          {
+            color: 'success',
+            label: 'LoginSucceeded',
+            value: 'LoginSucceeded',
+          },
           { color: 'error', label: 'LoginFailed', value: 'LoginFailed' },
           { color: 'warning', label: 'Logout', value: 'Logout' },
         ],

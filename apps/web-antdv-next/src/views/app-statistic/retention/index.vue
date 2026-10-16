@@ -107,11 +107,7 @@ onMounted(() => {
     </div>
 
     <!-- Filter Bar -->
-    <StatisticFilterBar
-      v-model="query"
-      :loading="loading"
-      @change="loadData"
-    />
+    <StatisticFilterBar v-model="query" :loading="loading" @change="loadData" />
 
     <!-- Average Retention KPIs -->
     <div v-if="!failed" class="space-y-4">

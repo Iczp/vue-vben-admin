@@ -170,10 +170,14 @@ const [Modal, modalApi] = useVbenModal<ContentRedirectDto | undefined>({
           </RadioGroup>
         </FormItem>
 
-        <div class="flex items-center justify-between p-3 border rounded bg-muted/20">
+        <div
+          class="flex items-center justify-between p-3 border rounded bg-muted/20"
+        >
           <div>
             <div class="font-medium text-sm">启用规则</div>
-            <div class="text-xs text-muted-foreground">关闭后访问该路径将不再触发重定向</div>
+            <div class="text-xs text-muted-foreground">
+              关闭后访问该路径将不再触发重定向
+            </div>
           </div>
           <Switch v-model:checked="isEnabled" />
         </div>

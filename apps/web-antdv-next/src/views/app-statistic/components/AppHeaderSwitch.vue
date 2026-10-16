@@ -1,17 +1,18 @@
 <script lang="ts" setup>
+import type { FormattedAppItem } from '../utils/app-storage';
+
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import {
   Button as AButton,
   Input as AInput,
-  message,
   Modal as AModal,
   Select as ASelect,
   Tooltip as ATooltip,
+  message,
 } from 'antdv-next';
 
-import type { FormattedAppItem } from '../utils/app-storage';
 import {
   addCustomApp,
   generateAppAlias,
@@ -120,7 +121,9 @@ async function handleSaveAlias() {
     message.success(`已为 ${editingAppId.value} 设置别名: ${alias}`);
   } else {
     removeAppAlias(editingAppId.value);
-    message.success(`已恢复 ${editingAppId.value} 自动别名: ${generateAppAlias(editingAppId.value)}`);
+    message.success(
+      `已恢复 ${editingAppId.value} 自动别名: ${generateAppAlias(editingAppId.value)}`,
+    );
   }
   editModalVisible.value = false;
   await refreshApps();
@@ -161,9 +164,10 @@ let cleanupListener: (() => void) | null = null;
 
 onMounted(async () => {
   // 优先级：route.query.appId > props.modelValue > getStoredAppId()
-  const qAppId = typeof route.query.appId === 'string' && route.query.appId !== 'default'
-    ? route.query.appId
-    : undefined;
+  const qAppId =
+    typeof route.query.appId === 'string' && route.query.appId !== 'default'
+      ? route.query.appId
+      : undefined;
 
   currentAppId.value = qAppId || props.modelValue || getStoredAppId();
 
@@ -198,7 +202,11 @@ watch(
 watch(
   () => route.query.appId,
   (val) => {
-    if (typeof val === 'string' && val !== 'default' && val !== currentAppId.value) {
+    if (
+      typeof val === 'string' &&
+      val !== 'default' &&
+      val !== currentAppId.value
+    ) {
       currentAppId.value = val;
       setStoredAppId(val);
       emit('update:modelValue', val);
@@ -209,9 +217,13 @@ watch(
 </script>
 
 <template>
-  <div class="inline-flex items-center gap-1.5 bg-card/90 border border-border/80 px-2.5 py-1 rounded-md shadow-xs">
+  <div
+    class="inline-flex items-center gap-1.5 bg-card/90 border border-border/80 px-2.5 py-1 rounded-md shadow-xs"
+  >
     <!-- 图标与提示 -->
-    <div class="flex items-center gap-1 text-muted-foreground text-xs shrink-0 select-none">
+    <div
+      class="flex items-center gap-1 text-muted-foreground text-xs shrink-0 select-none"
+    >
       <GridIcon class="text-primary text-sm size-3.5" />
       <span class="font-medium text-foreground hidden sm:inline">当前应用:</span>
     </div>
@@ -278,13 +290,17 @@ watch(
       <div class="py-2 space-y-3">
         <div>
           <div class="text-xs text-muted-foreground mb-1">应用标识 (AppId)</div>
-          <div class="font-mono text-sm font-semibold text-foreground bg-muted/40 p-2 rounded border border-border/50">
+          <div
+            class="font-mono text-sm font-semibold text-foreground bg-muted/40 p-2 rounded border border-border/50"
+          >
             {{ editingAppId }}
           </div>
         </div>
 
         <div>
-          <div class="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <div
+            class="flex items-center justify-between text-xs text-muted-foreground mb-1"
+          >
             <span>应用别名 / 显示名称</span>
             <span
               class="text-primary cursor-pointer hover:underline"
@@ -300,7 +316,9 @@ watch(
           />
           <div class="text-[11px] text-muted-foreground mt-1">
             当前系统根据 AppId 自动生成的别名为：
-            <span class="font-medium text-foreground">{{ generateAppAlias(editingAppId) }}</span>
+            <span class="font-medium text-foreground">{{
+              generateAppAlias(editingAppId)
+            }}</span>
           </div>
         </div>
       </div>
@@ -316,7 +334,9 @@ watch(
     >
       <div class="py-2 space-y-3">
         <div>
-          <div class="text-xs text-muted-foreground mb-1">应用标识 (AppId) *</div>
+          <div class="text-xs text-muted-foreground mb-1">
+            应用标识 (AppId) *
+          </div>
           <AInput
             v-model:value="newAppId"
             placeholder="例如: com.rctea.im 或 gotoim-app"
@@ -328,7 +348,9 @@ watch(
         </div>
 
         <div>
-          <div class="text-xs text-muted-foreground mb-1">应用别名 / 名称 (选填)</div>
+          <div class="text-xs text-muted-foreground mb-1">
+            应用别名 / 名称 (选填)
+          </div>
           <AInput
             v-model:value="newAppAlias"
             placeholder="留空则自动根据 AppId 规范生成"

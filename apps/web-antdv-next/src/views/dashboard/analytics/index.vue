@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { AnalysisOverviewItem } from '@vben/common-ui';
 import type { TabOption } from '@vben/types';
+
 import type { MessageReportOptions } from '#/api/chat/message-report';
 
 import { computed, onMounted, ref } from 'vue';
@@ -18,6 +19,7 @@ import {
   SvgCardIcon,
   SvgDownloadIcon,
 } from '@vben/icons';
+
 import { Button, Card, RadioGroup, Statistic, Tag } from 'antdv-next';
 
 import {
@@ -115,7 +117,10 @@ async function loadOverviewData() {
     });
     currentPeriodTotalMessages.value = sum;
     if (sum > 0) {
-      allTimeEstimatedMessages.value = Math.max(allTimeEstimatedMessages.value, sum * 3);
+      allTimeEstimatedMessages.value = Math.max(
+        allTimeEstimatedMessages.value,
+        sum * 3,
+      );
     }
   } catch (error) {
     console.error('Failed to calculate period messages', error);
@@ -175,9 +180,13 @@ onMounted(() => {
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
             <span class="text-sm font-bold text-foreground">📊 消息统计粒度</span>
-            <Tag color="processing" class="text-xs font-medium">当前分析维度</Tag>
+            <Tag color="processing" class="text-xs font-medium">
+当前分析维度
+</Tag>
           </div>
-          <span class="text-xs text-muted-foreground">{{ currentGranularityTitle }}</span>
+          <span class="text-xs text-muted-foreground">{{
+            currentGranularityTitle
+          }}</span>
         </div>
         <RadioGroup
           v-model:value="currentReportType"
@@ -191,16 +200,26 @@ onMounted(() => {
       </Card>
 
       <!-- 状态指标 1: 引擎收集状态 -->
-      <Card size="small" class="lg:col-span-2 shadow-sm flex flex-col justify-center">
+      <Card
+        size="small"
+        class="lg:col-span-2 shadow-sm flex flex-col justify-center"
+      >
         <Statistic
           title="统计引擎收集"
           :value="reportOptions?.enable ? '已启用' : '未启用'"
-          :value-style="{ color: reportOptions?.enable ? '#10b981' : '#ef4444', fontWeight: 700, fontSize: '18px' }"
+          :value-style="{
+            color: reportOptions?.enable ? '#10b981' : '#ef4444',
+            fontWeight: 700,
+            fontSize: '18px',
+          }"
         />
       </Card>
 
       <!-- 状态指标 2: 自动落库周期 -->
-      <Card size="small" class="lg:col-span-2 shadow-sm flex flex-col justify-center">
+      <Card
+        size="small"
+        class="lg:col-span-2 shadow-sm flex flex-col justify-center"
+      >
         <Statistic
           title="自动落库周期"
           :value="reportOptions?.flushToDbTimerPeriodSeconds ?? '-'"
@@ -210,15 +229,20 @@ onMounted(() => {
       </Card>
 
       <!-- 操作入口卡片 -->
-      <Card size="small" class="lg:col-span-3 shadow-sm flex items-center justify-between bg-muted/20">
+      <Card
+        size="small"
+        class="lg:col-span-3 shadow-sm flex items-center justify-between bg-muted/20"
+      >
         <div>
-          <div class="text-xs font-semibold text-foreground mb-1">报表数据管理</div>
-          <div class="text-xs text-muted-foreground">落盘缓存或查看报表大盘</div>
+          <div class="text-xs font-semibold text-foreground mb-1">
+            报表数据管理
+          </div>
+          <div class="text-xs text-muted-foreground">
+            落盘缓存或查看报表大盘
+          </div>
         </div>
         <div class="flex items-center gap-2">
-          <Button size="small" @click="onOpenFlushModal">
-            落库
-          </Button>
+          <Button size="small" @click="onOpenFlushModal"> 落库 </Button>
           <Button type="primary" size="small" @click="goToMessageReportPage">
             完整报表 &gt;
           </Button>
@@ -239,11 +263,17 @@ onMounted(() => {
     <!-- 下层分布图表卡片 -->
     <div class="w-full md:flex">
       <!-- 1. 终端与通道访问分布 -->
-      <AnalysisChartCard class="mt-5 md:mt-0 md:mr-4 md:w-1/3" title="访问终端分布">
+      <AnalysisChartCard
+        class="mt-5 md:mt-0 md:mr-4 md:w-1/3"
+        title="访问终端分布"
+      >
         <AnalyticsVisitsData />
       </AnalysisChartCard>
       <!-- 2. 消息类型占比 (联动当前粒度) -->
-      <AnalysisChartCard class="mt-5 md:mt-0 md:mr-4 md:w-1/3" title="消息类型分布">
+      <AnalysisChartCard
+        class="mt-5 md:mt-0 md:mr-4 md:w-1/3"
+        title="消息类型分布"
+      >
         <AnalyticsVisitsSource :report-type="currentReportType" />
       </AnalysisChartCard>
       <!-- 3. 业务服务分布 -->
@@ -262,10 +292,10 @@ onMounted(() => {
 
 .report-type-radio-group :deep(.ant-radio-button-wrapper) {
   flex: 1;
-  text-align: center;
-  font-weight: 600;
-  font-size: 13px;
   height: 36px;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 34px;
+  text-align: center;
 }
 </style>

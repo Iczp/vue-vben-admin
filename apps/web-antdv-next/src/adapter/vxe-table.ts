@@ -253,33 +253,28 @@ setupVbenVxeTable({
         const shape = props?.shape || 'square';
         const size = props?.size || 38;
 
-        return h(
-          'div',
-          { class: 'flex items-center justify-center py-0.5' },
-          [
-            h(
-              Avatar,
-              {
-                shape,
-                size,
-                src: avatarUrl,
-                style: {
-                  backgroundColor: '#3b82f6',
-                  borderRadius: shape === 'square' ? '6px' : '9999px',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  ...props?.style,
-                },
-                ...props,
+        return h('div', { class: 'flex items-center justify-center py-0.5' }, [
+          h(
+            Avatar,
+            {
+              shape,
+              size,
+              src: avatarUrl,
+              style: {
+                backgroundColor: '#3b82f6',
+                borderRadius: shape === 'square' ? '6px' : '9999px',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+                cursor: 'pointer',
+                fontWeight: 600,
+                ...props?.style,
               },
-              {
-                default: () =>
-                  name ? name.slice(0, 1).toUpperCase() : '💬',
-              },
-            ),
-          ],
-        );
+              ...props,
+            },
+            {
+              default: () => (name ? name.slice(0, 1).toUpperCase() : '💬'),
+            },
+          ),
+        ]);
       },
     });
 
@@ -288,11 +283,11 @@ setupVbenVxeTable({
       renderTableDefault({ attrs, props }, { column, row }) {
         const val = get(row, column.field);
         const text =
-          props?.text !== undefined
-            ? isFunction(props.text)
+          props?.text === undefined
+            ? val
+            : isFunction(props.text)
               ? props.text(row)
-              : props.text
-            : val;
+              : props.text;
         const clickHandler = attrs?.onClick || props?.onClick;
         return h(
           Button,
@@ -301,7 +296,9 @@ setupVbenVxeTable({
             type: 'link',
             style: { padding: 0, height: 'auto', ...props?.style },
             ...props,
-            onClick: clickHandler ? () => clickHandler({ column, row, value: val }) : undefined,
+            onClick: clickHandler
+              ? () => clickHandler({ column, row, value: val })
+              : undefined,
           },
           { default: () => text },
         );
@@ -313,12 +310,16 @@ setupVbenVxeTable({
       renderTableDefault({ options, props }, { column, row }) {
         const value = get(row, column.field);
         if (Array.isArray(value)) {
-          if (value.length === 0) return h('span', { class: 'text-muted-foreground' }, '-');
+          if (value.length === 0)
+            return h('span', { class: 'text-muted-foreground' }, '-');
           return h(
             'div',
             { class: 'flex flex-wrap gap-1 items-center' },
             value.map((item: any) => {
-              const label = typeof item === 'object' && item !== null ? item.name || item.label : String(item);
+              const label =
+                typeof item === 'object' && item !== null
+                  ? item.name || item.label
+                  : String(item);
               const color = item?.color || 'blue';
               return h(
                 Tag,

@@ -52,13 +52,7 @@ function onDelete(row: BlobDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: BlobDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: BlobDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);

@@ -1,10 +1,11 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   CreateSensitiveWordWhitelistInput,
   GetSensitiveWordWhitelistsInput,
   SensitiveWordWhitelistDto,
   UpdateSensitiveWordWhitelistInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 
@@ -58,7 +59,9 @@ export async function updateSensitiveWordWhitelistApi(
  * 删除白名单词条
  */
 export async function deleteSensitiveWordWhitelistApi(id: string) {
-  return requestClient.delete<void>(`/cms/admin/sensitive-word-whitelists/${id}`);
+  return requestClient.delete<void>(
+    `/cms/admin/sensitive-word-whitelists/${id}`,
+  );
 }
 
 /**

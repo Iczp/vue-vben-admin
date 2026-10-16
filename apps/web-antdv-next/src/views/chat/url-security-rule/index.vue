@@ -18,6 +18,7 @@ import {
 import { $t } from '#/locales';
 
 import { CATEGORY_OPTIONS, LEVEL_OPTIONS, useColumns } from './data';
+import BatchImportModal from './modules/batch-import-modal.vue';
 import RuleModal from './modules/rule-modal.vue';
 import UrlInspectorModal from './modules/url-inspector-modal.vue';
 
@@ -39,6 +40,16 @@ const [InspectorModalComp, inspectorModalApi] = useVbenModal({
   connectedComponent: UrlInspectorModal,
   destroyOnClose: true,
 });
+
+// 批量导入弹窗
+const [BatchImportModalComp, batchImportModalApi] = useVbenModal({
+  connectedComponent: BatchImportModal,
+  destroyOnClose: true,
+});
+
+function onBatchImport() {
+  batchImportModalApi.open();
+}
 
 function onCreate() {
   ruleModalApi.setData(null).open();
@@ -136,7 +147,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
           return await getUrlSecurityRulesApi({
             category: selectedCategory.value,
-            isEnabled: selectedEnabled.value !== undefined ? selectedEnabled.value === 1 : undefined,
+            isEnabled:
+              selectedEnabled.value === undefined
+                ? undefined
+                : selectedEnabled.value === 1,
             keyword: keyword.value.trim() || undefined,
             level: selectedLevel.value,
             maxResultCount,
@@ -164,6 +178,7 @@ function refreshGrid() {
   <Page auto-content-height>
     <RuleModalComp @success="refreshGrid" />
     <InspectorModalComp />
+    <BatchImportModalComp @success="refreshGrid" />
 
     <Grid>
       <!-- 面包屑与标题 -->
@@ -227,15 +242,13 @@ function refreshGrid() {
             <Button @click="onInspect">
               <span class="mr-1">🔍</span> 在线 URL 检测
             </Button>
-            <Button
-              :loading="isRefreshingCache"
-              @click="onRefreshCache"
-            >
+            <Button @click="onBatchImport">
+              <span class="mr-1">📥</span> 批量导入规则
+            </Button>
+            <Button :loading="isRefreshingCache" @click="onRefreshCache">
               <span class="mr-1">⚡</span> 刷新 Redis 缓存
             </Button>
-            <Button type="primary" @click="onCreate">
-              + 新增安全规则
-            </Button>
+            <Button type="primary" @click="onCreate"> + 新增安全规则 </Button>
           </div>
         </div>
       </template>

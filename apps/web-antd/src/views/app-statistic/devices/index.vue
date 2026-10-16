@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { DeviceDto, GetDevicesInput } from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -15,7 +17,6 @@ import {
 import dayjs from 'dayjs';
 
 import { getDevicesApi } from '#/api/app-statistic/device';
-import type { DeviceDto, GetDevicesInput } from '#/api/app-statistic/types';
 
 const router = useRouter();
 const route = useRoute();
@@ -184,7 +185,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">设备列表</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          设备列表
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           检索终端物理设备、查看首次与最近活跃、排查特定设备统计信息
         </p>
@@ -242,7 +245,12 @@ onMounted(() => {
 
         <ACol :lg="6" :md="24" :sm="24" :xs="24">
           <div class="flex items-center justify-end space-x-2">
-            <AButton :loading="loading" size="small" type="primary" @click="handleSearch">
+            <AButton
+              :loading="loading"
+              size="small"
+              type="primary"
+              @click="handleSearch"
+            >
               查询
             </AButton>
             <AButton size="small" @click="handleReset">重置</AButton>

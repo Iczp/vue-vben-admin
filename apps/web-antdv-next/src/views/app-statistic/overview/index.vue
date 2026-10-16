@@ -9,13 +9,14 @@ import { useRouter } from 'vue-router';
 
 import { useAccess } from '@vben/access';
 
-import { message, Popconfirm } from 'antdv-next';
-import { Alert } from 'antdv-next';
 import {
   Button as AButton,
   Card as ACard,
   Col as ACol,
+  Alert,
   Row as ARow,
+  message,
+  Popconfirm,
 } from 'antdv-next';
 import dayjs from 'dayjs';
 
@@ -127,7 +128,9 @@ onMounted(() => {
           {{ $t('appStatistic.text178') }}
         </p>
       </div>
-      <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <div
+        class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+      >
         <!-- 页面右上角 App 切换器 -->
         <AppHeaderSwitch v-model="query.appId" @change="loadData" />
 
@@ -154,11 +157,7 @@ onMounted(() => {
 
     <Alert :message="$t('appStatistic.aggregateNote')" type="info" show-icon />
     <!-- Filter Bar -->
-    <StatisticFilterBar
-      v-model="query"
-      :loading="loading"
-      @change="loadData"
-    />
+    <StatisticFilterBar v-model="query" :loading="loading" @change="loadData" />
 
     <!-- KPI Metric Cards -->
     <div v-if="!failed" class="space-y-4">

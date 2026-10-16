@@ -165,8 +165,8 @@ export function useColumns(
             disabled: (row: AiRunDto) =>
               ![
                 AiRunStatus.Failed,
-                AiRunStatus.TimedOut,
                 AiRunStatus.RetryScheduled,
+                AiRunStatus.TimedOut,
               ].includes(row.status),
             text: '重试',
           },
@@ -187,4 +187,3 @@ export function useColumns(
     },
   ];
 }
-

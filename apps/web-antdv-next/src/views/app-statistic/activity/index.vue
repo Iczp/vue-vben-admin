@@ -6,15 +6,15 @@ import type {
 
 import { computed, onMounted, ref } from 'vue';
 
-import { Alert } from 'antdv-next';
 import {
   Button as AButton,
   Card as ACard,
   Col as ACol,
+  Alert,
+  RadioButton as ARadioButton,
+  RadioGroup as ARadioGroup,
   Row as ARow,
 } from 'antdv-next';
-import { RadioButton as ARadioButton } from 'antdv-next';
-import { RadioGroup as ARadioGroup } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { getActivityAnalysisApi } from '#/api/app-statistic/activity';
@@ -107,11 +107,7 @@ onMounted(() => {
 
     <Alert :message="$t('appStatistic.aggregateNote')" type="info" show-icon />
     <!-- Filter Bar -->
-    <StatisticFilterBar
-      v-model="query"
-      :loading="loading"
-      @change="loadData"
-    />
+    <StatisticFilterBar v-model="query" :loading="loading" @change="loadData" />
 
     <Alert
       v-if="activityData && !activityData.hasRollingMetrics"

@@ -60,8 +60,7 @@ export interface AbortInput {
   reason: string;
 }
 
-export interface GetOnlineConnectionsInput
-  extends PagedAndSortedResultRequestDto {
+export interface GetOnlineConnectionsInput extends PagedAndSortedResultRequestDto {
   chatObjectId?: number;
   clientId?: string;
   connectionId?: string;
@@ -110,9 +109,12 @@ export async function getOnlineTotalCountApi(host?: string) {
  * 分页获取所有主机节点及连接分布 (GET /api/chat/online/hosts)
  */
 export async function getOnlineHostsApi(params?: GetOnlineHostsInput) {
-  return requestClient.get<PagedResultDto<OnlineHostDto>>('/chat/online/hosts', {
-    params,
-  });
+  return requestClient.get<PagedResultDto<OnlineHostDto>>(
+    '/chat/online/hosts',
+    {
+      params,
+    },
+  );
 }
 
 /**
@@ -159,7 +161,9 @@ export async function getOnlineCountByOwnerApi(ownerId: number | string) {
  * 获取指定会话的在线连接数量 (GET /api/chat/online/count-by-session/{sessionId})
  */
 export async function getOnlineCountBySessionApi(sessionId: string) {
-  return requestClient.get<number>(`/chat/online/count-by-session/${sessionId}`);
+  return requestClient.get<number>(
+    `/chat/online/count-by-session/${sessionId}`,
+  );
 }
 
 /**

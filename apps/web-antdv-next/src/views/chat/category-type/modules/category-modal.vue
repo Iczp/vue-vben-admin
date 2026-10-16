@@ -97,23 +97,41 @@ defineExpose({ modalApi });
 <template>
   <Modal :title="modalTitle" class="w-[480px]">
     <div class="space-y-4 p-4">
-      <div v-if="parentCategory" class="rounded bg-muted/50 p-2.5 text-xs text-muted-foreground">
+      <div
+        v-if="parentCategory"
+        class="rounded bg-muted/50 p-2.5 text-xs text-muted-foreground"
+      >
         上级分类：<strong>{{ parentCategory.name }}</strong>
       </div>
 
       <div>
-        <div class="mb-1 font-medium text-sm">分类名称 <span class="text-red-500">*</span></div>
-        <Input v-model:value="name" placeholder="请输入分类名称，如：部门组织、兴趣社群" />
+        <div class="mb-1 font-medium text-sm">
+          分类名称 <span class="text-red-500">*</span>
+        </div>
+        <Input
+          v-model:value="name"
+          placeholder="请输入分类名称，如：部门组织、兴趣社群"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">排序号</div>
-        <InputNumber v-model:value="sorting" class="w-full" :min="0" :max="9999" placeholder="数字越小越靠前" />
+        <InputNumber
+          v-model:value="sorting"
+          class="w-full"
+          :min="0"
+          :max="9999"
+          placeholder="数字越小越靠前"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">分类描述</div>
-        <Input.TextArea v-model:value="description" :rows="3" placeholder="可选填分类描述" />
+        <Input.TextArea
+          v-model:value="description"
+          :rows="3"
+          placeholder="可选填分类描述"
+        />
       </div>
     </div>
   </Modal>

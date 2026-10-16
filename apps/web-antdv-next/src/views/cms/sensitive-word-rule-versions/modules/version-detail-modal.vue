@@ -5,14 +5,21 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Alert, Descriptions, DescriptionsItem, Empty, Spin, Tag } from 'antdv-next';
+import {
+  Alert,
+  Descriptions,
+  DescriptionsItem,
+  Empty,
+  Spin,
+  Tag,
+} from 'antdv-next';
 
 import { getSensitiveWordRuleVersionApi } from '#/api/cms';
 
 import { versionStatusOptions } from '../data';
 
 const loading = ref(false);
-const detail = ref<SensitiveWordRuleVersionDetailDto | null>(null);
+const detail = ref<null | SensitiveWordRuleVersionDetailDto>(null);
 
 async function loadDetail(id: string) {
   loading.value = true;
@@ -31,7 +38,7 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { id: string } | undefined;
+      const data = modalApi.getData() as undefined | { id: string };
       if (data?.id) {
         modalApi.setState({ title: `规则版本详情` });
         loadDetail(data.id);
@@ -52,8 +59,16 @@ const [Modal, modalApi] = useVbenModal({
             <span class="font-bold text-base">v{{ detail.version }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="状态">
-            <Tag :color="versionStatusOptions.find(o => o.value === detail?.status)?.color">
-              {{ versionStatusOptions.find(o => o.value === detail?.status)?.label || detail.status }}
+            <Tag
+              :color="
+                versionStatusOptions.find((o) => o.value === detail?.status)
+                  ?.color
+              "
+            >
+              {{
+                versionStatusOptions.find((o) => o.value === detail?.status)
+                  ?.label || detail.status
+              }}
             </Tag>
             <Tag v-if="detail.isActive" color="success">当前生效</Tag>
           </DescriptionsItem>
@@ -80,7 +95,9 @@ const [Modal, modalApi] = useVbenModal({
           </DescriptionsItem>
 
           <DescriptionsItem label="规则集 Hash" :span="2">
-            <span class="font-mono text-xs select-all">{{ detail.contentHash }}</span>
+            <span class="font-mono text-xs select-all">{{
+              detail.contentHash
+            }}</span>
           </DescriptionsItem>
 
           <DescriptionsItem label="发布说明" :span="2">
@@ -88,9 +105,14 @@ const [Modal, modalApi] = useVbenModal({
           </DescriptionsItem>
         </Descriptions>
 
-        <div v-if="detail.sourceVersionsJson" class="flex flex-col gap-1 text-xs">
+        <div
+          v-if="detail.sourceVersionsJson"
+          class="flex flex-col gap-1 text-xs"
+        >
           <span class="font-medium text-foreground">来源词库版本指纹清单:</span>
-          <pre class="p-2 rounded bg-muted font-mono text-[11px] overflow-auto max-h-[160px]">{{ detail.sourceVersionsJson }}</pre>
+          <pre
+            class="p-2 rounded bg-muted font-mono text-[11px] overflow-auto max-h-[160px]"
+            >{{ detail.sourceVersionsJson }}</pre>
         </div>
 
         <Alert

@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+import type { Dayjs } from 'dayjs';
+
+import type { EventDto, GetEventsInput } from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 
 import {
@@ -15,10 +19,9 @@ import {
   Tag as ATag,
   message,
 } from 'ant-design-vue';
-import dayjs, { type Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
 import { getEventsApi } from '#/api/app-statistic/event';
-import type { EventDto, GetEventsInput } from '#/api/app-statistic/types';
 
 const loading = ref(false);
 const eventList = ref<EventDto[]>([]);
@@ -200,7 +203,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">事件分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          事件分析
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           实时检索应用埋点事件、追踪异常、调试客户端上报与数据核对
         </p>
@@ -299,7 +304,12 @@ onMounted(() => {
 
         <ACol :lg="8" :md="24" :sm="24" :xs="24">
           <div class="flex items-center justify-end space-x-2">
-            <AButton :loading="loading" size="small" type="primary" @click="handleSearch">
+            <AButton
+              :loading="loading"
+              size="small"
+              type="primary"
+              @click="handleSearch"
+            >
               查询
             </AButton>
             <AButton size="small" @click="handleReset">重置</AButton>
@@ -334,11 +344,7 @@ onMounted(() => {
     </ACard>
 
     <!-- Event Detail Drawer -->
-    <ADrawer
-      v-model:open="drawerVisible"
-      :width="640"
-      title="事件日志详情"
-    >
+    <ADrawer v-model:open="drawerVisible" :width="640" title="事件日志详情">
       <div v-if="selectedEvent" class="space-y-4">
         <ADescriptions :column="2" bordered size="small">
           <ADescriptions.Item label="Event ID" :span="2">
@@ -354,11 +360,17 @@ onMounted(() => {
           </ADescriptions.Item>
 
           <ADescriptions.Item label="客户端时间">
-            {{ dayjs(selectedEvent.eventTime).format('YYYY-MM-DD HH:mm:ss.SSS') }}
+            {{
+              dayjs(selectedEvent.eventTime).format('YYYY-MM-DD HH:mm:ss.SSS')
+            }}
           </ADescriptions.Item>
 
           <ADescriptions.Item label="服务端接收时间">
-            {{ dayjs(selectedEvent.receivedTime).format('YYYY-MM-DD HH:mm:ss.SSS') }}
+            {{
+              dayjs(selectedEvent.receivedTime).format(
+                'YYYY-MM-DD HH:mm:ss.SSS',
+              )
+            }}
           </ADescriptions.Item>
 
           <ADescriptions.Item label="页面 (Page)">
@@ -382,15 +394,21 @@ onMounted(() => {
           </ADescriptions.Item>
 
           <ADescriptions.Item label="Session ID" :span="2">
-            <span class="font-mono text-xs">{{ selectedEvent.sessionId || '-' }}</span>
+            <span class="font-mono text-xs">{{
+              selectedEvent.sessionId || '-'
+            }}</span>
           </ADescriptions.Item>
 
           <ADescriptions.Item label="User ID" :span="2">
-            <span class="font-mono text-xs">{{ selectedEvent.userId || '-' }}</span>
+            <span class="font-mono text-xs">{{
+              selectedEvent.userId || '-'
+            }}</span>
           </ADescriptions.Item>
 
           <ADescriptions.Item label="Device ID" :span="2">
-            <span class="font-mono text-xs">{{ selectedEvent.deviceId || '-' }}</span>
+            <span class="font-mono text-xs">{{
+              selectedEvent.deviceId || '-'
+            }}</span>
           </ADescriptions.Item>
         </ADescriptions>
 
@@ -409,7 +427,7 @@ onMounted(() => {
           </div>
           <pre
             class="bg-muted/50 p-3 rounded text-xs font-mono overflow-auto max-h-96 border border-border"
-          >{{ formatJson(selectedEvent.properties) }}</pre>
+            >{{ formatJson(selectedEvent.properties) }}</pre>
         </div>
       </div>
     </ADrawer>

@@ -1,10 +1,10 @@
-import { requestClient } from '#/api/request';
-
 import type {
   AppStatisticDashboardDto,
   AppStatisticQueryInput,
   OverviewDto,
 } from './types';
+
+import { requestClient } from '#/api/request';
 
 /**
  * 获取仪表盘数据

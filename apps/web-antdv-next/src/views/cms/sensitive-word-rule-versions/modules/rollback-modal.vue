@@ -5,13 +5,7 @@ import { reactive, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Alert,
-  Form,
-  FormItem,
-  Input,
-  message,
-} from 'antdv-next';
+import { Alert, Form, FormItem, Input, message } from 'antdv-next';
 
 import { rollbackSensitiveWordRuleVersionApi } from '#/api/cms';
 
@@ -19,7 +13,7 @@ const emit = defineEmits<{
   success: [];
 }>();
 
-const targetVersion = ref<SensitiveWordRuleVersionDto | null>(null);
+const targetVersion = ref<null | SensitiveWordRuleVersionDto>(null);
 
 const formState = reactive({
   reason: '',
@@ -41,7 +35,9 @@ const [Modal, modalApi] = useVbenModal({
       await rollbackSensitiveWordRuleVersionApi(targetVersion.value.id, {
         reason: formState.reason.trim(),
       });
-      message.success(`已成功回滚至版本 v${targetVersion.value.version}！各运行时节点已更新。`);
+      message.success(
+        `已成功回滚至版本 v${targetVersion.value.version}！各运行时节点已更新。`,
+      );
       modalApi.close();
       emit('success');
     } catch (error: any) {
@@ -53,7 +49,9 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as SensitiveWordRuleVersionDto | undefined;
+      const data = modalApi.getData() as
+        | SensitiveWordRuleVersionDto
+        | undefined;
       targetVersion.value = data || null;
       if (data) {
         modalApi.setState({ title: `回滚规则版本至 v${data.version}` });
@@ -75,7 +73,9 @@ const [Modal, modalApi] = useVbenModal({
         show-icon
       />
 
-      <div class="p-3 rounded-lg border bg-gray-50/70 dark:bg-gray-900/50 text-sm flex flex-col gap-1.5">
+      <div
+        class="p-3 rounded-lg border bg-gray-50/70 dark:bg-gray-900/50 text-sm flex flex-col gap-1.5"
+      >
         <div class="flex justify-between">
           <span class="text-muted-foreground">目标版本:</span>
           <span class="font-bold">v{{ targetVersion?.version }}</span>
@@ -86,7 +86,9 @@ const [Modal, modalApi] = useVbenModal({
         </div>
         <div class="flex justify-between">
           <span class="text-muted-foreground">规则集 Hash:</span>
-          <span class="font-mono text-xs">{{ targetVersion?.contentHash }}</span>
+          <span class="font-mono text-xs">{{
+            targetVersion?.contentHash
+          }}</span>
         </div>
         <div class="flex justify-between">
           <span class="text-muted-foreground">初次发布时间:</span>

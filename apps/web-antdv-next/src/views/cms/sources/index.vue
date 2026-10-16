@@ -9,11 +9,7 @@ import { Plus, RotateCw } from '@vben/icons';
 import { Button, Card, Input, message, Modal, Select } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  deleteSourceApi,
-  getSourcesApi,
-  SourceType,
-} from '#/api/cms';
+import { deleteSourceApi, getSourcesApi, SourceType } from '#/api/cms';
 
 import { sourceTypeOptions, useColumns } from './data';
 import SourceModal from './modules/source-modal.vue';
@@ -55,13 +51,7 @@ function onDelete(row: ContentSourceDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: ContentSourceDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: ContentSourceDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -127,7 +117,11 @@ function onFilterChange() {
   <Page auto-content-height>
     <div class="h-full flex flex-col gap-3">
       <!-- 搜索过滤栏 -->
-      <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
+      <Card
+        variant="borderless"
+        class="shrink-0 shadow-sm"
+        :body-style="{ padding: '12px 16px' }"
+      >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <Input.Search
@@ -170,7 +164,9 @@ function onFilterChange() {
       </Card>
 
       <!-- 表格展示 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>

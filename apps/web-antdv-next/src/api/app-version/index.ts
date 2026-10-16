@@ -58,10 +58,9 @@ export interface GetAppVersionInput extends PagedAndSortedResultRequestDto {
  * 分页获取 App 版本列表
  */
 export async function getAppVersionsApi(params?: GetAppVersionInput) {
-  return requestClient.get<PagedResultDto<AppVersionDto>>(
-    '/chat/app-version',
-    { params },
-  );
+  return requestClient.get<PagedResultDto<AppVersionDto>>('/chat/app-version', {
+    params,
+  });
 }
 
 /**

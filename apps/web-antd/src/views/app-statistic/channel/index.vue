@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  ChannelAnalysisDto,
+} from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 
 import {
@@ -11,10 +16,6 @@ import {
 import dayjs from 'dayjs';
 
 import { getChannelAnalysisApi } from '#/api/app-statistic/channel';
-import type {
-  AppStatisticQueryInput,
-  ChannelAnalysisDto,
-} from '#/api/app-statistic/types';
 
 import {
   DimensionBarChart,
@@ -74,7 +75,8 @@ const tableColumns = [
     dataIndex: 'percentage',
     key: 'percentage',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => `${Number(text ?? 0).toFixed(1)}%`,
+    customRender: ({ text }: { text: number }) =>
+      `${Number(text ?? 0).toFixed(1)}%`,
   },
   {
     title: '事件总数',
@@ -101,7 +103,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">渠道分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          渠道分析
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           分析官方、各大应用商店及分发渠道的用户获客与活跃质量
         </p>

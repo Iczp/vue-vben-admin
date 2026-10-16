@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { DeviceDetailDto } from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -13,7 +15,6 @@ import {
 import dayjs from 'dayjs';
 
 import { getDeviceDetailApi } from '#/api/app-statistic/device';
-import type { DeviceDetailDto } from '#/api/app-statistic/types';
 
 import { TrendChart } from '../components';
 
@@ -97,16 +98,29 @@ onMounted(() => {
           设备统计详情
         </h2>
       </div>
-      <AButton :loading="loading" size="small" @click="loadDetail">刷新</AButton>
+      <AButton :loading="loading" size="small" @click="loadDetail">
+刷新
+</AButton>
     </div>
 
     <ASpin :spinning="loading">
       <div v-if="deviceDetail" class="space-y-4">
         <!-- Device Info Card -->
-        <ACard :bordered="false" class="shadow-sm" size="small" title="设备基本信息">
-          <ADescriptions :column="{ xs: 1, sm: 2, md: 3, lg: 4 }" bordered size="small">
+        <ACard
+          :bordered="false"
+          class="shadow-sm"
+          size="small"
+          title="设备基本信息"
+        >
+          <ADescriptions
+            :column="{ xs: 1, sm: 2, md: 3, lg: 4 }"
+            bordered
+            size="small"
+          >
             <ADescriptions.Item label="DeviceKey" :span="2">
-              <span class="font-mono text-xs">{{ deviceDetail.device.deviceKey }}</span>
+              <span class="font-mono text-xs">{{
+                deviceDetail.device.deviceKey
+              }}</span>
             </ADescriptions.Item>
 
             <ADescriptions.Item label="App ID">
@@ -114,7 +128,11 @@ onMounted(() => {
             </ADescriptions.Item>
 
             <ADescriptions.Item label="平台">
-              <ATag color="blue">{{ deviceDetail.device.platform || '-' }}</ATag>
+              <ATag color="blue">
+{{
+                deviceDetail.device.platform || '-'
+              }}
+</ATag>
             </ADescriptions.Item>
 
             <ADescriptions.Item label="设备品牌">
@@ -126,7 +144,8 @@ onMounted(() => {
             </ADescriptions.Item>
 
             <ADescriptions.Item label="操作系统">
-              {{ deviceDetail.device.osName }} {{ deviceDetail.device.osVersion }}
+              {{ deviceDetail.device.osName }}
+              {{ deviceDetail.device.osVersion }}
             </ADescriptions.Item>
 
             <ADescriptions.Item label="当前 App 版本">
@@ -146,21 +165,33 @@ onMounted(() => {
             </ADescriptions.Item>
 
             <ADescriptions.Item label="最近登录用户">
-              <span class="font-mono text-xs">{{ deviceDetail.device.lastUserId || '-' }}</span>
+              <span class="font-mono text-xs">{{
+                deviceDetail.device.lastUserId || '-'
+              }}</span>
             </ADescriptions.Item>
 
             <ADescriptions.Item label="首次活跃时间">
-              {{ dayjs(deviceDetail.device.firstSeenTime).format('YYYY-MM-DD HH:mm:ss') }}
+              {{
+                dayjs(deviceDetail.device.firstSeenTime).format(
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              }}
             </ADescriptions.Item>
 
             <ADescriptions.Item label="最近活跃时间">
-              {{ dayjs(deviceDetail.device.lastSeenTime).format('YYYY-MM-DD HH:mm:ss') }}
+              {{
+                dayjs(deviceDetail.device.lastSeenTime).format(
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              }}
             </ADescriptions.Item>
 
             <ADescriptions.Item label="最近登录时间" :span="2">
               {{
                 deviceDetail.device.lastLoginTime
-                  ? dayjs(deviceDetail.device.lastLoginTime).format('YYYY-MM-DD HH:mm:ss')
+                  ? dayjs(deviceDetail.device.lastLoginTime).format(
+                      'YYYY-MM-DD HH:mm:ss',
+                    )
                   : '-'
               }}
             </ADescriptions.Item>
@@ -173,13 +204,22 @@ onMounted(() => {
           :metrics="[
             { key: 'launch_count', label: '启动次数', color: '#1677ff' },
             { key: 'page_view_count', label: '浏览量 (PV)', color: '#52c41a' },
-            { key: 'duration_seconds', label: '使用时长(秒)', color: '#722ed1' },
+            {
+              key: 'duration_seconds',
+              label: '使用时长(秒)',
+              color: '#722ed1',
+            },
           ]"
           title="近 30 天活跃度趋势"
         />
 
         <!-- Recent Events -->
-        <ACard :bordered="false" class="shadow-sm" size="small" title="该设备最近上报事件">
+        <ACard
+          :bordered="false"
+          class="shadow-sm"
+          size="small"
+          title="该设备最近上报事件"
+        >
           <ATable
             :columns="eventColumns"
             :data-source="deviceDetail.recentEvents"

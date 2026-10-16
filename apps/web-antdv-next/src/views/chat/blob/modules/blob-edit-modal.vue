@@ -21,7 +21,8 @@ const formState = ref({
 });
 
 const getTitle = computed(
-  () => `${$t('common.edit', '编辑对象元数据')} - ${currentRecord.value?.fileName || currentRecord.value?.id}`,
+  () =>
+    `${$t('common.edit', '编辑对象元数据')} - ${currentRecord.value?.fileName || currentRecord.value?.id}`,
 );
 
 function resetState() {

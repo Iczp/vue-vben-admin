@@ -1,4 +1,3 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   SensitiveWordRuleActivationDto,
   SensitiveWordRulePreviewDto,
@@ -8,6 +7,8 @@ import type {
   SensitiveWordRuleVersionDto,
   SensitiveWordRuleVersionGetListInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

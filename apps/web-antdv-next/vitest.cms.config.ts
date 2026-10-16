@@ -7,7 +7,7 @@ export default mergeConfig(
   base,
   defineConfig({
     resolve: {
-      alias: { '#': fileURLToPath(new URL('./src', import.meta.url)) },
+      alias: { '#': fileURLToPath(new URL('src', import.meta.url)) },
     },
   }),
 );

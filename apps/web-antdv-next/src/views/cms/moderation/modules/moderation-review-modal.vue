@@ -71,7 +71,7 @@ const [Modal, modalApi] = useVbenModal<{ id: string }>({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { id: string } | undefined;
+      const data = modalApi.getData() as undefined | { id: string };
       recordId.value = data?.id || '';
       isApproved.value = true;
       opinion.value = '';
@@ -127,14 +127,18 @@ const [Modal, modalApi] = useVbenModal<{ id: string }>({
             <template v-if="column.dataIndex === 'riskScore'">
               <span
                 :class="
-                  record.riskScore > 0.6 ? 'text-red-500 font-bold' : 'text-foreground'
+                  record.riskScore > 0.6
+                    ? 'text-red-500 font-bold'
+                    : 'text-foreground'
                 "
               >
                 {{ record.riskScore }}
               </span>
             </template>
             <template v-else-if="column.dataIndex === 'matchedContext'">
-              <span class="text-xs text-red-600 bg-red-50 dark:bg-red-950/30 px-1 py-0.5 rounded">
+              <span
+                class="text-xs text-red-600 bg-red-50 dark:bg-red-950/30 px-1 py-0.5 rounded"
+              >
                 {{ record.matchedContext || '未检出关键词' }}
               </span>
             </template>

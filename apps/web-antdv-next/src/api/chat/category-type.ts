@@ -8,10 +8,9 @@ import { requestClient } from '#/api/request';
 /**
  * 将平铺数组转换为树形结构
  */
-export function listToTree<T extends { children?: T[]; id: string; parentId?: null | string }>(
-  items: T[],
-  parentId: null | string = null,
-): T[] {
+export function listToTree<
+  T extends { children?: T[]; id: string; parentId?: null | string },
+>(items: T[], parentId: null | string = null): T[] {
   return items
     .filter((item) => (item.parentId || null) === (parentId || null))
     .map((item) => {
@@ -85,7 +84,9 @@ export interface ChatObjectTypeUpdateInput {
 /**
  * 分页获取分类列表
  */
-export async function getCategoriesApi(params?: PagedAndSortedResultRequestDto) {
+export async function getCategoriesApi(
+  params?: PagedAndSortedResultRequestDto,
+) {
   return requestClient.get<PagedResultDto<ChatObjectCategoryDto>>(
     '/chat/chat-object-category',
     { params },

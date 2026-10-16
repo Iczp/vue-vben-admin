@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { AppStatisticQueryInput } from '#/api/app-statistic/types';
+
 import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -14,8 +16,6 @@ import {
   Space as ASpace,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
-
-import type { AppStatisticQueryInput } from '#/api/app-statistic/types';
 
 interface Props {
   modelValue: AppStatisticQueryInput;
@@ -73,16 +73,6 @@ function setDateShortcut(shortcut: string) {
   let end = today;
 
   switch (shortcut) {
-    case 'today': {
-      start = today;
-      end = today;
-      break;
-    }
-    case 'yesterday': {
-      start = today.subtract(1, 'day');
-      end = today.subtract(1, 'day');
-      break;
-    }
     case '7d': {
       start = today.subtract(6, 'day');
       end = today;
@@ -93,15 +83,25 @@ function setDateShortcut(shortcut: string) {
       end = today;
       break;
     }
+    case 'lastMonth': {
+      const lastMonth = today.subtract(1, 'month');
+      start = lastMonth.startOf('month');
+      end = lastMonth.endOf('month');
+      break;
+    }
     case 'thisMonth': {
       start = today.startOf('month');
       end = today;
       break;
     }
-    case 'lastMonth': {
-      const lastMonth = today.subtract(1, 'month');
-      start = lastMonth.startOf('month');
-      end = lastMonth.endOf('month');
+    case 'today': {
+      start = today;
+      end = today;
+      break;
+    }
+    case 'yesterday': {
+      start = today.subtract(1, 'day');
+      end = today.subtract(1, 'day');
       break;
     }
     default: {
@@ -306,7 +306,10 @@ onMounted(() => {
         <div class="flex flex-wrap items-center gap-2">
           <ARangePicker
             :allow-clear="false"
-            :value="[dayjs(internalQuery.startDate), dayjs(internalQuery.endDate)]"
+            :value="[
+              dayjs(internalQuery.startDate),
+              dayjs(internalQuery.endDate),
+            ]"
             class="w-56"
             format="YYYY-MM-DD"
             size="small"
@@ -317,7 +320,9 @@ onMounted(() => {
 
       <!-- Date Quick Buttons & Search Actions -->
       <ACol :lg="24" :md="24" :sm="24" :xs="24">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-t pt-2">
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 border-t pt-2"
+        >
           <div class="flex flex-wrap items-center gap-1">
             <span class="text-muted-foreground mr-1 text-xs">快捷范围:</span>
             <ARadio.Group
@@ -336,7 +341,12 @@ onMounted(() => {
           </div>
 
           <ASpace size="small">
-            <AButton :loading="loading" size="small" type="primary" @click="handleSearch">
+            <AButton
+              :loading="loading"
+              size="small"
+              type="primary"
+              @click="handleSearch"
+            >
               查询
             </AButton>
             <AButton size="small" @click="handleReset">重置</AButton>

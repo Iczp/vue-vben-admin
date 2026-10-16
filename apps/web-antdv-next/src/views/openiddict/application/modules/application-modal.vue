@@ -11,6 +11,7 @@ import {
   CheckboxGroup,
   Col,
   Input,
+  InputNumber,
   message,
   Row,
   Select,
@@ -46,6 +47,13 @@ const selectedGrantTypes = ref<string[]>([
 const selectedScopes = ref<string[]>(['openid', 'profile', 'email']);
 const redirectUrisText = ref('');
 const postLogoutRedirectUrisText = ref('');
+
+const accessTokenLifetime = ref<number | undefined>(undefined);
+const identityTokenLifetime = ref<number | undefined>(undefined);
+const refreshTokenLifetime = ref<number | undefined>(undefined);
+const authorizationCodeLifetime = ref<number | undefined>(undefined);
+const deviceCodeLifetime = ref<number | undefined>(undefined);
+const allowedCorsOriginsText = ref('');
 
 const availableScopes = ref<Array<{ label: string; value: string }>>([
   { label: 'openid (OpenID 身份验证)', value: 'openid' },
@@ -86,7 +94,7 @@ async function loadScopes() {
     [...availableScopes.value, ...dynamicScopes].forEach((item) => {
       map.set(item.value, item.label);
     });
-    availableScopes.value = Array.from(map.entries()).map(([value, label]) => ({
+    availableScopes.value = [...map.entries()].map(([value, label]) => ({
       label,
       value,
     }));
@@ -106,6 +114,12 @@ function resetState() {
   selectedScopes.value = ['openid', 'profile', 'email'];
   redirectUrisText.value = '';
   postLogoutRedirectUrisText.value = '';
+  accessTokenLifetime.value = undefined;
+  identityTokenLifetime.value = undefined;
+  refreshTokenLifetime.value = undefined;
+  authorizationCodeLifetime.value = undefined;
+  deviceCodeLifetime.value = undefined;
+  allowedCorsOriginsText.value = '';
   activeTab.value = 'basic';
 }
 
@@ -139,38 +153,54 @@ const [Modal, modalApi] = useVbenModal<ApplicationDto | null>({
       .split('\n')
       .map((s) => s.trim())
       .filter(Boolean);
+    const allowedCorsOrigins = allowedCorsOriginsText.value
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     try {
       modalApi.lock();
       if (isEdit.value && appModel.value?.id) {
         await updateApplicationApi(appModel.value.id, {
+          accessTokenLifetime: accessTokenLifetime.value,
+          allowedCorsOrigins,
           applicationType: applicationType.value,
+          authorizationCodeLifetime: authorizationCodeLifetime.value,
           clientId: clientId.value.trim(),
           clientType: clientType.value,
           clientUri: clientUri.value.trim() || undefined,
           consentType: consentType.value,
+          deviceCodeLifetime: deviceCodeLifetime.value,
           displayName: displayName.value.trim() || undefined,
           grantTypes: selectedGrantTypes.value,
+          identityTokenLifetime: identityTokenLifetime.value,
           logoUri: logoUri.value.trim() || undefined,
           permissions: appModel.value.permissions || [],
           postLogoutRedirectUris,
           redirectUris,
+          refreshTokenLifetime: refreshTokenLifetime.value,
           scopes: selectedScopes.value,
         });
       } else {
         await createApplicationApi({
+          accessTokenLifetime: accessTokenLifetime.value,
+          allowedCorsOrigins,
           applicationType: applicationType.value,
+          authorizationCodeLifetime: authorizationCodeLifetime.value,
           clientId: clientId.value.trim(),
           clientSecret: clientSecret.value.trim() || undefined,
           clientType: clientType.value,
           clientUri: clientUri.value.trim() || undefined,
           consentType: consentType.value,
+          deviceCodeLifetime: deviceCodeLifetime.value,
           displayName: displayName.value.trim() || undefined,
           grantTypes: selectedGrantTypes.value,
+          identityTokenLifetime: identityTokenLifetime.value,
           logoUri: logoUri.value.trim() || undefined,
           permissions: [],
           postLogoutRedirectUris,
           redirectUris,
+          refreshTokenLifetime: refreshTokenLifetime.value,
           scopes: selectedScopes.value,
         });
       }
@@ -210,6 +240,14 @@ const [Modal, modalApi] = useVbenModal<ApplicationDto | null>({
           redirectUrisText.value = (detail.redirectUris || []).join('\n');
           postLogoutRedirectUrisText.value = (
             detail.postLogoutRedirectUris || []
+          ).join('\n');
+          accessTokenLifetime.value = detail.accessTokenLifetime;
+          identityTokenLifetime.value = detail.identityTokenLifetime;
+          refreshTokenLifetime.value = detail.refreshTokenLifetime;
+          authorizationCodeLifetime.value = detail.authorizationCodeLifetime;
+          deviceCodeLifetime.value = detail.deviceCodeLifetime;
+          allowedCorsOriginsText.value = (
+            detail.allowedCorsOrigins || []
           ).join('\n');
         } catch {
           appModel.value = raw as any;
@@ -409,6 +447,116 @@ defineExpose({ modalApi });
                 v-model:value="postLogoutRedirectUrisText"
                 :rows="3"
                 placeholder="https://localhost:5001/signout-callback-oidc"
+              />
+            </div>
+          </div>
+        </Tabs.TabPane>
+
+        <!-- 令牌生命周期与安全 (Lifetimes & CORS) -->
+        <Tabs.TabPane
+          key="security"
+          tab="令牌生命周期与安全"
+        >
+          <div class="space-y-4 pt-2">
+            <div class="rounded bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+              💡 客户端独立的生命周期配置优先于系统全局默认值（留空则继承系统全局默认）。时间单位均为<strong>秒 (Seconds)</strong>。
+            </div>
+
+            <Row :gutter="16">
+              <Col :span="12">
+                <div class="mb-1 font-medium">
+                  访问令牌生命周期 (Access Token)
+                </div>
+                <InputNumber
+                  v-model:value="accessTokenLifetime"
+                  :min="1"
+                  :step="60"
+                  placeholder="默认 (如 3600 秒 / 1小时)"
+                  class="w-full"
+                />
+                <div class="mt-1 text-xs text-muted-foreground">
+                  常用：3600(1小时), 7200(2小时), 86400(1天)
+                </div>
+              </Col>
+              <Col :span="12">
+                <div class="mb-1 font-medium">
+                  刷新令牌生命周期 (Refresh Token)
+                </div>
+                <InputNumber
+                  v-model:value="refreshTokenLifetime"
+                  :min="1"
+                  :step="3600"
+                  placeholder="默认 (如 1209600 秒 / 14天)"
+                  class="w-full"
+                />
+                <div class="mt-1 text-xs text-muted-foreground">
+                  常用：604800(7天), 1209600(14天), 2592000(30天)
+                </div>
+              </Col>
+            </Row>
+
+            <Row :gutter="16">
+              <Col :span="12">
+                <div class="mb-1 font-medium">
+                  身份令牌生命周期 (Identity Token)
+                </div>
+                <InputNumber
+                  v-model:value="identityTokenLifetime"
+                  :min="1"
+                  :step="60"
+                  placeholder="默认 (如 300 秒 / 5分钟)"
+                  class="w-full"
+                />
+                <div class="mt-1 text-xs text-muted-foreground">
+                  常用：300(5分钟), 900(15分钟)
+                </div>
+              </Col>
+              <Col :span="12">
+                <div class="mb-1 font-medium">
+                  授权码生命周期 (Authorization Code)
+                </div>
+                <InputNumber
+                  v-model:value="authorizationCodeLifetime"
+                  :min="1"
+                  :step="60"
+                  placeholder="默认 (如 300 秒 / 5分钟)"
+                  class="w-full"
+                />
+                <div class="mt-1 text-xs text-muted-foreground">
+                  常用：300(5分钟)
+                </div>
+              </Col>
+            </Row>
+
+            <Row :gutter="16">
+              <Col :span="12">
+                <div class="mb-1 font-medium">
+                  设备代码生命周期 (Device Code)
+                </div>
+                <InputNumber
+                  v-model:value="deviceCodeLifetime"
+                  :min="1"
+                  :step="60"
+                  placeholder="默认 (如 300 秒 / 5分钟)"
+                  class="w-full"
+                />
+                <div class="mt-1 text-xs text-muted-foreground">
+                  用于设备流授权，常用：300(5分钟)
+                </div>
+              </Col>
+            </Row>
+
+            <div class="pt-2 border-t border-border">
+              <div class="mb-1 font-medium">
+                允许的跨域来源 (Allowed CORS Origins)
+              </div>
+              <div class="text-xs text-muted-foreground mb-2">
+                系统已自动从“登录回调地址”解析对应域名并允许跨域。如需额外放行其他前端站点或子域名，请在此填写（每行一个）：
+              </div>
+              <Input.TextArea
+                v-model:value="allowedCorsOriginsText"
+                :rows="3"
+                placeholder="https://app.example.com&#10;http://localhost:3000"
               />
             </div>
           </div>

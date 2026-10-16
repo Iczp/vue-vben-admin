@@ -7,8 +7,8 @@ import type { HttpTransportType, LogLevel } from '@microsoft/signalr';
  * SignalR 连接状态
  */
 export type HubConnectionStatus =
-  | 'Connecting'
   | 'Connected'
+  | 'Connecting'
   | 'Disconnected'
   | 'Reconnecting';
 

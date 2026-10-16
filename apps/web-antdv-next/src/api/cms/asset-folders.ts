@@ -59,10 +59,7 @@ export async function updateAssetFolderApi(
 /**
  * 移动文件夹位置 (变更父级)
  */
-export async function moveAssetFolderApi(
-  id: string,
-  data: AssetFolderMoveDto,
-) {
+export async function moveAssetFolderApi(id: string, data: AssetFolderMoveDto) {
   return requestClient.post<AssetFolderDto>(
     `/cms/admin/asset-folders/${id}/move`,
     data,

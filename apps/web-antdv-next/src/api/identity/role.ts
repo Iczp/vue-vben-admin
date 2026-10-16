@@ -1,4 +1,3 @@
-import type { ListResultDto, PagedResultDto } from '#/api/abp/types';
 import type {
   GetIdentityRolesInput,
   IdentityRoleCreateDto,
@@ -6,16 +5,17 @@ import type {
   IdentityRoleUpdateDto,
 } from './types';
 
+import type { ListResultDto, PagedResultDto } from '#/api/abp/types';
+
 import { requestClient } from '#/api/request';
 
 /**
  * 分页获取角色列表
  */
 export async function getRolesApi(params?: GetIdentityRolesInput) {
-  return requestClient.get<PagedResultDto<IdentityRoleDto>>(
-    '/identity/roles',
-    { params },
-  );
+  return requestClient.get<PagedResultDto<IdentityRoleDto>>('/identity/roles', {
+    params,
+  });
 }
 
 /**

@@ -33,7 +33,11 @@ export function useColumns(
       cellRender: {
         name: 'CellTag',
         options: [
-          { color: 'blue', label: '机密 (Confidential)', value: 'confidential' },
+          {
+            color: 'blue',
+            label: '机密 (Confidential)',
+            value: 'confidential',
+          },
           { color: 'orange', label: '公共 (Public)', value: 'public' },
         ],
       },
@@ -47,7 +51,11 @@ export function useColumns(
         options: [
           { color: 'default', label: '明确同意 (Explicit)', value: 'explicit' },
           { color: 'purple', label: '隐式同意 (Implicit)', value: 'implicit' },
-          { color: 'cyan', label: '系统默认 (Systematic)', value: 'systematic' },
+          {
+            color: 'cyan',
+            label: '系统默认 (Systematic)',
+            value: 'systematic',
+          },
         ],
       },
       field: 'consentType',
@@ -82,6 +90,7 @@ export function useColumns(
         name: 'CellOperation',
         options: [
           { code: 'edit', text: $t('common.edit', '编辑') },
+          { code: 'permissions', text: '分配权限' },
           { code: 'set-secret', text: '修改密钥' },
           { code: 'delete', text: $t('common.delete', '删除') },
         ],
@@ -89,7 +98,7 @@ export function useColumns(
       field: 'operation',
       fixed: 'right',
       title: $t('common.action', '操作'),
-      width: 200,
+      width: 240,
     },
   ];
 }

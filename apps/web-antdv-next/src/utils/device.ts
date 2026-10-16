@@ -1,14 +1,14 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 const DEVICE_ID_STORAGE_KEY = '__app_device_id__';
-let deviceIdPromise: Promise<string> | null = null;
+let deviceIdPromise: null | Promise<string> = null;
 
 /**
  * 简单字符串哈希算法 (murmurhash/djb2-like)
  */
 function simpleHash(str: string): string {
   let hash1 = 5381;
-  let hash2 = 52711;
+  let hash2 = 52_711;
 
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
@@ -31,10 +31,11 @@ function generateLocalFingerprint(): string {
 
     // 1. UserAgent & Platform
     if (typeof navigator !== 'undefined') {
-      components.push(navigator.userAgent || '');
-      components.push(navigator.language || '');
-      components.push(String(navigator.hardwareConcurrency || ''));
-      components.push(String((navigator as any).deviceMemory || ''));
+      components.push(navigator.userAgent || '', navigator.language || '');
+      components.push(
+        String(navigator.hardwareConcurrency || ''),
+        String((navigator as any).deviceMemory || ''),
+      );
       components.push(navigator.platform || '');
     }
 
@@ -108,10 +109,10 @@ export async function getDeviceId(): Promise<string> {
           }
           return result.visitorId;
         }
-      } catch (err) {
+      } catch (error) {
         console.warn(
           '[Device] FingerprintJS load failed, falling back to local fingerprint.',
-          err,
+          error,
         );
       }
 

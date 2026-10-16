@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  PageAnalysisDto,
+} from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 
 import {
@@ -9,10 +14,6 @@ import {
 import dayjs from 'dayjs';
 
 import { getPageAnalysisApi } from '#/api/app-statistic/page';
-import type {
-  AppStatisticQueryInput,
-  PageAnalysisDto,
-} from '#/api/app-statistic/types';
 
 import {
   DimensionBarChart,
@@ -22,7 +23,7 @@ import {
 } from '../components';
 
 const loading = ref(false);
-const pageData = ref<PageAnalysisDto | null>(null);
+const pageData = ref<null | PageAnalysisDto>(null);
 
 const query = ref<AppStatisticQueryInput>({
   appId: 'default',
@@ -98,7 +99,8 @@ const tableColumns = [
     dataIndex: 'percentage',
     key: 'percentage',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => `${Number(text ?? 0).toFixed(1)}%`,
+    customRender: ({ text }: { text: number }) =>
+      `${Number(text ?? 0).toFixed(1)}%`,
   },
 ];
 
@@ -112,7 +114,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">页面分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          页面分析
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           统计各个功能模块页面的访问深度、独立访客与平均停留时间
         </p>

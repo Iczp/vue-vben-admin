@@ -143,9 +143,7 @@ function refreshGrid() {
             />
           </div>
           <div>
-            <Button type="primary" @click="onCreate">
-              + 生成新邀请码
-            </Button>
+            <Button type="primary" @click="onCreate"> + 生成新邀请码 </Button>
           </div>
         </div>
       </template>

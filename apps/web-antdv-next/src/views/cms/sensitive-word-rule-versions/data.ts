@@ -7,16 +7,44 @@ import {
 } from '#/api/cms';
 
 export const versionStatusOptions = [
-  { color: 'default', label: '草稿 (Draft)', value: SensitiveWordRuleVersionStatus.Draft },
-  { color: 'processing', label: '已就绪 (Ready)', value: SensitiveWordRuleVersionStatus.Ready },
-  { color: 'success', label: '生效中 (Active)', value: SensitiveWordRuleVersionStatus.Active },
-  { color: 'default', label: '已归档 (Archived)', value: SensitiveWordRuleVersionStatus.Archived },
+  {
+    color: 'default',
+    label: '草稿 (Draft)',
+    value: SensitiveWordRuleVersionStatus.Draft,
+  },
+  {
+    color: 'processing',
+    label: '已就绪 (Ready)',
+    value: SensitiveWordRuleVersionStatus.Ready,
+  },
+  {
+    color: 'success',
+    label: '生效中 (Active)',
+    value: SensitiveWordRuleVersionStatus.Active,
+  },
+  {
+    color: 'default',
+    label: '已归档 (Archived)',
+    value: SensitiveWordRuleVersionStatus.Archived,
+  },
 ];
 
 export const activationActionOptions = [
-  { color: 'default', label: '初始就绪', value: SensitiveWordActivationAction.Initial },
-  { color: 'success', label: '新版本发布', value: SensitiveWordActivationAction.Publish },
-  { color: 'warning', label: '版本回滚', value: SensitiveWordActivationAction.Rollback },
+  {
+    color: 'default',
+    label: '初始就绪',
+    value: SensitiveWordActivationAction.Initial,
+  },
+  {
+    color: 'success',
+    label: '新版本发布',
+    value: SensitiveWordActivationAction.Publish,
+  },
+  {
+    color: 'warning',
+    label: '版本回滚',
+    value: SensitiveWordActivationAction.Rollback,
+  },
 ];
 
 export function useColumns(
@@ -60,7 +88,8 @@ export function useColumns(
     },
     {
       field: 'contentHash',
-      formatter: ({ cellValue }) => (cellValue ? `${cellValue.slice(0, 12)}...` : '-'),
+      formatter: ({ cellValue }) =>
+        cellValue ? `${cellValue.slice(0, 12)}...` : '-',
       minWidth: 140,
       title: '规则集 Hash',
     },

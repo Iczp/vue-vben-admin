@@ -54,8 +54,12 @@ defineExpose({ modalApi });
 <template>
   <Modal title="强制断开在线连接" class="w-[500px]">
     <div class="space-y-4 p-4">
-      <div class="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-        已选择 <strong>{{ connectionIds.length }}</strong> 个连接，强制断开后客户端的 SignalR 长连接将被直接关闭。
+      <div
+        class="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+      >
+        已选择
+        <strong>{{ connectionIds.length }}</strong> 个连接，强制断开后客户端的
+        SignalR 长连接将被直接关闭。
       </div>
 
       <div>

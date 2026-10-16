@@ -1,4 +1,3 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   MappingProfileValidateResultDto,
   SensitiveWordMappingProfileCreateInput,
@@ -7,6 +6,8 @@ import type {
   SensitiveWordMappingProfileGetListInput,
   SensitiveWordMappingProfileUpdateInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

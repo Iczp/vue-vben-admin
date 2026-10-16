@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-import type { RecommendationRuleDto, RecommendationRulePreviewItemDto } from '#/api/cms';
+import type {
+  RecommendationRuleDto,
+  RecommendationRulePreviewItemDto,
+} from '#/api/cms';
 
 import { ref } from 'vue';
 
@@ -27,7 +30,7 @@ import {
 
 import { previewRecommendationRuleApi } from '#/api/cms';
 
-const currentRule = ref<RecommendationRuleDto | null>(null);
+const currentRule = ref<null | RecommendationRuleDto>(null);
 const loading = ref(false);
 
 // 交互调参参数
@@ -152,28 +155,46 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
       <Card size="small" variant="borderless" class="bg-muted/20">
         <Descriptions size="small" :column="3">
           <DescriptionsItem label="当前规则">
-            <span class="font-semibold">{{ currentRule?.name || '默认推荐规则' }}</span>
+            <span class="font-semibold">{{
+              currentRule?.name || '默认推荐规则'
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="绑定应用场景">
-            <Tag color="blue">{{ currentRule?.scene || '通用场景 (General)' }}</Tag>
+            <Tag color="blue">
+{{
+              currentRule?.scene || '通用场景 (General)'
+            }}
+</Tag>
           </DescriptionsItem>
           <DescriptionsItem label="前台客户端调用代码">
             <code class="text-xs bg-muted px-1.5 py-0.5 rounded text-primary">
-              GET /api/cms/recommendations/positions/{{ currentRule?.scene || 'Scene' }}
+              GET /api/cms/recommendations/positions/{{
+                currentRule?.scene || 'Scene'
+              }}
             </code>
           </DescriptionsItem>
         </Descriptions>
       </Card>
 
       <!-- 交互权重调参面板 -->
-      <Card size="small" title="算法参数调节面板" :bordered="false" class="bg-muted/10">
+      <Card
+        size="small"
+        title="算法参数调节面板"
+        :bordered="false"
+        class="bg-muted/10"
+      >
         <Row :gutter="[24, 8]">
           <Col :span="8">
             <div class="flex items-center justify-between text-xs">
               <span class="font-medium">时效性权重 (Freshness):</span>
               <span class="text-primary font-bold">{{ freshnessWeight }}</span>
             </div>
-            <Slider v-model:value="freshnessWeight" :min="0" :max="1" :step="0.05" />
+            <Slider
+              v-model:value="freshnessWeight"
+              :min="0"
+              :max="1"
+              :step="0.05"
+            />
           </Col>
 
           <Col :span="8">
@@ -181,7 +202,12 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
               <span class="font-medium">相似度权重 (Similarity):</span>
               <span class="text-primary font-bold">{{ similarityWeight }}</span>
             </div>
-            <Slider v-model:value="similarityWeight" :min="0" :max="1" :step="0.05" />
+            <Slider
+              v-model:value="similarityWeight"
+              :min="0"
+              :max="1"
+              :step="0.05"
+            />
           </Col>
 
           <Col :span="8">
@@ -189,7 +215,12 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
               <span class="font-medium">兴趣偏好权重 (Interest):</span>
               <span class="text-primary font-bold">{{ interestWeight }}</span>
             </div>
-            <Slider v-model:value="interestWeight" :min="0" :max="1" :step="0.05" />
+            <Slider
+              v-model:value="interestWeight"
+              :min="0"
+              :max="1"
+              :step="0.05"
+            />
           </Col>
 
           <Col :span="8">
@@ -197,7 +228,12 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
               <span class="font-medium">热度权重 (Popularity):</span>
               <span class="text-primary font-bold">{{ popularityWeight }}</span>
             </div>
-            <Slider v-model:value="popularityWeight" :min="0" :max="1" :step="0.05" />
+            <Slider
+              v-model:value="popularityWeight"
+              :min="0"
+              :max="1"
+              :step="0.05"
+            />
           </Col>
 
           <Col :span="8">
@@ -205,7 +241,12 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
               <span class="font-medium">人工干预权重 (Manual):</span>
               <span class="text-primary font-bold">{{ manualWeight }}</span>
             </div>
-            <Slider v-model:value="manualWeight" :min="0" :max="1" :step="0.05" />
+            <Slider
+              v-model:value="manualWeight"
+              :min="0"
+              :max="1"
+              :step="0.05"
+            />
           </Col>
 
           <Col :span="8">
@@ -213,7 +254,12 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
               <span class="font-medium">输出条目规模:</span>
             </div>
             <div class="flex items-center gap-2">
-              <InputNumber v-model:value="resultCount" :min="1" :max="50" class="w-full" />
+              <InputNumber
+                v-model:value="resultCount"
+                :min="1"
+                :max="50"
+                class="w-full"
+              />
               <Button type="primary" :loading="loading" @click="fetchPreview">
                 <template #icon><RotateCw class="size-3.5" /></template>
                 重新计算
@@ -238,7 +284,14 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
                 <Badge
                   :count="record.rank"
                   :number-style="{
-                    backgroundColor: record.rank === 1 ? '#ff4d4f' : record.rank === 2 ? '#fa8c16' : record.rank === 3 ? '#faad14' : '#d9d9d9',
+                    backgroundColor:
+                      record.rank === 1
+                        ? '#ff4d4f'
+                        : record.rank === 2
+                          ? '#fa8c16'
+                          : record.rank === 3
+                            ? '#faad14'
+                            : '#d9d9d9',
                     color: record.rank <= 3 ? '#fff' : '#666',
                     fontWeight: 'bold',
                   }"
@@ -255,7 +308,10 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
                     class="shrink-0 rounded"
                   />
                   <div class="flex flex-col min-w-0">
-                    <span class="font-medium text-sm truncate hover:text-primary cursor-default" :title="record.title">
+                    <span
+                      class="font-medium text-sm truncate hover:text-primary cursor-default"
+                      :title="record.title"
+                    >
                       {{ record.title }}
                     </span>
                     <span class="text-xs text-muted-foreground">短代码: {{ record.code }}</span>
@@ -264,12 +320,18 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
               </template>
 
               <template v-else-if="column.key === 'categoryName'">
-                <Tag v-if="record.categoryName" color="cyan">{{ record.categoryName }}</Tag>
+                <Tag v-if="record.categoryName" color="cyan">
+{{
+                  record.categoryName
+                }}
+</Tag>
                 <span v-else class="text-muted-foreground text-xs">未分类</span>
               </template>
 
               <template v-else-if="column.key === 'authorName'">
-                <span class="text-xs">{{ record.authorName || '系统发布' }}</span>
+                <span class="text-xs">{{
+                  record.authorName || '系统发布'
+                }}</span>
               </template>
 
               <template v-else-if="column.key === 'calculatedScore'">
@@ -280,13 +342,19 @@ const previewColumns: TableColumnsType<RecommendationRulePreviewItemDto> = [
 
               <template v-else-if="column.key === 'publishTime'">
                 <span class="text-xs text-muted-foreground">
-                  {{ record.publishTime ? new Date(record.publishTime).toLocaleString() : '未设定' }}
+                  {{
+                    record.publishTime
+                      ? new Date(record.publishTime).toLocaleString()
+                      : '未设定'
+                  }}
                 </span>
               </template>
             </template>
 
             <template #emptyText>
-              <Empty description="暂无符合条件的推荐候选文章（请确保已发布文章开启了【允许推荐】）" />
+              <Empty
+                description="暂无符合条件的推荐候选文章（请确保已发布文章开启了【允许推荐】）"
+              />
             </template>
           </Table>
         </div>

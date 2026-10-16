@@ -102,7 +102,9 @@ defineExpose({ modalApi });
       </div>
 
       <div v-if="!isEdit">
-        <div class="mb-1 text-sm font-medium">所属聊天对象 / 拥有者 ID (可选)</div>
+        <div class="mb-1 text-sm font-medium">
+          所属聊天对象 / 拥有者 ID (可选)
+        </div>
         <Input
           v-model:value="formState.ownerId"
           placeholder="请输入关联的目标聊天对象 ID (UUID)"

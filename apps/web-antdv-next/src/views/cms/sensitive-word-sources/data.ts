@@ -9,20 +9,52 @@ import {
 
 export const sourceTypeOptions = [
   { color: 'blue', label: 'Git 仓库', value: SensitiveWordSourceType.Git },
-  { color: 'green', label: 'HTTP(S) 接口/文件', value: SensitiveWordSourceType.Http },
-  { color: 'orange', label: '本地文件目录', value: SensitiveWordSourceType.LocalFile },
+  {
+    color: 'green',
+    label: 'HTTP(S) 接口/文件',
+    value: SensitiveWordSourceType.Http,
+  },
+  {
+    color: 'orange',
+    label: '本地文件目录',
+    value: SensitiveWordSourceType.LocalFile,
+  },
 ];
 
 export const syncModeOptions = [
-  { color: 'default', label: '纯手工 (Manual)', value: SensitiveWordSyncMode.Manual },
-  { color: 'warning', label: '审核后应用 (Review)', value: SensitiveWordSyncMode.ReviewBeforeApply },
-  { color: 'purple', label: '自动同步应用 (Auto)', value: SensitiveWordSyncMode.Automatic },
+  {
+    color: 'default',
+    label: '纯手工 (Manual)',
+    value: SensitiveWordSyncMode.Manual,
+  },
+  {
+    color: 'warning',
+    label: '审核后应用 (Review)',
+    value: SensitiveWordSyncMode.ReviewBeforeApply,
+  },
+  {
+    color: 'purple',
+    label: '自动同步应用 (Auto)',
+    value: SensitiveWordSyncMode.Automatic,
+  },
 ];
 
 export const statusOptions = [
-  { color: 'default', label: '空闲就绪', value: SensitiveWordSourceStatus.Idle },
-  { color: 'processing', label: '检查中', value: SensitiveWordSourceStatus.Checking },
-  { color: 'warning', label: '同步中', value: SensitiveWordSourceStatus.Syncing },
+  {
+    color: 'default',
+    label: '空闲就绪',
+    value: SensitiveWordSourceStatus.Idle,
+  },
+  {
+    color: 'processing',
+    label: '检查中',
+    value: SensitiveWordSourceStatus.Checking,
+  },
+  {
+    color: 'warning',
+    label: '同步中',
+    value: SensitiveWordSourceStatus.Syncing,
+  },
   { color: 'error', label: '异常', value: SensitiveWordSourceStatus.Error },
 ];
 
@@ -39,7 +71,12 @@ export function useColumns(
       title: '类型',
       width: 120,
     },
-    { field: 'sourceUri', minWidth: 200, showOverflow: 'ellipsis', title: '源地址' },
+    {
+      field: 'sourceUri',
+      minWidth: 200,
+      showOverflow: 'ellipsis',
+      title: '源地址',
+    },
     { field: 'branch', title: '分支', width: 100, formatter: 'formatEmpty' },
     { field: 'priority', title: '优先级', width: 80 },
     {
@@ -54,8 +91,18 @@ export function useColumns(
       title: '状态',
       width: 100,
     },
-    { field: 'lastCheckedVersion', title: '最新版本', width: 110, formatter: 'formatEmpty' },
-    { field: 'lastCheckTime', formatter: 'formatDateTime', title: '上次检查', width: 160 },
+    {
+      field: 'lastCheckedVersion',
+      title: '最新版本',
+      width: 110,
+      formatter: 'formatEmpty',
+    },
+    {
+      field: 'lastCheckTime',
+      formatter: 'formatDateTime',
+      title: '上次检查',
+      width: 160,
+    },
     {
       cellRender: {
         name: 'CellTag',
@@ -81,7 +128,11 @@ export function useColumns(
           { code: 'sync', text: '同步' },
           { code: 'snapshots', text: '快照' },
           { code: 'edit', text: '编辑' },
-          { code: 'toggle', text: (row: SensitiveWordSourceDto) => (row.isEnabled ? '禁用' : '启用') },
+          {
+            code: 'toggle',
+            text: (row: SensitiveWordSourceDto) =>
+              row.isEnabled ? '禁用' : '启用',
+          },
           { code: 'delete', props: { danger: true }, text: '删除' },
         ],
       },

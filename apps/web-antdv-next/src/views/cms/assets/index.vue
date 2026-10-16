@@ -44,7 +44,7 @@ import {
   mediaDimensions,
 } from '../components/media';
 import MediaPreview from '../components/MediaPreview.vue';
-import { assetStatusOptions, assetTypeOptions, useColumns } from './data';
+import { assetTypeOptions, useColumns } from './data';
 import AssetMoveModal from './modules/asset-move-modal.vue';
 import AssetReferenceModal from './modules/asset-reference-modal.vue';
 import AssetStatusModal from './modules/asset-status-modal.vue';
@@ -375,7 +375,7 @@ async function loadGridViewData() {
 
 function toggleGridItemSelection(item: AssetDto) {
   const idx = selectedRows.value.findIndex((r) => r.id === item.id);
-  if (idx >= 0) {
+  if (idx !== -1) {
     selectedRows.value.splice(idx, 1);
   } else {
     selectedRows.value.push(item);
@@ -581,10 +581,7 @@ function onFilterChange() {
             </div>
 
             <!-- 当选中具体自定义文件夹时，显式展示文件夹管理按钮 -->
-            <div
-              v-if="currentFolderRecord"
-              class="flex items-center gap-1.5"
-            >
+            <div v-if="currentFolderRecord" class="flex items-center gap-1.5">
               <Button
                 size="small"
                 type="dashed"
@@ -592,16 +589,11 @@ function onFilterChange() {
               >
                 ➕ 新建子文件夹
               </Button>
-              <Button
-                size="small"
-                @click="onEditFolder(currentFolderRecord)"
-              >
+              <Button size="small" @click="onEditFolder(currentFolderRecord)">
                 ✏️ 编辑/移动文件夹
               </Button>
               <Dropdown :trigger="['click']">
-                <Button size="small" danger>
-                  🗑️ 删除文件夹
-                </Button>
+                <Button size="small" danger> 🗑️ 删除文件夹 </Button>
                 <template #overlay>
                   <Menu>
                     <MenuItem
@@ -783,7 +775,9 @@ function onFilterChange() {
                     </div>
 
                     <!-- 右上角类型与状态 -->
-                    <div class="absolute right-1.5 top-1.5 flex items-center gap-1">
+                    <div
+                      class="absolute right-1.5 top-1.5 flex items-center gap-1"
+                    >
                       <Tag
                         :color="
                           assetTypeOptions.find((o) => o.value === item.type)
@@ -800,7 +794,9 @@ function onFilterChange() {
                   </div>
 
                   <!-- 卡片信息区 -->
-                  <div class="p-2 flex-1 flex flex-col justify-between text-xs space-y-1">
+                  <div
+                    class="p-2 flex-1 flex flex-col justify-between text-xs space-y-1"
+                  >
                     <div>
                       <div
                         class="font-medium truncate text-foreground"
@@ -808,7 +804,9 @@ function onFilterChange() {
                       >
                         {{ item.fileName }}
                       </div>
-                      <div class="text-[11px] text-muted-foreground flex items-center justify-between mt-0.5">
+                      <div
+                        class="text-[11px] text-muted-foreground flex items-center justify-between mt-0.5"
+                      >
                         <span>{{ formatMediaSize(item.fileSize) }}</span>
                         <span
                           v-if="
@@ -818,28 +816,33 @@ function onFilterChange() {
                         >
                           {{ mediaDimensions(item) }}
                         </span>
-                        <span
-                          v-else-if="item.type === AssetType.Audio"
-                        >
+                        <span v-else-if="item.type === AssetType.Audio">
                           {{ formatMediaDuration(item.duration) }}
                         </span>
                       </div>
                     </div>
 
-                    <div class="flex items-center justify-between pt-1 border-t border-border/50 text-[11px]">
+                    <div
+                      class="flex items-center justify-between pt-1 border-t border-border/50 text-[11px]"
+                    >
                       <a
                         class="text-primary hover:underline cursor-pointer"
                         @click="onOpenReferences(item)"
                       >
                         引用 {{ item.referenceCount ?? 0 }} 次
                       </a>
-                      <span class="text-muted-foreground truncate max-w-[90px]" :title="item.folderName || '未归档'">
+                      <span
+                        class="text-muted-foreground truncate max-w-[90px]"
+                        :title="item.folderName || '未归档'"
+                      >
                         📁 {{ item.folderName || '未归档' }}
                       </span>
                     </div>
 
                     <!-- 底部快捷操作栏 -->
-                    <div class="flex items-center justify-between pt-1 border-t border-border/50">
+                    <div
+                      class="flex items-center justify-between pt-1 border-t border-border/50"
+                    >
                       <Button
                         size="small"
                         type="link"
@@ -878,14 +881,12 @@ function onFilterChange() {
                   </div>
                 </div>
               </div>
-              <Empty
-                v-else
-                description="当前条件下暂无素材"
-                class="py-16"
-              />
+              <Empty v-else description="当前条件下暂无素材" class="py-16" />
             </Spin>
 
-            <div class="flex justify-end pt-2 px-2 border-t border-border/50 shrink-0">
+            <div
+              class="flex justify-end pt-2 px-2 border-t border-border/50 shrink-0"
+            >
               <Pagination
                 v-model:current="gridPage"
                 v-model:page-size="gridPageSize"

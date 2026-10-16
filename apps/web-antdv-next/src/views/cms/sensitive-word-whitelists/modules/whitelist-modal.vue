@@ -1,10 +1,4 @@
 <script lang="ts" setup>
-import type {
-  CreateSensitiveWordWhitelistInput,
-  SensitiveWordWhitelistDto,
-  UpdateSensitiveWordWhitelistInput,
-} from '#/api/cms';
-
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
@@ -13,9 +7,12 @@ import { Form, FormItem, Input, message, Select, Spin } from 'antdv-next';
 
 import {
   createSensitiveWordWhitelistApi,
+  type CreateSensitiveWordWhitelistInput,
   getSensitiveWordWhitelistApi,
   type ModerationScene,
+  type SensitiveWordWhitelistDto,
   updateSensitiveWordWhitelistApi,
+  type UpdateSensitiveWordWhitelistInput,
 } from '#/api/cms';
 
 import { sceneOptions } from '../../sensitive-words/data';
@@ -25,7 +22,9 @@ const emit = defineEmits(['success']);
 const loading = ref(false);
 const recordId = ref<null | string>(null);
 const isEdit = computed(() => Boolean(recordId.value));
-const modalTitle = computed(() => (isEdit.value ? '编辑白名单词条' : '新建白名单词条'));
+const modalTitle = computed(() =>
+  isEdit.value ? '编辑白名单词条' : '新建白名单词条',
+);
 
 const text = ref('');
 const scene = ref<ModerationScene | undefined>(undefined);

@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { SensitiveWordSourceDto } from '#/api/cms';
-
 import { reactive } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -16,14 +14,12 @@ import {
   enableSensitiveWordSourceApi,
   getSensitiveWordSourcesApi,
   initializeDefaultSourcesApi,
+  type SensitiveWordSourceDto,
   type SensitiveWordSourceType,
   syncSensitiveWordSourceApi,
 } from '#/api/cms';
 
-import {
-  sourceTypeOptions,
-  useColumns,
-} from './data';
+import { sourceTypeOptions, useColumns } from './data';
 import MappingModal from './modules/mapping-modal.vue';
 import SnapshotModal from './modules/snapshot-modal.vue';
 import SourceModal from './modules/source-modal.vue';
@@ -71,7 +67,10 @@ function onViewSnapshots(row: SensitiveWordSourceDto) {
 
 async function onCheckUpdate(row: SensitiveWordSourceDto) {
   try {
-    message.loading({ content: `正在检查数据源【${row.name}】更新...`, key: 'check-source' });
+    message.loading({
+      content: `正在检查数据源【${row.name}】更新...`,
+      key: 'check-source',
+    });
     const res = await checkSensitiveWordSourceApi(row.id);
     if (res.hasChanges) {
       Modal.info({
@@ -80,11 +79,17 @@ async function onCheckUpdate(row: SensitiveWordSourceDto) {
         title: '外部数据源有新更新',
       });
     } else {
-      message.success({ content: `【${row.name}】已是最新状态，无更新。`, key: 'check-source' });
+      message.success({
+        content: `【${row.name}】已是最新状态，无更新。`,
+        key: 'check-source',
+      });
     }
     refreshGrid();
   } catch (error: any) {
-    message.error({ content: `检查更新失败: ${error?.message || error}`, key: 'check-source' });
+    message.error({
+      content: `检查更新失败: ${error?.message || error}`,
+      key: 'check-source',
+    });
   }
 }
 
@@ -95,7 +100,10 @@ async function onSync(row: SensitiveWordSourceDto) {
     title: '触发词库同步',
     async onOk() {
       try {
-        message.loading({ content: '正在同步外部词库并计算差异...', key: 'sync-source' });
+        message.loading({
+          content: '正在同步外部词库并计算差异...',
+          key: 'sync-source',
+        });
         const batchId = await syncSensitiveWordSourceApi(row.id);
         message.success({
           content: `同步任务已触发，成功生成审查批次（ID: ${batchId ? batchId.slice(0, 8) : 'NEW'}），请前往【同步批次】查看详情与审核差异。`,
@@ -104,7 +112,10 @@ async function onSync(row: SensitiveWordSourceDto) {
         });
         refreshGrid();
       } catch (error: any) {
-        message.error({ content: `同步失败: ${error?.message || error}`, key: 'sync-source' });
+        message.error({
+          content: `同步失败: ${error?.message || error}`,
+          key: 'sync-source',
+        });
       }
     },
   });
@@ -141,7 +152,8 @@ function onDelete(row: SensitiveWordSourceDto) {
 
 function onInitDefaults() {
   Modal.confirm({
-    content: '系统将初始化推荐的开源主流词库（如 GitHub Sensitive-lexicon / 政府暴恐政敏库等预设数据源）。若已存在相同编码则跳过。确定初始化吗？',
+    content:
+      '系统将初始化推荐的开源主流词库（如 GitHub Sensitive-lexicon / 政府暴恐政敏库等预设数据源）。若已存在相同编码则跳过。确定初始化吗？',
     okText: '确认初始化',
     title: '初始化推荐开源词库',
     async onOk() {
@@ -289,12 +301,8 @@ function onFilterChange() {
               <template #icon><Plus class="size-4" /></template>
               新建数据源
             </Button>
-            <Button @click="onInitDefaults">
-              初始化开源词库
-            </Button>
-            <Button @click="onOpenMappingProfile">
-              配置分类映射
-            </Button>
+            <Button @click="onInitDefaults"> 初始化开源词库 </Button>
+            <Button @click="onOpenMappingProfile"> 配置分类映射 </Button>
             <Button @click="refreshGrid">
               <template #icon><RotateCw class="size-4" /></template>
               刷新
@@ -304,7 +312,9 @@ function onFilterChange() {
       </Card>
 
       <!-- 列表主体 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>

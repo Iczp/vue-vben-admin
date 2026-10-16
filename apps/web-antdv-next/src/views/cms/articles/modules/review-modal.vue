@@ -3,14 +3,7 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Form,
-  FormItem,
-  Input,
-  message,
-  Radio,
-  RadioGroup,
-} from 'antdv-next';
+import { Form, FormItem, Input, message, Radio, RadioGroup } from 'antdv-next';
 
 import { approveArticleApi, rejectArticleApi } from '#/api/cms';
 
@@ -50,7 +43,9 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { id: string; title: string } | undefined;
+      const data = modalApi.getData() as
+        | undefined
+        | { id: string; title: string };
       articleId.value = data?.id || '';
       articleTitle.value = data?.title || '';
       action.value = 'approve';

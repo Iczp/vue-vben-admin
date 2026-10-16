@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
+
 import type { MessageSummaryDto } from '#/api/chat/message-report';
 
 import { onMounted, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import { Empty, Spin } from 'antdv-next';
 
 import {
@@ -56,7 +58,7 @@ async function loadVisitData() {
       bucketMap.set(bucket, (bucketMap.get(bucket) || 0) + count);
     });
 
-    const sortedBuckets = Array.from(bucketMap.keys()).sort((a, b) => a - b);
+    const sortedBuckets = [...bucketMap.keys()].sort((a, b) => a - b);
     const xAxisData = sortedBuckets.map((b) => formatDateBucket(b));
     const seriesData = sortedBuckets.map((b) => bucketMap.get(b) || 0);
 
@@ -144,7 +146,10 @@ onMounted(() => {
 <template>
   <div class="relative h-[320px] w-full">
     <Spin :spinning="loading" class="h-full w-full">
-      <div v-if="!hasData && !loading" class="flex h-[300px] items-center justify-center">
+      <div
+        v-if="!hasData && !loading"
+        class="flex h-[300px] items-center justify-center"
+      >
         <Empty description="暂无该统计维度的消息汇总数据" />
       </div>
       <EchartsUI v-else ref="chartRef" />

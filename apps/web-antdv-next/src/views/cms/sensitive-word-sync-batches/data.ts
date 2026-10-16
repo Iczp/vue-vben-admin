@@ -8,25 +8,61 @@ import {
 } from '#/api/cms';
 
 export const batchStatusOptions = [
-  { color: 'warning', label: '待审核', value: SensitiveWordBatchStatus.PendingReview },
-  { color: 'processing', label: '应用中', value: SensitiveWordBatchStatus.Applying },
-  { color: 'success', label: '已应用', value: SensitiveWordBatchStatus.Applied },
-  { color: 'default', label: '已忽略', value: SensitiveWordBatchStatus.Ignored },
+  {
+    color: 'warning',
+    label: '待审核',
+    value: SensitiveWordBatchStatus.PendingReview,
+  },
+  {
+    color: 'processing',
+    label: '应用中',
+    value: SensitiveWordBatchStatus.Applying,
+  },
+  {
+    color: 'success',
+    label: '已应用',
+    value: SensitiveWordBatchStatus.Applied,
+  },
+  {
+    color: 'default',
+    label: '已忽略',
+    value: SensitiveWordBatchStatus.Ignored,
+  },
   { color: 'error', label: '应用失败', value: SensitiveWordBatchStatus.Failed },
-  { color: 'default', label: '已废弃', value: SensitiveWordBatchStatus.Superseded },
+  {
+    color: 'default',
+    label: '已废弃',
+    value: SensitiveWordBatchStatus.Superseded,
+  },
 ];
 
 export const changeTypeOptions = [
   { color: 'success', label: '新增', value: SensitiveWordChangeType.Added },
-  { color: 'processing', label: '更新', value: SensitiveWordChangeType.Updated },
+  {
+    color: 'processing',
+    label: '更新',
+    value: SensitiveWordChangeType.Updated,
+  },
   { color: 'error', label: '移除', value: SensitiveWordChangeType.Removed },
   { color: 'warning', label: '冲突', value: SensitiveWordChangeType.Conflict },
 ];
 
 export const applyStatusOptions = [
-  { color: 'warning', label: '待处理', value: SensitiveWordApplyStatus.Pending },
-  { color: 'success', label: '已应用', value: SensitiveWordApplyStatus.Applied },
-  { color: 'default', label: '已跳过', value: SensitiveWordApplyStatus.Skipped },
+  {
+    color: 'warning',
+    label: '待处理',
+    value: SensitiveWordApplyStatus.Pending,
+  },
+  {
+    color: 'success',
+    label: '已应用',
+    value: SensitiveWordApplyStatus.Applied,
+  },
+  {
+    color: 'default',
+    label: '已跳过',
+    value: SensitiveWordApplyStatus.Skipped,
+  },
   { color: 'error', label: '失败', value: SensitiveWordApplyStatus.Failed },
 ];
 

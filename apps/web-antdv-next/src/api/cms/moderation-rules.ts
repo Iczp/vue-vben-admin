@@ -29,7 +29,5 @@ export async function getModerationRuleRuntimeStateApi() {
  * 手动强制刷新重载敏感词内存快照
  */
 export async function reloadModerationRulesApi() {
-  return requestClient.post<void>(
-    '/cms/admin/moderation/local-rules/reload',
-  );
+  return requestClient.post<void>('/cms/admin/moderation/local-rules/reload');
 }

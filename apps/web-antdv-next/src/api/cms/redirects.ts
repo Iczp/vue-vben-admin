@@ -1,10 +1,11 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   ContentRedirectCreateDto,
   ContentRedirectDto,
   ContentRedirectGetListInput,
   ContentRedirectUpdateDto,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

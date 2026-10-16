@@ -59,8 +59,8 @@ function refreshValueGrid() {
   nextTick(() => {
     try {
       valueGridApi?.query?.();
-    } catch (e) {
-      console.warn('Grid query failed or not mounted yet', e);
+    } catch (error) {
+      console.warn('Grid query failed or not mounted yet', error);
     }
   });
 }
@@ -79,7 +79,8 @@ function findNodeById(nodes: EntryNameDto[], id: string): EntryNameDto | null {
 function onTreeSelect(keys: any[], info: any) {
   if (keys.length > 0) {
     const key = keys[0];
-    const node = info?.node?.dataRef || info?.node || findNodeById(treeData.value, key);
+    const node =
+      info?.node?.dataRef || info?.node || findNodeById(treeData.value, key);
     if (node) {
       selectedEntryName.value = node;
       selectedKeys.value = [key];
@@ -225,7 +226,15 @@ onMounted(() => {
       <Card
         size="small"
         class="w-80 flex flex-col shrink-0 h-full overflow-hidden"
-        :styles="{ body: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '12px' } }"
+        :styles="{
+          body: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            padding: '12px',
+          },
+        }"
       >
         <div class="flex items-center justify-between pb-2 mb-2 border-b">
           <span class="font-semibold text-sm">字典属性键树 (EntryName)</span>
@@ -239,19 +248,27 @@ onMounted(() => {
             <template v-if="treeData.length > 0">
               <Tree
                 :tree-data="treeData"
-                :field-names="{ children: 'children', title: 'name', key: 'id' }"
+                :field-names="{
+                  children: 'children',
+                  title: 'name',
+                  key: 'id',
+                }"
                 :selected-keys="selectedKeys"
                 default-expand-all
                 block-node
                 @select="onTreeSelect"
               >
                 <template #titleRender="node: any">
-                  <div class="group flex items-center justify-between py-0.5 pr-1 w-full text-xs">
+                  <div
+                    class="group flex items-center justify-between py-0.5 pr-1 w-full text-xs"
+                  >
                     <div class="truncate flex-1" :title="node.name">
                       <span>{{ node.name }}</span>
                       <span v-if="node.code" class="text-muted-foreground ml-1">({{ node.code }})</span>
                     </div>
-                    <div class="hidden group-hover:flex items-center gap-1 shrink-0 ml-1">
+                    <div
+                      class="hidden group-hover:flex items-center gap-1 shrink-0 ml-1"
+                    >
                       <Button
                         size="small"
                         type="link"
@@ -293,11 +310,22 @@ onMounted(() => {
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <template v-if="selectedEntryName">
-                <span class="font-bold text-base">{{ selectedEntryName.name }}</span>
-                <Tag v-if="selectedEntryName.code" color="blue">{{ selectedEntryName.code }}</Tag>
-                <Tag v-if="selectedEntryName.isChoice" color="green">下拉选项字典</Tag>
+                <span class="font-bold text-base">{{
+                  selectedEntryName.name
+                }}</span>
+                <Tag v-if="selectedEntryName.code" color="blue">
+{{
+                  selectedEntryName.code
+                }}
+</Tag>
+                <Tag v-if="selectedEntryName.isChoice" color="green">
+下拉选项字典
+</Tag>
                 <Tag v-else color="default">自由文本录入</Tag>
-                <span v-if="selectedEntryName.description" class="text-xs text-muted-foreground ml-2">
+                <span
+                  v-if="selectedEntryName.description"
+                  class="text-xs text-muted-foreground ml-2"
+                >
                   {{ selectedEntryName.description }}
                 </span>
               </template>

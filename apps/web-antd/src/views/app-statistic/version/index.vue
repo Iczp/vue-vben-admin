@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  AppStatisticQueryInput,
+  VersionAnalysisDto,
+} from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -12,10 +17,6 @@ import {
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import type {
-  AppStatisticQueryInput,
-  VersionAnalysisDto,
-} from '#/api/app-statistic/types';
 import { getVersionAnalysisApi } from '#/api/app-statistic/version';
 
 import {
@@ -29,7 +30,7 @@ import {
 const route = useRoute();
 
 const loading = ref(false);
-const versionData = ref<VersionAnalysisDto | null>(null);
+const versionData = ref<null | VersionAnalysisDto>(null);
 
 const query = ref<AppStatisticQueryInput>({
   appId: 'default',
@@ -79,7 +80,8 @@ const tableColumns = [
     dataIndex: 'percentage',
     key: 'percentage',
     align: 'right' as const,
-    customRender: ({ text }: { text: number }) => `${Number(text ?? 0).toFixed(1)}%`,
+    customRender: ({ text }: { text: number }) =>
+      `${Number(text ?? 0).toFixed(1)}%`,
   },
   {
     title: '上报事件数',
@@ -109,7 +111,9 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">版本分析</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          版本分析
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           追踪各客户端应用版本分布、升级替换速度及旧版本衰退态势
         </p>
@@ -134,7 +138,12 @@ onMounted(() => {
       <ATag
         closable
         color="blue"
-        @close="() => { query.appVersion = undefined; loadData(); }"
+        @close="
+          () => {
+            query.appVersion = undefined;
+            loadData();
+          }
+        "
       >
         {{ query.appVersion }}
       </ATag>

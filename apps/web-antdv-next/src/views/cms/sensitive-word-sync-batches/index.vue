@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { SensitiveWordSyncBatchDto } from '#/api/cms';
-
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -15,6 +13,7 @@ import {
   getSensitiveWordSyncBatchesApi,
   ignoreSensitiveWordSyncBatchApi,
   type SensitiveWordBatchStatus,
+  type SensitiveWordSyncBatchDto,
   supersedeSensitiveWordSyncBatchApi,
 } from '#/api/cms';
 
@@ -45,12 +44,21 @@ function onApply(row: SensitiveWordSyncBatchDto) {
     title: '应用同步差异批次',
     async onOk() {
       try {
-        message.loading({ content: '正在应用变更到敏感词库...', key: 'apply-batch' });
+        message.loading({
+          content: '正在应用变更到敏感词库...',
+          key: 'apply-batch',
+        });
         await applySensitiveWordSyncBatchApi(row.id);
-        message.success({ content: '批次应用成功！草稿态已更新，可前往版本中心发布上线。', key: 'apply-batch' });
+        message.success({
+          content: '批次应用成功！草稿态已更新，可前往版本中心发布上线。',
+          key: 'apply-batch',
+        });
         refreshGrid();
       } catch (error: any) {
-        message.error({ content: `应用失败: ${error?.message || error}`, key: 'apply-batch' });
+        message.error({
+          content: `应用失败: ${error?.message || error}`,
+          key: 'apply-batch',
+        });
       }
     },
   });
@@ -64,7 +72,9 @@ function onIgnore(row: SensitiveWordSyncBatchDto) {
     title: '忽略同步批次',
     async onOk() {
       try {
-        await ignoreSensitiveWordSyncBatchApi(row.id, { remark: '人工审核主动忽略' });
+        await ignoreSensitiveWordSyncBatchApi(row.id, {
+          remark: '人工审核主动忽略',
+        });
         message.success('已忽略该批次');
         refreshGrid();
       } catch (error: any) {
@@ -204,7 +214,9 @@ function onFilterChange() {
       </Card>
 
       <!-- 列表主体 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>

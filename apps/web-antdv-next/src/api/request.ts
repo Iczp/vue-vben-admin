@@ -65,7 +65,7 @@ function renderErrorMessageNode(title: string, detail?: string) {
                 'div',
                 {
                   class:
-                    'text-[12px] text-muted-foreground whitespace-pre-wrap break-words max-w-[440px] opacity-85 mt-0.5 font-normal',
+                    'text-[12px] text-muted-foreground whitespace-pre-wrap break-words max-w-[440px] max-h-[140px] overflow-y-auto opacity-85 mt-0.5 font-normal',
                   title: detail,
                 },
                 detail,
@@ -107,7 +107,6 @@ const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 const authURL =
   (import.meta.env.VITE_GLOB_AUTH_URL as string) || '/auth-server';
 
-
 /**
  * 重新认证逻辑
  */
@@ -145,11 +144,25 @@ function formatToken(token: null | string) {
  * 统一 ABP 与 OAuth2 错误弹窗提示
  */
 function handleUnifiedError(msg: string, error: unknown) {
-  const { message: title, details: detail } = getRequestErrorMessage(error, msg || '请求失败');
+  const { message: title, details: detail } = getRequestErrorMessage(
+    error,
+    msg || '请求失败',
+  );
   // RequestClient throws response.data. Preserve status information for empty HTTP errors.
-  if (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object') {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'response' in error &&
+    error.response &&
+    typeof error.response === 'object'
+  ) {
     const response = error.response as { data?: unknown; status?: number };
-    if (typeof response.status === 'number' && (response.data === undefined || response.data === null || response.data === '')) {
+    if (
+      typeof response.status === 'number' &&
+      (response.data === undefined ||
+        response.data === null ||
+        response.data === '')
+    ) {
       response.data = { error: { message: title, details: detail } };
     }
   }
@@ -174,14 +187,18 @@ function getCookie(name: string): string | undefined {
  * 包含：App-Id、App-Device-Id (浏览器指纹)、App-Device-Type、App-Version、Accept-Language、__tenant、RequestVerificationToken
  */
 const getAntiforgeryToken = createAbpAntiforgery({
-  loadConfiguration: (service) => requestClient.get(service.configurationPath, {
-    params: { includeLocalizationResources: false },
-    withCredentials: true,
-  }),
+  loadConfiguration: (service) =>
+    requestClient.get(service.configurationPath, {
+      params: { includeLocalizationResources: false },
+      withCredentials: true,
+    }),
   readCookie: getCookie,
 });
 
-function applyCommonHeadersInterceptor(client: RequestClient, business = false) {
+function applyCommonHeadersInterceptor(
+  client: RequestClient,
+  business = false,
+) {
   client.addRequestInterceptor({
     fulfilled: async (config) => {
       config.headers = config.headers || {};
@@ -210,9 +227,17 @@ function applyCommonHeadersInterceptor(client: RequestClient, business = false) 
 
       // Each independent API owns a distinct cookie/token pair.
       const xsrfToken = business
-        ? await getAntiforgeryToken(config.url || '', config.method || 'GET', `${useAccessStore().accessToken || ''}:${tenantId || ''}`)
+        ? await getAntiforgeryToken(
+            config.url || '',
+            config.method || 'GET',
+            `${useAccessStore().accessToken || ''}:${tenantId || ''}`,
+          )
         : getCookie('XSRF-TOKEN');
-      const token = xsrfToken || (/^\/(?:api\/)?chat\/scan-login(?:\/|$)/.test(config.url || '') ? getCookie('XSRF-TOKEN') : undefined);
+      const token =
+        xsrfToken ||
+        (/^\/(?:api\/)?chat\/scan-login(?:\/|$)/.test(config.url || '')
+          ? getCookie('XSRF-TOKEN')
+          : undefined);
       if (token) {
         config.headers.RequestVerificationToken = token;
         config.headers['X-XSRF-TOKEN'] = token;

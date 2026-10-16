@@ -1,6 +1,6 @@
-import { requestClient } from '#/api/request';
-
 import type { RebuildDailyDataInput } from './types';
+
+import { requestClient } from '#/api/request';
 
 export * from './activity';
 export * from './channel';

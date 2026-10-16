@@ -69,7 +69,7 @@ const activeMetrics = ref<string[]>(
 
 function toggleMetric(key: string) {
   const index = activeMetrics.value.indexOf(key);
-  if (index > -1) {
+  if (index !== -1) {
     if (activeMetrics.value.length > 1) {
       activeMetrics.value.splice(index, 1);
     }
@@ -86,7 +86,7 @@ const distinctDates = computed(() => {
   props.data.forEach((item) => {
     if (item.date) dateSet.add(item.date);
   });
-  return Array.from(dateSet).sort();
+  return [...dateSet].sort();
 });
 
 const hasData = computed(() =>
@@ -214,9 +214,10 @@ watch(
   (metrics) => {
     const keys = new Set(metrics.map((item) => item.key));
     const retained = activeMetrics.value.filter((key) => keys.has(key));
-    activeMetrics.value = retained.length
-      ? retained
-      : metrics.slice(0, props.initialMetrics).map((item) => item.key);
+    activeMetrics.value =
+      retained.length > 0
+        ? retained
+        : metrics.slice(0, props.initialMetrics).map((item) => item.key);
   },
   { deep: true },
 );

@@ -106,23 +106,42 @@ defineExpose({ modalApi });
   <Modal :title="modalTitle" class="w-[480px]">
     <div class="space-y-3 p-4">
       <div>
-        <div class="mb-1 font-medium text-sm">显示标签 (Label / Name) <span class="text-red-500">*</span></div>
-        <Input v-model:value="name" placeholder="UI 展示文字，如：互联网/IT、VIP会员" />
+        <div class="mb-1 font-medium text-sm">
+          显示标签 (Label / Name) <span class="text-red-500">*</span>
+        </div>
+        <Input
+          v-model:value="name"
+          placeholder="UI 展示文字，如：互联网/IT、VIP会员"
+        />
       </div>
 
       <div>
-        <div class="mb-1 font-medium text-sm">键值 (Value) <span class="text-red-500">*</span></div>
-        <Input v-model:value="value" placeholder="存入数据库的代码值，如：it, vip, 1, 2" />
+        <div class="mb-1 font-medium text-sm">
+          键值 (Value) <span class="text-red-500">*</span>
+        </div>
+        <Input
+          v-model:value="value"
+          placeholder="存入数据库的代码值，如：it, vip, 1, 2"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">排序号</div>
-        <InputNumber v-model:value="sorting" class="w-full" :min="0" :max="9999" />
+        <InputNumber
+          v-model:value="sorting"
+          class="w-full"
+          :min="0"
+          :max="9999"
+        />
       </div>
 
       <div>
         <div class="mb-1 font-medium text-sm">说明</div>
-        <Input.TextArea v-model:value="description" :rows="2" placeholder="可选填该选项的备注" />
+        <Input.TextArea
+          v-model:value="description"
+          :rows="2"
+          placeholder="可选填该选项的备注"
+        />
       </div>
     </div>
   </Modal>

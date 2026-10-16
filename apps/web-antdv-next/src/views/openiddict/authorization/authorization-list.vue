@@ -12,6 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteAuthorizationApi,
   getAuthorizationsApi,
+  revokeAuthorizationApi,
 } from '#/api/openiddict';
 import { $t } from '#/locales';
 
@@ -20,29 +21,44 @@ import { useColumns } from './data';
 const subjectFilter = ref('');
 const statusFilter = ref<string | undefined>(undefined);
 
-function onDelete(row: AuthorizationDto) {
+function onRevoke(row: AuthorizationDto) {
   Modal.confirm({
     cancelText: $t('common.cancel', '取消'),
-    content: `确定要撤销该授权记录吗？`,
+    content: `确定要吊销该授权记录吗？吊销后该授权及其关联的所有令牌将被立即作废。`,
     okText: $t('common.confirm', '确认'),
     okType: 'danger',
     async onOk() {
-      await deleteAuthorizationApi(row.id);
-      message.success('授权记录已撤销');
+      await revokeAuthorizationApi(row.id);
+      message.success('授权记录已成功吊销');
       refreshGrid();
     },
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: AuthorizationDto;
-}) {
-  if (code === 'delete') {
-    onDelete(row);
+function onDelete(row: AuthorizationDto) {
+  Modal.confirm({
+    cancelText: $t('common.cancel', '取消'),
+    content: `确定要彻底删除该授权记录吗？`,
+    okText: $t('common.confirm', '确认'),
+    okType: 'danger',
+    async onOk() {
+      await deleteAuthorizationApi(row.id);
+      message.success('授权记录已成功删除');
+      refreshGrid();
+    },
+  });
+}
+
+function onActionClick({ code, row }: { code: string; row: AuthorizationDto }) {
+  switch (code) {
+    case 'revoke': {
+      onRevoke(row);
+      break;
+    }
+    case 'delete': {
+      onDelete(row);
+      break;
+    }
   }
 }
 
@@ -102,9 +118,7 @@ function refreshGrid() {
             $t('page.openiddict.title', 'OpenIddict 认证服务')
           }}</span>
           <span class="text-muted-foreground/60">/</span>
-          <span class="font-bold text-base text-foreground"
-            >授权记录管理 (Authorizations)</span
-          >
+          <span class="font-bold text-base text-foreground">授权记录管理 (Authorizations)</span>
         </div>
       </template>
 

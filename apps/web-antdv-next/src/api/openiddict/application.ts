@@ -1,4 +1,3 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   ApplicationCreateInput,
   ApplicationDetailDto,
@@ -6,6 +5,8 @@ import type {
   ApplicationUpdateInput,
   GetApplicationsInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 
@@ -115,3 +116,13 @@ export async function getConstantsTreeApi() {
     '/openiddict/consts/open-iddict-constants-tree',
   );
 }
+
+/**
+ * 获取 OpenIddict 标准 Claims 声明列表
+ */
+export async function getClaimsApi() {
+  return requestClient.get<Record<string, string>>(
+    '/openiddict/consts/claims',
+  );
+}
+

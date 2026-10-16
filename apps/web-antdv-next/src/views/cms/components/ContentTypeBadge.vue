@@ -9,6 +9,9 @@ const props = defineProps<{
 
 const config = computed(() => {
   switch (props.type?.toLowerCase()) {
+    case 'gallery': {
+      return { color: 'cyan', text: '图集相册' };
+    }
     case 'news': {
       return { color: 'blue', text: '新闻资讯' };
     }
@@ -18,14 +21,11 @@ const config = computed(() => {
     case 'video': {
       return { color: 'purple', text: '视频内容' };
     }
-    case 'gallery': {
-      return { color: 'cyan', text: '图集相册' };
+    case 'wechat': {
+      return { color: 'green', text: '公众号图文' };
     }
     case 'wiki': {
       return { color: 'geekblue', text: '知识文档' };
-    }
-    case 'wechat': {
-      return { color: 'green', text: '公众号图文' };
     }
     case 'article':
     default: {

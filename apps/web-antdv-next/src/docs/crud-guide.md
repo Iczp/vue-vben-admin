@@ -40,6 +40,7 @@ src/
 ## 二、通用组合式函数 `useAbpCrud`
 
 `useAbpCrud`（位于 `#/composables/use-abp-crud`）专为对接 ABP 后端开发，自动解决以下通用逻辑：
+
 - **分页转换**：前端页码 `currentPage + pageSize` $\rightarrow$ ABP 的 `skipCount + maxResultCount`；
 - **排序转换**：表格多列/单列排序 $\rightarrow$ ABP 的 `sorting: "FieldName asc|desc"`；
 - **双击交互**：统一行双击（`cellDblclick`）行为：**有详情进入详情，无详情进入编辑**；
@@ -50,7 +51,7 @@ src/
 ### 1. 参数选项 `UseAbpCrudOptions<TEntity, TQuery>`
 
 | 属性 | 类型 | 必填 | 说明 |
-| :--- | :--- | :---: | :--- |
+| :-- | :-- | :-: | :-- |
 | `service` | `object` | **是** | 包含 `list`, `delete`, `create`, `update`, `get` 等 API 集合 |
 | `columns` | `(helpers) => VxeTableGridColumns` | **是** | 表格列定义函数，入参注入 `onAction`, `onEdit`, `onDelete`, `onPermission` |
 | `formComponent` | `Component` | 否 | 新增/编辑的弹窗组件（由 `useVbenModal` 包装） |
@@ -62,7 +63,7 @@ src/
 ### 2. 返回值对象
 
 | 属性 / 方法 | 类型 | 说明 |
-| :--- | :--- | :--- |
+| :-- | :-- | :-- |
 | `Grid` | `Component` | 渲染好的 VXE 表格组件 |
 | `gridApi` | `VxeGridApi` | 表格控制实例（`gridApi.query()`, `gridApi.reload()` 等） |
 | `FormModal` | `Component` | 渲染好的新增/编辑弹窗组件 |
@@ -87,7 +88,7 @@ src/
 已在全局注册，可直接在 `formatter: 'xxx'` 中指定：
 
 | Formatter 名称 | 说明 | 配置示例 | 输出样例 |
-| :--- | :--- | :--- | :--- |
+| :-- | :-- | :-- | :-- |
 | `formatDateTime` | 日期时间格式化 | `formatter: 'formatDateTime'` | `2026-08-24 17:30:00` |
 | `formatDate` | 纯日期格式化 | `formatter: 'formatDate'` | `2026-08-24` |
 | `formatTime` | 纯时间格式化 | `formatter: 'formatTime'` | `17:30:00` |
@@ -124,6 +125,7 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 通过纯 JSON 的 `cellRender` 属性，可以直接挂载丰富的组件：
 
 ### 1. 状态与枚举标签 `CellTag`
+
 ```ts
 {
   field: 'isActive',
@@ -140,7 +142,9 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 ```
 
 ### 2. 一键复制 `CellCopyable`
+
 鼠标悬浮显示复制按钮，点击自动写入系统剪贴板：
+
 ```ts
 {
   field: 'clientIpAddress',
@@ -151,6 +155,7 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 ```
 
 ### 3. 在线状态徽标 `CellBadge`
+
 ```ts
 {
   field: 'isOnline',
@@ -167,7 +172,9 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 ```
 
 ### 4. 异步状态开关 `CellSwitch`
+
 可在表格内直接操作开关，支持异步接口校验：
+
 ```ts
 {
   field: 'isActive',
@@ -186,7 +193,9 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 ```
 
 ### 5. 操作列按钮组 `CellOperation`
+
 自动生成编辑、权限、删除按钮，支持防误触删除确认：
+
 ```ts
 {
   field: 'operation',
@@ -211,6 +220,7 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 类似 DevExpress 的 Custom Column Template，当纯 JSON 配置无法满足极度复杂的交互场景时，可以通过 `slots: { default: 'slotName' }` 自定义模板。
 
 ### 1. 列配置中声明 Slot 名称
+
 ```ts
 {
   field: 'userProfile',
@@ -221,6 +231,7 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 ```
 
 ### 2. 页面中书写自定义 UI
+
 ```vue
 <template>
   <Page auto-content-height>
@@ -246,6 +257,7 @@ const GENDER_MAP: Record<number, string> = { 1: '男', 2: '女', 0: '保密' };
 以开发一个 **角色管理 (Role Management)** 为例：
 
 ### 1. API 接口定义 (`src/api/identity/role.ts`)
+
 ```ts
 import type { ListResultDto, PagedResultDto } from '#/api/abp/types';
 import type {
@@ -257,7 +269,9 @@ import type {
 import { requestClient } from '#/api/request';
 
 export function getRolesApi(params?: GetIdentityRolesInput) {
-  return requestClient.get<PagedResultDto<IdentityRoleDto>>('/identity/roles', { params });
+  return requestClient.get<PagedResultDto<IdentityRoleDto>>('/identity/roles', {
+    params,
+  });
 }
 
 export function createRoleApi(data: IdentityRoleCreateDto) {
@@ -274,6 +288,7 @@ export function deleteRoleApi(id: string) {
 ```
 
 ### 2. 表格列配置 (`src/views/identity/role/data.ts`)
+
 ```ts
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { IdentityRoleDto } from '#/api/identity';
@@ -328,6 +343,7 @@ export function useColumns(
 ```
 
 ### 3. 表单弹窗 (`src/views/identity/role/modules/role-modal.vue`)
+
 ```vue
 <script lang="ts" setup>
 import type { IdentityRoleDto } from '#/api/identity';
@@ -343,7 +359,9 @@ const isDefault = ref(false);
 const isPublic = ref(false);
 
 const isEdit = computed(() => Boolean(roleModel.value?.id));
-const getTitle = computed(() => isEdit.value ? `编辑角色 - ${roleModel.value?.name}` : '新建角色');
+const getTitle = computed(() =>
+  isEdit.value ? `编辑角色 - ${roleModel.value?.name}` : '新建角色',
+);
 
 const [Modal, modalApi] = useVbenModal<IdentityRoleDto | null>({
   async onConfirm() {
@@ -408,6 +426,7 @@ const [Modal, modalApi] = useVbenModal<IdentityRoleDto | null>({
 ```
 
 ### 4. 列表装配主页面 (`src/views/identity/role/index.vue`)
+
 ```vue
 <script lang="ts" setup>
 import type { IdentityRoleDto } from '#/api/identity';
@@ -420,23 +439,17 @@ import PermissionModal from '#/views/permission/permission-modal.vue';
 import { useColumns } from './data';
 import RoleModal from './modules/role-modal.vue';
 
-const {
-  Grid,
-  FormModal,
-  PermModal,
-  onCreate,
-  refresh,
-  queryParams,
-} = useAbpCrud<IdentityRoleDto>({
-  columns: ({ onAction }) => useColumns(onAction),
-  formComponent: RoleModal,
-  permissionComponent: PermissionModal,
-  getEntityTitle: (row) => row.name,
-  service: {
-    list: getRolesApi,
-    delete: deleteRoleApi,
-  },
-});
+const { Grid, FormModal, PermModal, onCreate, refresh, queryParams } =
+  useAbpCrud<IdentityRoleDto>({
+    columns: ({ onAction }) => useColumns(onAction),
+    formComponent: RoleModal,
+    permissionComponent: PermissionModal,
+    getEntityTitle: (row) => row.name,
+    service: {
+      list: getRolesApi,
+      delete: deleteRoleApi,
+    },
+  });
 </script>
 
 <template>
@@ -458,7 +471,9 @@ const {
 
       <!-- 第二行：左侧搜索表单，右侧操作按钮 -->
       <template #top>
-        <div class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1">
+        <div
+          class="flex items-center justify-between py-2 px-1 flex-wrap gap-2 mb-1"
+        >
           <div class="flex items-center gap-2 flex-wrap">
             <Input.Search
               v-model:value="queryParams.filter"

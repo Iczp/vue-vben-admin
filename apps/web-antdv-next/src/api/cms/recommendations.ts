@@ -1,9 +1,13 @@
-import type { PagedAndSortedResultRequestDto, PagedResultDto } from '#/api/abp/types';
 import type {
   RecommendationRuleCreateDto,
   RecommendationRuleDto,
   RecommendationRuleUpdateDto,
 } from './types';
+
+import type {
+  PagedAndSortedResultRequestDto,
+  PagedResultDto,
+} from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 
@@ -66,8 +70,7 @@ export async function deleteRecommendationRuleApi(id: string) {
 export async function previewRecommendationRuleApi(
   data: import('./types').PreviewRecommendationRuleInput,
 ) {
-  return requestClient.post<import('./types').RecommendationRulePreviewItemDto[]>(
-    '/cms/admin/recommendation-rules/preview',
-    data,
-  );
+  return requestClient.post<
+    import('./types').RecommendationRulePreviewItemDto[]
+  >('/cms/admin/recommendation-rules/preview', data);
 }

@@ -65,26 +65,38 @@ defineExpose({ drawerApi });
             <span class="text-xs">{{ detail.creationTime || '-' }}</span>
           </div>
           <div class="py-1">
-            <div class="text-muted-foreground text-xs mb-1">扫描原始报文/字符串:</div>
-            <div class="p-2 bg-background rounded font-mono text-xs break-all border">
+            <div class="text-muted-foreground text-xs mb-1">
+              扫描原始报文/字符串:
+            </div>
+            <div
+              class="p-2 bg-background rounded font-mono text-xs break-all border"
+            >
               {{ detail.content || '-' }}
             </div>
           </div>
         </div>
 
         <div>
-          <h4 class="text-sm font-semibold mb-2 text-foreground border-l-3 border-primary pl-2">
-            处理器分发结果 (Handler Pipeline: {{ detail.scanHandlerList?.length || 0 }})
+          <h4
+            class="text-sm font-semibold mb-2 text-foreground border-l-3 border-primary pl-2"
+          >
+            处理器分发结果 (Handler Pipeline:
+            {{ detail.scanHandlerList?.length || 0 }})
           </h4>
 
-          <div v-if="detail.scanHandlerList && detail.scanHandlerList.length > 0" class="space-y-2">
+          <div
+            v-if="detail.scanHandlerList && detail.scanHandlerList.length > 0"
+            class="space-y-2"
+          >
             <div
               v-for="(h, idx) in detail.scanHandlerList"
               :key="idx"
               class="border rounded-md p-3 bg-muted/10 space-y-1.5"
             >
               <div class="flex items-center justify-between">
-                <span class="font-medium text-xs font-mono text-foreground">{{ h.handlerFullName }}</span>
+                <span class="font-medium text-xs font-mono text-foreground">{{
+                  h.handlerFullName
+                }}</span>
                 <Tag :color="h.isSuccess ? 'green' : 'red'">
                   {{ h.isSuccess ? '处理成功' : '失败/未命中' }}
                 </Tag>
@@ -92,7 +104,10 @@ defineExpose({ drawerApi });
               <div v-if="h.message" class="text-xs text-muted-foreground">
                 响应消息: {{ h.message }}
               </div>
-              <div v-if="h.data" class="p-1.5 bg-background rounded text-xs font-mono break-all overflow-x-auto">
+              <div
+                v-if="h.data"
+                class="p-1.5 bg-background rounded text-xs font-mono break-all overflow-x-auto"
+              >
                 {{ JSON.stringify(h.data) }}
               </div>
             </div>

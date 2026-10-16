@@ -9,10 +9,26 @@ import {
 
 export const moderationStatusOptions = [
   { color: 'default', label: '待处理', value: ContentModerationStatus.Pending },
-  { color: 'processing', label: '审核中', value: ContentModerationStatus.Processing },
-  { color: 'success', label: '合规通过', value: ContentModerationStatus.Approved },
-  { color: 'error', label: '违规拦截', value: ContentModerationStatus.Rejected },
-  { color: 'warning', label: '需人工审核', value: ContentModerationStatus.NeedManualReview },
+  {
+    color: 'processing',
+    label: '审核中',
+    value: ContentModerationStatus.Processing,
+  },
+  {
+    color: 'success',
+    label: '合规通过',
+    value: ContentModerationStatus.Approved,
+  },
+  {
+    color: 'error',
+    label: '违规拦截',
+    value: ContentModerationStatus.Rejected,
+  },
+  {
+    color: 'warning',
+    label: '需人工审核',
+    value: ContentModerationStatus.NeedManualReview,
+  },
 ];
 
 export const riskLevelOptions = [
@@ -25,7 +41,11 @@ export const riskLevelOptions = [
 export const decisionOptions = [
   { color: 'success', label: '建议通过', value: ModerationDecision.Approve },
   { color: 'error', label: '建议拒绝', value: ModerationDecision.Reject },
-  { color: 'warning', label: '转人工复核', value: ModerationDecision.ManualReview },
+  {
+    color: 'warning',
+    label: '转人工复核',
+    value: ModerationDecision.ManualReview,
+  },
 ];
 
 export function useColumns(

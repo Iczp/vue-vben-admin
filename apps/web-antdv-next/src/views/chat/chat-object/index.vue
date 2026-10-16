@@ -36,12 +36,28 @@ const objectTypeTabs = [
   { key: 'all', label: '全部对象', value: undefined },
   { key: 'personal', label: '👤 个人号', value: ChatObjectTypeEnums.Personal },
   { key: 'room', label: '👥 群聊/房间', value: ChatObjectTypeEnums.Room },
-  { key: 'official', label: '📢 官方服务号', value: ChatObjectTypeEnums.Official },
-  { key: 'subscription', label: '📰 订阅号', value: ChatObjectTypeEnums.Subscription },
+  {
+    key: 'official',
+    label: '📢 官方服务号',
+    value: ChatObjectTypeEnums.Official,
+  },
+  {
+    key: 'subscription',
+    label: '📰 订阅号',
+    value: ChatObjectTypeEnums.Subscription,
+  },
   { key: 'square', label: '🌐 广场', value: ChatObjectTypeEnums.Square },
   { key: 'robot', label: '🤖 机器人', value: ChatObjectTypeEnums.Robot },
-  { key: 'shopKeeper', label: '🏪 掌柜', value: ChatObjectTypeEnums.ShopKeeper },
-  { key: 'shopWaiter', label: '🧑‍💼 店小二', value: ChatObjectTypeEnums.ShopWaiter },
+  {
+    key: 'shopKeeper',
+    label: '🏪 掌柜',
+    value: ChatObjectTypeEnums.ShopKeeper,
+  },
+  {
+    key: 'shopWaiter',
+    label: '🧑‍💼 店小二',
+    value: ChatObjectTypeEnums.ShopWaiter,
+  },
   { key: 'customer', label: '🙋 客户', value: ChatObjectTypeEnums.Customer },
   { key: 'anonymous', label: '🕶️ 匿名', value: ChatObjectTypeEnums.Anonymous },
 ];
@@ -78,8 +94,8 @@ async function loadFilterOptions() {
       label: `${t.name} (${t.id})`,
       value: t.id,
     }));
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -110,13 +126,7 @@ function onDelete(row: ChatObjectDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: ChatObjectDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: ChatObjectDto }) {
   switch (code) {
     case 'delete': {
       onDelete(row);
@@ -201,11 +211,19 @@ onMounted(() => {
     <Card
       size="small"
       class="flex-1 flex flex-col h-full shadow-sm overflow-hidden"
-      :styles="{ body: { padding: '10px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } }"
+      :styles="{
+        body: {
+          padding: '10px',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden',
+        },
+      }"
     >
       <!-- 对象类型 Tab 切换 (Tab 分类) -->
       <Tabs
-        v-model:activeKey="activeTypeTab"
+        v-model:active-key="activeTypeTab"
         type="card"
         size="small"
         class="shrink-0 mb-1.5"
@@ -229,7 +247,9 @@ onMounted(() => {
           </template>
 
           <template #top>
-            <div class="flex items-center justify-between py-1 px-1 flex-wrap gap-2 mb-1">
+            <div
+              class="flex items-center justify-between py-1 px-1 flex-wrap gap-2 mb-1"
+            >
               <div class="flex items-center gap-2 flex-wrap">
                 <Input.Search
                   v-model:value="filterText"
@@ -252,16 +272,18 @@ onMounted(() => {
                   allow-clear
                   class="w-44"
                   :tree-data="categoryTree"
-                  :field-names="{ children: 'children', label: 'name', value: 'id' }"
+                  :field-names="{
+                    children: 'children',
+                    label: 'name',
+                    value: 'id',
+                  }"
                   tree-default-expand-all
                   @change="refreshGrid"
                 />
               </div>
 
               <Space>
-                <Button type="primary" @click="onAdd">
-                  + 新建聊天对象
-                </Button>
+                <Button type="primary" @click="onAdd"> + 新建聊天对象 </Button>
               </Space>
             </div>
           </template>

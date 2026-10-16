@@ -1,8 +1,9 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   ContentDailyStatDto,
   ContentDailyStatGetListInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 

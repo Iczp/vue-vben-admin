@@ -14,11 +14,7 @@ import {
   Select,
 } from 'antdv-next';
 
-import {
-  AiRunStatus,
-  createAiRunApi,
-  updateAiRunApi,
-} from '#/api/chat/ai-run';
+import { AiRunStatus, createAiRunApi, updateAiRunApi } from '#/api/chat/ai-run';
 
 const emit = defineEmits<{
   (e: 'success'): void;
@@ -87,7 +83,8 @@ const [Modal, modalApi] = useVbenModal({
         await createAiRunApi({
           maxAttempts: createFormState.value.maxAttempts,
           provider: createFormState.value.provider,
-          requesterSessionUnitId: createFormState.value.requesterSessionUnitId.trim(),
+          requesterSessionUnitId:
+            createFormState.value.requesterSessionUnitId.trim(),
           sessionId: createFormState.value.sessionId.trim(),
           sourceMessageId: createFormState.value.sourceMessageId,
         });
@@ -103,7 +100,7 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { record?: AiRunDto } | undefined;
+      const data = modalApi.getData() as undefined | { record?: AiRunDto };
       if (data?.record) {
         isEdit.value = true;
         recordId.value = data.record.id;
@@ -125,7 +122,10 @@ defineExpose({ modalApi });
 </script>
 
 <template>
-  <Modal :title="isEdit ? '修改 AI 执行任务' : '新建 AI 执行任务'" class="w-[560px]">
+  <Modal
+    :title="isEdit ? '修改 AI 执行任务' : '新建 AI 执行任务'"
+    class="w-[560px]"
+  >
     <div class="p-4 space-y-4">
       <!-- 新增模式表单 -->
       <Form v-if="!isEdit" layout="vertical">
@@ -185,7 +185,10 @@ defineExpose({ modalApi });
               { label: '排队中 (Queued)', value: AiRunStatus.Queued },
               { label: '执行中 (Running)', value: AiRunStatus.Running },
               { label: '已完成 (Completed)', value: AiRunStatus.Completed },
-              { label: '等待重试 (RetryScheduled)', value: AiRunStatus.RetryScheduled },
+              {
+                label: '等待重试 (RetryScheduled)',
+                value: AiRunStatus.RetryScheduled,
+              },
               { label: '执行失败 (Failed)', value: AiRunStatus.Failed },
               { label: '执行超时 (TimedOut)', value: AiRunStatus.TimedOut },
               { label: '已取消 (Cancelled)', value: AiRunStatus.Cancelled },

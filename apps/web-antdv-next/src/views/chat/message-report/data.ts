@@ -1,5 +1,9 @@
 import type { VxeTableGridColumns } from '#/adapter/vxe-table';
-import type { MessageReportDto, MessageSummaryDto } from '#/api/chat/message-report';
+import type {
+  MessageReportDto,
+  MessageSummaryDto,
+} from '#/api/chat/message-report';
+
 import { MessageReportTypes, MessageTypes } from '#/api/chat/message-report';
 
 /**
@@ -15,10 +19,18 @@ export const messageTypeOptions = [
   { color: 'geekblue', label: '链接 (Link)', value: MessageTypes.Link },
   { color: 'gold', label: '位置 (Location)', value: MessageTypes.Location },
   { color: 'magenta', label: '名片 (Contacts)', value: MessageTypes.Contacts },
-  { color: 'red', label: '红包 (RedEnvelope)', value: MessageTypes.RedEnvelope },
+  {
+    color: 'red',
+    label: '红包 (RedEnvelope)',
+    value: MessageTypes.RedEnvelope,
+  },
   { color: 'volcano', label: 'HTML', value: MessageTypes.Html },
   { color: 'lime', label: '文章 (Article)', value: MessageTypes.Article },
-  { color: 'processing', label: '聊天记录 (History)', value: MessageTypes.History },
+  {
+    color: 'processing',
+    label: '聊天记录 (History)',
+    value: MessageTypes.History,
+  },
 ];
 
 /**

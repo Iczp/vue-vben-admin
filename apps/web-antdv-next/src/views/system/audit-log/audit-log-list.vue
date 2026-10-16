@@ -28,13 +28,7 @@ function onDetail(row: AuditLogDto) {
   detailModalApi.setData({ id: row.id }).open();
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: AuditLogDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: AuditLogDto }) {
   if (code === 'detail') {
     onDetail(row);
   }

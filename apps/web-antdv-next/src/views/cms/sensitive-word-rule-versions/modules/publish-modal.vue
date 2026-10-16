@@ -5,14 +5,7 @@ import { reactive, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import {
-  Alert,
-  Form,
-  FormItem,
-  Input,
-  message,
-  Spin,
-} from 'antdv-next';
+import { Alert, Form, FormItem, Input, message, Spin } from 'antdv-next';
 
 import {
   previewSensitiveWordRuleVersionApi,
@@ -24,7 +17,7 @@ const emit = defineEmits<{
 }>();
 
 const loading = ref(false);
-const preview = ref<SensitiveWordRulePreviewDto | null>(null);
+const preview = ref<null | SensitiveWordRulePreviewDto>(null);
 
 const formState = reactive({
   remark: '',
@@ -91,22 +84,38 @@ const [Modal, modalApi] = useVbenModal({
         />
 
         <!-- 草稿指标 -->
-        <div class="grid grid-cols-3 gap-3 p-3 rounded-lg border bg-gray-50/70 dark:bg-gray-900/50 text-sm">
+        <div
+          class="grid grid-cols-3 gap-3 p-3 rounded-lg border bg-gray-50/70 dark:bg-gray-900/50 text-sm"
+        >
           <div>
             <div class="text-xs text-muted-foreground">词条总数</div>
-            <div class="text-lg font-bold text-foreground mt-0.5">{{ preview?.totalWords ?? 0 }}</div>
+            <div class="text-lg font-bold text-foreground mt-0.5">
+              {{ preview?.totalWords ?? 0 }}
+            </div>
           </div>
           <div>
             <div class="text-xs text-muted-foreground">正则词条</div>
-            <div class="text-lg font-bold text-foreground mt-0.5">{{ preview?.totalRegexWords ?? 0 }}</div>
+            <div class="text-lg font-bold text-foreground mt-0.5">
+              {{ preview?.totalRegexWords ?? 0 }}
+            </div>
           </div>
           <div>
             <div class="text-xs text-muted-foreground">白名单总数</div>
-            <div class="text-lg font-bold text-foreground mt-0.5">{{ preview?.totalWhitelists ?? 0 }}</div>
+            <div class="text-lg font-bold text-foreground mt-0.5">
+              {{ preview?.totalWhitelists ?? 0 }}
+            </div>
           </div>
-          <div class="col-span-3 text-xs text-muted-foreground flex gap-4 pt-1 border-t">
-            <span>草稿修订版本: <code>#{{ preview?.currentDraftRevision ?? 0 }}</code></span>
-            <span>内容 SHA256: <code class="font-mono">{{ preview?.contentHash ? `${preview.contentHash.slice(0, 12)}...` : '-' }}</code></span>
+          <div
+            class="col-span-3 text-xs text-muted-foreground flex gap-4 pt-1 border-t"
+          >
+            <span>草稿修订版本:
+              <code>#{{ preview?.currentDraftRevision ?? 0 }}</code></span>
+            <span>内容 SHA256:
+              <code class="font-mono">{{
+                preview?.contentHash
+                  ? `${preview.contentHash.slice(0, 12)}...`
+                  : '-'
+              }}</code></span>
           </div>
         </div>
 

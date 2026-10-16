@@ -36,7 +36,7 @@ const detail = ref<AiRunDetailDto | null>(null);
 const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
-      const data = drawerApi.getData() as { id?: string } | undefined;
+      const data = drawerApi.getData() as undefined | { id?: string };
       if (data?.id) {
         await fetchDetail(data.id);
       }
@@ -110,14 +110,26 @@ defineExpose({ drawerApi });
           <div class="pt-2 flex items-center gap-2 border-t">
             <Popconfirm
               title="确定立即重试该任务吗？"
-              :disabled="![AiRunStatus.Failed, AiRunStatus.TimedOut, AiRunStatus.RetryScheduled].includes(detail.status)"
+              :disabled="
+                ![
+                  AiRunStatus.Failed,
+                  AiRunStatus.TimedOut,
+                  AiRunStatus.RetryScheduled,
+                ].includes(detail.status)
+              "
               @confirm="onRetry"
             >
               <Button
                 type="primary"
                 size="small"
                 :loading="actionLoading"
-                :disabled="![AiRunStatus.Failed, AiRunStatus.TimedOut, AiRunStatus.RetryScheduled].includes(detail.status)"
+                :disabled="
+                  ![
+                    AiRunStatus.Failed,
+                    AiRunStatus.TimedOut,
+                    AiRunStatus.RetryScheduled,
+                  ].includes(detail.status)
+                "
               >
                 人工重试
               </Button>
@@ -125,14 +137,22 @@ defineExpose({ drawerApi });
 
             <Popconfirm
               title="确定要取消此 AI 任务吗？"
-              :disabled="![AiRunStatus.Queued, AiRunStatus.Running].includes(detail.status)"
+              :disabled="
+                ![AiRunStatus.Queued, AiRunStatus.Running].includes(
+                  detail.status,
+                )
+              "
               @confirm="onCancel"
             >
               <Button
                 danger
                 size="small"
                 :loading="actionLoading"
-                :disabled="![AiRunStatus.Queued, AiRunStatus.Running].includes(detail.status)"
+                :disabled="
+                  ![AiRunStatus.Queued, AiRunStatus.Running].includes(
+                    detail.status,
+                  )
+                "
               >
                 取消任务
               </Button>
@@ -160,18 +180,26 @@ defineExpose({ drawerApi });
             <span class="font-mono text-xs">{{ detail.sourceMessageId }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="回复消息 ID">
-            <span class="font-mono text-xs">{{ detail.outputMessageId ?? '-' }}</span>
+            <span class="font-mono text-xs">{{
+              detail.outputMessageId ?? '-'
+            }}</span>
           </DescriptionsItem>
 
           <DescriptionsItem label="会话 ID" :span="2">
-            <span class="font-mono select-all text-xs">{{ detail.sessionId }}</span>
+            <span class="font-mono select-all text-xs">{{
+              detail.sessionId
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="发起者会话单元" :span="2">
-            <span class="font-mono select-all text-xs">{{ detail.requesterSessionUnitId }}</span>
+            <span class="font-mono select-all text-xs">{{
+              detail.requesterSessionUnitId
+            }}</span>
           </DescriptionsItem>
 
           <DescriptionsItem label="工作节点 (LeaseOwner)">
-            <span class="font-mono text-xs">{{ detail.leaseOwner ?? '-' }}</span>
+            <span class="font-mono text-xs">{{
+              detail.leaseOwner ?? '-'
+            }}</span>
           </DescriptionsItem>
           <DescriptionsItem label="租约到期时间">
             <span class="text-xs">{{ detail.leaseUntilTime ?? '-' }}</span>
@@ -200,12 +228,19 @@ defineExpose({ drawerApi });
         </Descriptions>
 
         <!-- 异常报错诊断区 -->
-        <div v-if="detail.lastErrorCode || detail.lastErrorMessage" class="p-4 rounded-lg bg-red-500/10 border border-red-500/20 space-y-2">
-          <div class="flex items-center gap-2 text-red-600 font-semibold text-xs">
+        <div
+          v-if="detail.lastErrorCode || detail.lastErrorMessage"
+          class="p-4 rounded-lg bg-red-500/10 border border-red-500/20 space-y-2"
+        >
+          <div
+            class="flex items-center gap-2 text-red-600 font-semibold text-xs"
+          >
             <span>错误代码:</span>
             <Tag color="error">{{ detail.lastErrorCode || 'Error' }}</Tag>
           </div>
-          <div class="text-xs font-mono text-red-700 dark:text-red-400 break-all whitespace-pre-wrap bg-background/50 p-2.5 rounded border">
+          <div
+            class="text-xs font-mono text-red-700 dark:text-red-400 break-all whitespace-pre-wrap bg-background/50 p-2.5 rounded border"
+          >
             {{ detail.lastErrorMessage }}
           </div>
         </div>

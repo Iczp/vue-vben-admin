@@ -7,16 +7,17 @@ import { initStores } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/antdv-next';
 
-import { message, notification } from 'antdv-next';
 import { useTitle } from '@vueuse/core';
+import { message, notification } from 'antdv-next';
 
 import { $t, setupI18n } from '#/locales';
-import '#/styles/message.css';
 
 import { initComponentAdapter } from './adapter/component';
 import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
 import { router } from './router';
+
+import '#/styles/message.css';
 
 // 限制全局消息提示数量与位置，防止堆叠遮挡
 message.config({

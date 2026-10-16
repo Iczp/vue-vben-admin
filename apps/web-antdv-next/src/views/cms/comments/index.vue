@@ -83,13 +83,7 @@ function onDelete(row: CommentDto) {
   });
 }
 
-function onActionClick({
-  code,
-  row,
-}: {
-  code: string;
-  row: CommentDto;
-}) {
+function onActionClick({ code, row }: { code: string; row: CommentDto }) {
   switch (code) {
     case 'approve': {
       onApprove(row);
@@ -158,7 +152,11 @@ function onFilterChange() {
   <Page auto-content-height>
     <div class="h-full flex flex-col gap-3">
       <!-- 搜索过滤栏 -->
-      <Card variant="borderless" class="shrink-0 shadow-sm" :body-style="{ padding: '12px 16px' }">
+      <Card
+        variant="borderless"
+        class="shrink-0 shadow-sm"
+        :body-style="{ padding: '12px 16px' }"
+      >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-3">
             <Input.Search
@@ -175,7 +173,9 @@ function onFilterChange() {
               @change="onFilterChange"
             >
               <RadioButton :value="undefined">全部</RadioButton>
-              <RadioButton :value="CommentStatus.PendingReview">待审核</RadioButton>
+              <RadioButton :value="CommentStatus.PendingReview">
+待审核
+</RadioButton>
               <RadioButton :value="CommentStatus.Approved">已通过</RadioButton>
               <RadioButton :value="CommentStatus.Rejected">已驳回</RadioButton>
               <RadioButton :value="CommentStatus.Hidden">已隐藏</RadioButton>
@@ -204,7 +204,9 @@ function onFilterChange() {
       </Card>
 
       <!-- 评论数据表格 -->
-      <div class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2">
+      <div
+        class="flex-1 min-h-0 bg-background rounded-lg shadow-sm overflow-hidden p-2"
+      >
         <Grid />
       </div>
     </div>

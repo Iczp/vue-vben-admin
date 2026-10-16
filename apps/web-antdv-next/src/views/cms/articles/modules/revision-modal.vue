@@ -6,6 +6,7 @@ import { computed, ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 
 import {
+  Modal as AntModal,
   Button,
   Descriptions,
   DescriptionsItem,
@@ -14,7 +15,6 @@ import {
   FormItem,
   Input,
   message,
-  Modal as AntModal,
   Popconfirm,
   Radio,
   RadioGroup,
@@ -56,8 +56,8 @@ const previewRevision = ref<ArticleRevisionDto | null>(null);
 
 // 版本对比弹窗状态
 const diffVisible = ref(false);
-const diffSourceVersion = ref<number | null>(null);
-const diffTargetVersion = ref<number | null>(null);
+const diffSourceVersion = ref<null | number>(null);
+const diffTargetVersion = ref<null | number>(null);
 
 const sourceRevision = computed(() =>
   revisions.value.find((r) => r.version === diffSourceVersion.value),
@@ -152,7 +152,9 @@ function onOpenDiff(record?: ArticleRevisionDto) {
   if (record) {
     diffTargetVersion.value = record.version;
     const prev = revisions.value.find((r) => r.version < record.version);
-    diffSourceVersion.value = prev ? prev.version : revisions.value[revisions.value.length - 1]?.version ?? null;
+    diffSourceVersion.value = prev
+      ? prev.version
+      : (revisions.value[revisions.value.length - 1]?.version ?? null);
   } else {
     diffTargetVersion.value = revisions.value[0]?.version ?? null;
     diffSourceVersion.value = revisions.value[1]?.version ?? null;
@@ -190,7 +192,9 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
   fullscreenButton: false,
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { id: string; title: string } | undefined;
+      const data = modalApi.getData() as
+        | undefined
+        | { id: string; title: string };
       articleId.value = data?.id || '';
       articleTitle.value = data?.title || '';
       showAddRevision.value = false;
@@ -238,9 +242,16 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'version'">
-              <Tag :color="record.version === revisions[0]?.version ? 'green' : 'blue'">
+              <Tag
+                :color="
+                  record.version === revisions[0]?.version ? 'green' : 'blue'
+                "
+              >
                 V{{ record.version }}
-                <span v-if="record.version === revisions[0]?.version" class="text-[10px] ml-0.5">(最新)</span>
+                <span
+                  v-if="record.version === revisions[0]?.version"
+                  class="text-[10px] ml-0.5"
+                  >(最新)</span>
               </Tag>
             </template>
             <template v-else-if="column.key === 'action'">
@@ -264,10 +275,10 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
                   cancel-text="取消"
                   @confirm="onRollback(record)"
                 >
-                  <Tooltip title="恢复当前文章为此版本，并自动生成新的回滚修订记录">
-                    <Button type="link" size="small">
-                      回滚
-                    </Button>
+                  <Tooltip
+                    title="恢复当前文章为此版本，并自动生成新的回滚修订记录"
+                  >
+                    <Button type="link" size="small"> 回滚 </Button>
                   </Tooltip>
                 </Popconfirm>
 
@@ -278,9 +289,7 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
                   ok-type="danger"
                   @confirm="onDeleteRevision(record)"
                 >
-                  <Button type="link" danger size="small">
-                    删除
-                  </Button>
+                  <Button type="link" danger size="small"> 删除 </Button>
                 </Popconfirm>
               </Space>
             </template>
@@ -331,18 +340,36 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
             <Tag color="blue">V{{ previewRevision.version }}</Tag>
           </DescriptionsItem>
           <DescriptionsItem label="修改时间">
-            {{ previewRevision.creationTime ? dayjs(previewRevision.creationTime).format('YYYY-MM-DD HH:mm:ss') : '-' }}
+            {{
+              previewRevision.creationTime
+                ? dayjs(previewRevision.creationTime).format(
+                    'YYYY-MM-DD HH:mm:ss',
+                  )
+                : '-'
+            }}
           </DescriptionsItem>
           <DescriptionsItem label="版本标题" :span="2">
             {{ previewRevision.title }}
           </DescriptionsItem>
-          <DescriptionsItem v-if="previewRevision.subtitle" label="副标题" :span="2">
+          <DescriptionsItem
+            v-if="previewRevision.subtitle"
+            label="副标题"
+            :span="2"
+          >
             {{ previewRevision.subtitle }}
           </DescriptionsItem>
-          <DescriptionsItem v-if="previewRevision.changeSummary || previewRevision.changeLog" label="修订说明" :span="2">
+          <DescriptionsItem
+            v-if="previewRevision.changeSummary || previewRevision.changeLog"
+            label="修订说明"
+            :span="2"
+          >
             {{ previewRevision.changeSummary || previewRevision.changeLog }}
           </DescriptionsItem>
-          <DescriptionsItem v-if="previewRevision.summary" label="摘要" :span="2">
+          <DescriptionsItem
+            v-if="previewRevision.summary"
+            label="摘要"
+            :span="2"
+          >
             {{ previewRevision.summary }}
           </DescriptionsItem>
         </Descriptions>
@@ -350,7 +377,9 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
 
       <Divider class="my-2">正文内容</Divider>
 
-      <div class="max-h-[55vh] overflow-y-auto p-4 border rounded bg-background">
+      <div
+        class="max-h-[55vh] overflow-y-auto p-4 border rounded bg-background"
+      >
         <div
           v-if="previewHtml"
           class="prose dark:prose-invert max-w-none text-sm leading-relaxed"
@@ -369,9 +398,7 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
           cancel-text="取消"
           @confirm="onRollback(previewRevision)"
         >
-          <Button type="primary">
-            回滚恢复至此版本
-          </Button>
+          <Button type="primary"> 回滚恢复至此版本 </Button>
         </Popconfirm>
         <Button @click="previewVisible = false">关闭</Button>
       </div>
@@ -385,7 +412,9 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
       :footer="null"
       destroy-on-hidden
     >
-      <div class="mb-4 flex items-center justify-between gap-4 p-3 bg-muted/20 border rounded">
+      <div
+        class="mb-4 flex items-center justify-between gap-4 p-3 bg-muted/20 border rounded"
+      >
         <div class="flex items-center gap-2">
           <span class="font-medium text-xs">对比基准版本 (左)：</span>
           <RadioGroup v-model:value="diffSourceVersion" size="small">
@@ -412,24 +441,38 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
         </div>
       </div>
 
-      <div v-if="sourceRevision && targetRevision" class="grid grid-cols-2 gap-4">
+      <div
+        v-if="sourceRevision && targetRevision"
+        class="grid grid-cols-2 gap-4"
+      >
         <!-- 左侧基准版本 -->
         <div class="border rounded p-3 bg-background flex flex-col">
           <div class="flex items-center justify-between border-b pb-2 mb-2">
             <Tag color="blue">V{{ sourceRevision.version }}</Tag>
             <span class="text-xs text-muted-foreground">
-              {{ dayjs(sourceRevision.creationTime).format('YYYY-MM-DD HH:mm') }}
+              {{
+                dayjs(sourceRevision.creationTime).format('YYYY-MM-DD HH:mm')
+              }}
             </span>
           </div>
           <div class="font-medium text-sm mb-1">{{ sourceRevision.title }}</div>
           <div class="text-xs text-muted-foreground mb-2">
-            说明: {{ sourceRevision.changeSummary || sourceRevision.changeLog || '无' }}
+            说明:
+            {{
+              sourceRevision.changeSummary || sourceRevision.changeLog || '无'
+            }}
           </div>
           <Divider class="my-1" />
-          <div class="flex-1 max-h-[50vh] overflow-y-auto text-xs leading-relaxed p-2 bg-muted/10 rounded">
+          <div
+            class="flex-1 max-h-[50vh] overflow-y-auto text-xs leading-relaxed p-2 bg-muted/10 rounded"
+          >
             <div
               class="prose dark:prose-invert max-w-none text-xs"
-              v-html="sourceRevision.contentHtml || sourceRevision.contentText || '无正文'"
+              v-html="
+                sourceRevision.contentHtml ||
+                sourceRevision.contentText ||
+                '无正文'
+              "
             ></div>
           </div>
         </div>
@@ -439,18 +482,29 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
           <div class="flex items-center justify-between border-b pb-2 mb-2">
             <Tag color="green">V{{ targetRevision.version }}</Tag>
             <span class="text-xs text-muted-foreground">
-              {{ dayjs(targetRevision.creationTime).format('YYYY-MM-DD HH:mm') }}
+              {{
+                dayjs(targetRevision.creationTime).format('YYYY-MM-DD HH:mm')
+              }}
             </span>
           </div>
           <div class="font-medium text-sm mb-1">{{ targetRevision.title }}</div>
           <div class="text-xs text-muted-foreground mb-2">
-            说明: {{ targetRevision.changeSummary || targetRevision.changeLog || '无' }}
+            说明:
+            {{
+              targetRevision.changeSummary || targetRevision.changeLog || '无'
+            }}
           </div>
           <Divider class="my-1" />
-          <div class="flex-1 max-h-[50vh] overflow-y-auto text-xs leading-relaxed p-2 bg-muted/10 rounded">
+          <div
+            class="flex-1 max-h-[50vh] overflow-y-auto text-xs leading-relaxed p-2 bg-muted/10 rounded"
+          >
             <div
               class="prose dark:prose-invert max-w-none text-xs"
-              v-html="targetRevision.contentHtml || targetRevision.contentText || '无正文'"
+              v-html="
+                targetRevision.contentHtml ||
+                targetRevision.contentText ||
+                '无正文'
+              "
             ></div>
           </div>
         </div>

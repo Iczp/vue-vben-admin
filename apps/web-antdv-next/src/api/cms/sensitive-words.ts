@@ -1,4 +1,3 @@
-import type { PagedResultDto } from '#/api/abp/types';
 import type {
   BatchImportResultDto,
   CreateSensitiveWordInput,
@@ -8,6 +7,8 @@ import type {
   SensitiveWordExportDto,
   UpdateSensitiveWordInput,
 } from './types';
+
+import type { PagedResultDto } from '#/api/abp/types';
 
 import { requestClient } from '#/api/request';
 
@@ -25,14 +26,19 @@ export async function getSensitiveWordsApi(params?: GetSensitiveWordsInput) {
  * 获取单个敏感词详情
  */
 export async function getSensitiveWordApi(id: string) {
-  return requestClient.get<SensitiveWordDto>(`/cms/admin/sensitive-words/${id}`);
+  return requestClient.get<SensitiveWordDto>(
+    `/cms/admin/sensitive-words/${id}`,
+  );
 }
 
 /**
  * 新建敏感词
  */
 export async function createSensitiveWordApi(data: CreateSensitiveWordInput) {
-  return requestClient.post<SensitiveWordDto>('/cms/admin/sensitive-words', data);
+  return requestClient.post<SensitiveWordDto>(
+    '/cms/admin/sensitive-words',
+    data,
+  );
 }
 
 /**

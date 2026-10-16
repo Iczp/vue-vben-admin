@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import type {
+  AppStatisticDashboardDto,
+  AppStatisticQueryInput,
+} from '#/api/app-statistic/types';
+
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -11,10 +16,6 @@ import {
 import dayjs from 'dayjs';
 
 import { getDashboardApi } from '#/api/app-statistic/dashboard';
-import type {
-  AppStatisticDashboardDto,
-  AppStatisticQueryInput,
-} from '#/api/app-statistic/types';
 
 import {
   DimensionBarChart,
@@ -103,14 +104,18 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">数据概览</h2>
+        <h2 class="text-xl font-bold tracking-tight text-foreground">
+          数据概览
+        </h2>
         <p class="text-xs text-muted-foreground mt-0.5">
           监控应用核心指标、活跃趋势与用户留存情况
         </p>
       </div>
       <div class="flex items-center space-x-2 text-xs text-muted-foreground">
         <span>更新时间: {{ lastUpdated }}</span>
-        <AButton :loading="loading" size="small" @click="loadData">刷新</AButton>
+        <AButton :loading="loading" size="small" @click="loadData">
+刷新
+</AButton>
       </div>
     </div>
 
@@ -182,7 +187,11 @@ onMounted(() => {
 
       <MetricCard
         :loading="loading"
-        :value="formatDuration(dashboardData?.summary?.todayAverageDurationSeconds ?? 0)"
+        :value="
+          formatDuration(
+            dashboardData?.summary?.todayAverageDurationSeconds ?? 0,
+          )
+        "
         title="平均使用时长"
         tooltip="当日活跃用户的人均单日使用总时长"
       />

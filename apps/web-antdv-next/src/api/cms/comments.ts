@@ -1,8 +1,6 @@
+import type { AdminCommentListInput, CommentDto } from './types';
+
 import type { PagedResultDto } from '#/api/abp/types';
-import type {
-  AdminCommentListInput,
-  CommentDto,
-} from './types';
 
 import { requestClient } from '#/api/request';
 

@@ -4,6 +4,7 @@ import type { EchartsUIType } from '@vben/plugins/echarts';
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import { Card as ACard, Spin as ASpin } from 'ant-design-vue';
 
 import StatisticEmpty from './StatisticEmpty.vue';
@@ -35,7 +36,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'itemClick', item: { name: string; value: number; raw: any }): void;
+  (e: 'itemClick', item: { name: string; raw: any; value: number; }): void;
 }>();
 
 const chartRef = ref<EchartsUIType>();
@@ -46,8 +47,11 @@ const normalizedData = computed(() => {
 
   return props.data
     .map((item) => {
-      const name = item[props.nameField] ?? item.name ?? item.range ?? 'Unknown';
-      const val = Number(item[props.valueField] ?? item.value ?? item.userCount ?? 0);
+      const name =
+        item[props.nameField] ?? item.name ?? item.range ?? 'Unknown';
+      const val = Number(
+        item[props.valueField] ?? item.value ?? item.userCount ?? 0,
+      );
       const pct = Number(item[props.percentageField] ?? item.percentage ?? 0);
       return {
         name: String(name),

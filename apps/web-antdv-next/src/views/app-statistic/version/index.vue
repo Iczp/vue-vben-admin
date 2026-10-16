@@ -73,8 +73,16 @@ function handleVersionClick(item: { name: string }) {
 }
 
 const tableColumns = [
-  { title: $t('appStatistic.firstSeenDate'), dataIndex: 'firstSeenDate', key: 'firstSeenDate' },
-  { title: $t('appStatistic.lastActiveDate'), dataIndex: 'lastActiveDate', key: 'lastActiveDate' },
+  {
+    title: $t('appStatistic.firstSeenDate'),
+    dataIndex: 'firstSeenDate',
+    key: 'firstSeenDate',
+  },
+  {
+    title: $t('appStatistic.lastActiveDate'),
+    dataIndex: 'lastActiveDate',
+    key: 'lastActiveDate',
+  },
   {
     title: $t('appStatistic.text166'),
     dataIndex: 'value',
@@ -146,11 +154,7 @@ onMounted(() => {
     </div>
 
     <!-- Filter Bar -->
-    <StatisticFilterBar
-      v-model="query"
-      :loading="loading"
-      @change="loadData"
-    />
+    <StatisticFilterBar v-model="query" :loading="loading" @change="loadData" />
 
     <!-- Active filter tag -->
     <div

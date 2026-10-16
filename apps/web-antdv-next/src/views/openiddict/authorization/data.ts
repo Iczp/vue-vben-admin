@@ -61,12 +61,15 @@ export function useColumns(
           usePopconfirm: false,
         },
         name: 'CellOperation',
-        options: [{ code: 'delete', text: '撤销授权' }],
+        options: [
+          { code: 'revoke', text: '吊销授权' },
+          { code: 'delete', text: '删除记录' },
+        ],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action', '操作'),
-      width: 110,
+      width: 160,
     },
   ];
 }

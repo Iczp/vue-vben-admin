@@ -38,7 +38,10 @@ const getTitle = computed(() =>
 const levelOptions = [
   { label: '安全 (白名单 - 直接放行)', value: UrlSecurityLevel.Safe },
   { label: '警告 (提示中转 - 提示防诈风险)', value: UrlSecurityLevel.Warning },
-  { label: '阻断 (黑名单 - 禁止打开并拦截发送)', value: UrlSecurityLevel.Blocked },
+  {
+    label: '阻断 (黑名单 - 禁止打开并拦截发送)',
+    value: UrlSecurityLevel.Blocked,
+  },
 ];
 
 const categoryOptions = [
@@ -92,7 +95,9 @@ const [Modal, modalApi] = useVbenModal<null | UrlSecurityRuleDto>({
         });
       }
 
-      message.success($t('common.saveSuccess', '保存成功，已同步刷新 Redis 缓存'));
+      message.success(
+        $t('common.saveSuccess', '保存成功，已同步刷新 Redis 缓存'),
+      );
       modalApi.close();
       emit('success');
     } finally {
@@ -141,7 +146,9 @@ defineExpose({ modalApi });
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <div class="mb-1 text-sm font-medium">安全风控级别 <span class="text-red-500">*</span></div>
+          <div class="mb-1 text-sm font-medium">
+            安全风控级别 <span class="text-red-500">*</span>
+          </div>
           <Select
             v-model:value="formState.level"
             :options="levelOptions"
@@ -149,7 +156,9 @@ defineExpose({ modalApi });
           />
         </div>
         <div>
-          <div class="mb-1 text-sm font-medium">风险细分类别 <span class="text-red-500">*</span></div>
+          <div class="mb-1 text-sm font-medium">
+            风险细分类别 <span class="text-red-500">*</span>
+          </div>
           <Select
             v-model:value="formState.category"
             :options="categoryOptions"
@@ -172,7 +181,9 @@ defineExpose({ modalApi });
       <div class="flex items-center justify-between border-t pt-3">
         <div>
           <div class="text-sm font-medium">是否立即启用</div>
-          <div class="text-xs text-muted-foreground">停用后该规则将不参与判定</div>
+          <div class="text-xs text-muted-foreground">
+            停用后该规则将不参与判定
+          </div>
         </div>
         <Switch v-model:checked="formState.isEnabled" />
       </div>

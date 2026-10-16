@@ -42,7 +42,9 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { id: string; title: string } | undefined;
+      const data = modalApi.getData() as
+        | undefined
+        | { id: string; title: string };
       articleId.value = data?.id || '';
       articleTitle.value = data?.title || '';
       publishTime.value = dayjs().add(1, 'hour');
@@ -60,7 +62,11 @@ const [Modal, modalApi] = useVbenModal<{ id: string; title: string }>({
     </div>
 
     <Form layout="vertical">
-      <FormItem label="计划发布时间" required extra="系统后台工作任务到达指定时间后将自动执行发布并生成快照">
+      <FormItem
+        label="计划发布时间"
+        required
+        extra="系统后台工作任务到达指定时间后将自动执行发布并生成快照"
+      >
         <DatePicker
           v-model:value="publishTime"
           show-time

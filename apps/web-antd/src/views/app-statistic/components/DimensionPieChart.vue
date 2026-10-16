@@ -4,6 +4,7 @@ import type { EchartsUIType } from '@vben/plugins/echarts';
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import { Card as ACard, Spin as ASpin } from 'ant-design-vue';
 
 import StatisticEmpty from './StatisticEmpty.vue';
@@ -33,7 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'itemClick', item: { name: string; value: number; raw: any }): void;
+  (e: 'itemClick', item: { name: string; raw: any; value: number; }): void;
 }>();
 
 const chartRef = ref<EchartsUIType>();

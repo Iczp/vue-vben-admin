@@ -11,12 +11,12 @@ import { Check, RotateCw, X } from '@vben/icons';
 
 import {
   Alert,
+  Modal as AntModal,
   Badge,
   Button,
   Card,
   Empty,
   message,
-  Modal as AntModal,
   Spin,
   Table,
   Tabs,
@@ -38,13 +38,17 @@ import {
   riskLevelOptions,
   sceneOptions,
 } from '../../sensitive-words/data';
-import { applyStatusOptions, batchStatusOptions, changeTypeOptions } from '../data';
+import {
+  applyStatusOptions,
+  batchStatusOptions,
+  changeTypeOptions,
+} from '../data';
 
 const emit = defineEmits<{
   success: [];
 }>();
 
-const currentBatch = ref<SensitiveWordSyncBatchDetailDto | null>(null);
+const currentBatch = ref<null | SensitiveWordSyncBatchDetailDto>(null);
 const loading = ref(false);
 const itemsLoading = ref(false);
 const activeTab = ref('all');
@@ -196,14 +200,23 @@ function onApplyBatch() {
     title: '应用同步差异批次',
     async onOk() {
       try {
-        message.loading({ content: '正在应用变更到敏感词库...', key: 'apply-batch' });
+        message.loading({
+          content: '正在应用变更到敏感词库...',
+          key: 'apply-batch',
+        });
         await applySensitiveWordSyncBatchApi(batchId);
-        message.success({ content: '批次应用成功！草稿态已更新，可前往版本中心发布上线。', key: 'apply-batch' });
+        message.success({
+          content: '批次应用成功！草稿态已更新，可前往版本中心发布上线。',
+          key: 'apply-batch',
+        });
         await loadBatchDetail(batchId);
         await loadItems();
         emit('success');
       } catch (error: any) {
-        message.error({ content: `应用失败: ${error?.message || error}`, key: 'apply-batch' });
+        message.error({
+          content: `应用失败: ${error?.message || error}`,
+          key: 'apply-batch',
+        });
       }
     },
   });
@@ -219,7 +232,9 @@ function onIgnoreBatch() {
     title: '忽略同步差异批次',
     async onOk() {
       try {
-        await ignoreSensitiveWordSyncBatchApi(batchId, { remark: '人工审核主动忽略' });
+        await ignoreSensitiveWordSyncBatchApi(batchId, {
+          remark: '人工审核主动忽略',
+        });
         message.success('已忽略该批次');
         await loadBatchDetail(batchId);
         await loadItems();
@@ -238,9 +253,11 @@ const [Modal, modalApi] = useVbenModal({
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { id: string } | undefined;
+      const data = modalApi.getData() as undefined | { id: string };
       if (data?.id) {
-        modalApi.setState({ title: `审查词库同步差异批次 [${data.id.slice(0, 8)}]` });
+        modalApi.setState({
+          title: `审查词库同步差异批次 [${data.id.slice(0, 8)}]`,
+        });
         activeTab.value = 'all';
         pagination.current = 1;
         loadBatchDetail(data.id).then(() => {
@@ -260,49 +277,76 @@ const [Modal, modalApi] = useVbenModal({
     <div class="flex flex-col gap-4 py-2">
       <!-- 概览看板 -->
       <Spin :spinning="loading">
-        <Card size="small" variant="borderless" class="bg-gray-50/70 dark:bg-gray-900/60 border">
+        <Card
+          size="small"
+          variant="borderless"
+          class="bg-gray-50/70 dark:bg-gray-900/60 border"
+        >
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div class="flex flex-col gap-1.5 text-sm">
               <div class="flex items-center gap-3">
                 <span class="font-semibold text-base">批次版本: {{ currentBatch?.sourceVersion || 'N/A' }}</span>
                 <Tag
-                  :color="batchStatusOptions.find(o => o.value === currentBatch?.status)?.color"
+                  :color="
+                    batchStatusOptions.find(
+                      (o) => o.value === currentBatch?.status,
+                    )?.color
+                  "
                 >
-                  {{ batchStatusOptions.find(o => o.value === currentBatch?.status)?.label || '未知状态' }}
+                  {{
+                    batchStatusOptions.find(
+                      (o) => o.value === currentBatch?.status,
+                    )?.label || '未知状态'
+                  }}
                 </Tag>
                 <Tag v-if="currentBatch?.requiresReview" color="warning">
                   需人工审查
                 </Tag>
               </div>
               <div class="text-xs text-muted-foreground flex gap-4">
-                <span>内容哈希: <code class="font-mono">{{ currentBatch?.contentHash?.slice(0, 10) }}...</code></span>
-                <span>语义哈希: <code class="font-mono">{{ currentBatch?.semanticHash?.slice(0, 10) }}...</code></span>
+                <span>内容哈希:
+                  <code class="font-mono">{{ currentBatch?.contentHash?.slice(0, 10) }}...</code></span>
+                <span>语义哈希:
+                  <code class="font-mono">{{ currentBatch?.semanticHash?.slice(0, 10) }}...</code></span>
                 <span>创建时间: {{ currentBatch?.creationTime }}</span>
               </div>
             </div>
 
             <!-- 统计标签栏 -->
             <div class="flex items-center gap-3 text-sm">
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-green-500/10 text-green-600 font-medium">
+              <div
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-green-500/10 text-green-600 font-medium"
+              >
                 <span>新增</span>
                 <span class="text-base font-bold">+{{ currentBatch?.addedCount ?? 0 }}</span>
               </div>
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-500/10 text-blue-600 font-medium">
+              <div
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-500/10 text-blue-600 font-medium"
+              >
                 <span>修改</span>
                 <span class="text-base font-bold">~{{ currentBatch?.updatedCount ?? 0 }}</span>
               </div>
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-red-500/10 text-red-600 font-medium">
+              <div
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-red-500/10 text-red-600 font-medium"
+              >
                 <span>删除</span>
                 <span class="text-base font-bold">-{{ currentBatch?.removedCount ?? 0 }}</span>
               </div>
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-orange-500/10 text-orange-600 font-medium">
+              <div
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-orange-500/10 text-orange-600 font-medium"
+              >
                 <span>锁定冲突</span>
                 <span class="text-base font-bold">!{{ currentBatch?.conflictCount ?? 0 }}</span>
               </div>
             </div>
 
             <!-- 操作按钮 -->
-            <div v-if="currentBatch?.status === SensitiveWordBatchStatus.PendingReview" class="flex items-center gap-2">
+            <div
+              v-if="
+                currentBatch?.status === SensitiveWordBatchStatus.PendingReview
+              "
+              class="flex items-center gap-2"
+            >
               <Button type="primary" @click="onApplyBatch">
                 <template #icon><Check class="size-4" /></template>
                 应用变更
@@ -332,10 +376,22 @@ const [Modal, modalApi] = useVbenModal({
             class="mb-0"
             @change="handleTabChange"
           >
-            <Tabs.TabPane key="all" :tab="`全部差异 (${currentBatch?.totalCount ?? 0})`" />
-            <Tabs.TabPane key="added" :tab="`新增项 (${currentBatch?.addedCount ?? 0})`" />
-            <Tabs.TabPane key="modified" :tab="`变更项 (${currentBatch?.updatedCount ?? 0})`" />
-            <Tabs.TabPane key="deleted" :tab="`移除项 (${currentBatch?.removedCount ?? 0})`" />
+            <Tabs.TabPane
+              key="all"
+              :tab="`全部差异 (${currentBatch?.totalCount ?? 0})`"
+            />
+            <Tabs.TabPane
+              key="added"
+              :tab="`新增项 (${currentBatch?.addedCount ?? 0})`"
+            />
+            <Tabs.TabPane
+              key="modified"
+              :tab="`变更项 (${currentBatch?.updatedCount ?? 0})`"
+            />
+            <Tabs.TabPane
+              key="deleted"
+              :tab="`移除项 (${currentBatch?.removedCount ?? 0})`"
+            />
             <Tabs.TabPane key="conflicts">
               <template #tab>
                 <span class="flex items-center gap-1">
@@ -373,11 +429,15 @@ const [Modal, modalApi] = useVbenModal({
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'word'">
-                <span class="font-medium text-foreground select-all">{{ record.word }}</span>
+                <span class="font-medium text-foreground select-all">{{
+                  record.word
+                }}</span>
               </template>
 
               <template v-else-if="column.key === 'normalizedWord'">
-                <span class="font-mono text-xs text-muted-foreground">{{ record.normalizedWord }}</span>
+                <span class="font-mono text-xs text-muted-foreground">{{
+                  record.normalizedWord
+                }}</span>
               </template>
 
               <template v-else-if="column.key === 'isRegex'">
@@ -387,50 +447,101 @@ const [Modal, modalApi] = useVbenModal({
 
               <template v-else-if="column.key === 'categoryChange'">
                 <div class="flex items-center gap-1 text-xs">
-                  <span v-if="record.oldSourceCategory" class="line-through text-muted-foreground">
+                  <span
+                    v-if="record.oldSourceCategory"
+                    class="line-through text-muted-foreground"
+                  >
                     {{ record.oldSourceCategory }}
                   </span>
-                  <span v-if="record.oldSourceCategory && record.newSourceCategory">→</span>
-                  <Tag color="cyan">{{ record.newSourceCategory || record.oldSourceCategory || '-' }}</Tag>
+                  <span
+                    v-if="record.oldSourceCategory && record.newSourceCategory"
+                    >→</span>
+                  <Tag color="cyan">
+{{
+                    record.newSourceCategory || record.oldSourceCategory || '-'
+                  }}
+</Tag>
                 </div>
               </template>
 
               <template v-else-if="column.key === 'suggestedRiskLevel'">
-                <Tag :color="riskLevelOptions.find(o => o.value === record.suggestedRiskLevel)?.color">
-                  {{ riskLevelOptions.find(o => o.value === record.suggestedRiskLevel)?.label || record.suggestedRiskLevel }}
+                <Tag
+                  :color="
+                    riskLevelOptions.find(
+                      (o) => o.value === record.suggestedRiskLevel,
+                    )?.color
+                  "
+                >
+                  {{
+                    riskLevelOptions.find(
+                      (o) => o.value === record.suggestedRiskLevel,
+                    )?.label || record.suggestedRiskLevel
+                  }}
                 </Tag>
               </template>
 
               <template v-else-if="column.key === 'suggestedAction'">
-                <Tag :color="actionOptions.find(o => o.value === record.suggestedAction)?.color">
-                  {{ actionOptions.find(o => o.value === record.suggestedAction)?.label || record.suggestedAction }}
+                <Tag
+                  :color="
+                    actionOptions.find(
+                      (o) => o.value === record.suggestedAction,
+                    )?.color
+                  "
+                >
+                  {{
+                    actionOptions.find(
+                      (o) => o.value === record.suggestedAction,
+                    )?.label || record.suggestedAction
+                  }}
                 </Tag>
               </template>
 
               <template v-else-if="column.key === 'suggestedScene'">
                 <span class="text-xs text-muted-foreground">
-                  {{ sceneOptions.find(o => o.value === record.suggestedScene)?.label || '全局通用' }}
+                  {{
+                    sceneOptions.find((o) => o.value === record.suggestedScene)
+                      ?.label || '全局通用'
+                  }}
                 </span>
               </template>
 
               <template v-else-if="column.key === 'changeType'">
-                <Tag :color="changeTypeOptions.find(o => o.value === record.changeType)?.color">
-                  {{ changeTypeOptions.find(o => o.value === record.changeType)?.label || record.changeType }}
+                <Tag
+                  :color="
+                    changeTypeOptions.find((o) => o.value === record.changeType)
+                      ?.color
+                  "
+                >
+                  {{
+                    changeTypeOptions.find((o) => o.value === record.changeType)
+                      ?.label || record.changeType
+                  }}
                 </Tag>
               </template>
 
               <template v-else-if="column.key === 'hasConflict'">
-                <Tooltip v-if="record.hasConflict" :title="record.conflictReason || '本地已锁定保护'">
-                  <Tag color="orange" class="cursor-pointer">
-                    已锁定保护
-                  </Tag>
+                <Tooltip
+                  v-if="record.hasConflict"
+                  :title="record.conflictReason || '本地已锁定保护'"
+                >
+                  <Tag color="orange" class="cursor-pointer"> 已锁定保护 </Tag>
                 </Tooltip>
                 <span v-else class="text-xs text-muted-foreground">无</span>
               </template>
 
               <template v-else-if="column.key === 'applyStatus'">
-                <Tag :color="applyStatusOptions.find(o => o.value === record.applyStatus)?.color">
-                  {{ applyStatusOptions.find(o => o.value === record.applyStatus)?.label || record.applyStatus }}
+                <Tag
+                  :color="
+                    applyStatusOptions.find(
+                      (o) => o.value === record.applyStatus,
+                    )?.color
+                  "
+                >
+                  {{
+                    applyStatusOptions.find(
+                      (o) => o.value === record.applyStatus,
+                    )?.label || record.applyStatus
+                  }}
                 </Tag>
               </template>
             </template>

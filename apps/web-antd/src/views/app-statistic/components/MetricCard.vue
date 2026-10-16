@@ -58,14 +58,22 @@ const formattedChangeRate = computed(() => {
 </script>
 
 <template>
-  <ACard :bordered="false" class="h-full shadow-sm hover:shadow-md transition-shadow" size="small">
+  <ACard
+    :bordered="false"
+    class="h-full shadow-sm hover:shadow-md transition-shadow"
+    size="small"
+  >
     <ASkeleton :loading="loading" :paragraph="{ rows: 2 }" active>
       <div class="flex flex-col justify-between">
         <!-- Title & Tooltip -->
-        <div class="flex items-center justify-between text-muted-foreground text-xs">
+        <div
+          class="flex items-center justify-between text-muted-foreground text-xs"
+        >
           <span class="font-medium truncate">{{ title }}</span>
           <ATooltip v-if="tooltip" :title="tooltip">
-            <span class="cursor-pointer text-muted-foreground hover:text-foreground">ⓘ</span>
+            <span
+              class="cursor-pointer text-muted-foreground hover:text-foreground"
+              >ⓘ</span>
           </ATooltip>
         </div>
 
@@ -75,12 +83,19 @@ const formattedChangeRate = computed(() => {
           <span class="text-2xl font-bold tracking-tight text-foreground">
             {{ formattedValue }}
           </span>
-          <span v-if="unit" class="text-xs text-muted-foreground ml-1">{{ unit }}</span>
+          <span v-if="unit" class="text-xs text-muted-foreground ml-1">{{
+            unit
+          }}</span>
         </div>
 
         <!-- Change Rate & Previous Value -->
-        <div class="flex items-center justify-between text-xs pt-1 border-t border-border/40">
-          <div v-if="formattedChangeRate !== null" class="flex items-center space-x-1 font-medium">
+        <div
+          class="flex items-center justify-between text-xs pt-1 border-t border-border/40"
+        >
+          <div
+            v-if="formattedChangeRate !== null"
+            class="flex items-center space-x-1 font-medium"
+          >
             <span
               v-if="isPositive"
               class="text-emerald-600 dark:text-emerald-400 flex items-center"
@@ -101,7 +116,10 @@ const formattedChangeRate = computed(() => {
           </div>
           <div v-else class="text-muted-foreground text-[11px]">-</div>
 
-          <div v-if="formattedPrevValue !== null" class="text-muted-foreground text-[11px]">
+          <div
+            v-if="formattedPrevValue !== null"
+            class="text-muted-foreground text-[11px]"
+          >
             <span>对比 {{ formattedPrevValue }}</span>
           </div>
         </div>

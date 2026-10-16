@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import type { CategoryCreateDto, CategoryDto, CategoryUpdateDto } from '#/api/cms';
+import type {
+  CategoryCreateDto,
+  CategoryDto,
+  CategoryUpdateDto,
+} from '#/api/cms';
 
 import { computed, ref } from 'vue';
 
@@ -34,7 +38,9 @@ const activeTab = ref('basic');
 const loading = ref(false);
 const recordId = ref<null | string>(null);
 const isEdit = computed(() => Boolean(recordId.value));
-const modalTitle = computed(() => (isEdit.value ? '编辑栏目分类' : '新建栏目分类'));
+const modalTitle = computed(() =>
+  isEdit.value ? '编辑栏目分类' : '新建栏目分类',
+);
 
 // 表单字段
 const parentId = ref<string | undefined>(undefined);
@@ -173,10 +179,12 @@ const [Modal, modalApi] = useVbenModal<{
   },
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as {
-        parentId?: string;
-        record?: CategoryDto;
-      } | undefined;
+      const data = modalApi.getData() as
+        | undefined
+        | {
+            parentId?: string;
+            record?: CategoryDto;
+          };
       initData(data);
     }
   },
@@ -186,7 +194,7 @@ const [Modal, modalApi] = useVbenModal<{
 <template>
   <Modal :title="modalTitle" class="w-[700px] max-w-full">
     <Spin :spinning="loading">
-      <Tabs v-model:activeKey="activeTab">
+      <Tabs v-model:active-key="activeTab">
         <Tabs.TabPane key="basic" tab="基本设置">
           <Form layout="vertical" class="mt-2">
             <FormItem label="上级分类">
@@ -257,10 +265,14 @@ const [Modal, modalApi] = useVbenModal<{
               />
             </FormItem>
 
-            <div class="flex items-center justify-between p-3 border rounded bg-muted/20">
+            <div
+              class="flex items-center justify-between p-3 border rounded bg-muted/20"
+            >
               <div>
                 <div class="font-medium text-sm">启用状态</div>
-                <div class="text-xs text-muted-foreground">停用后，该分类下内容将不在导航展示</div>
+                <div class="text-xs text-muted-foreground">
+                  停用后，该分类下内容将不在导航展示
+                </div>
               </div>
               <Switch v-model:checked="isActive" />
             </div>

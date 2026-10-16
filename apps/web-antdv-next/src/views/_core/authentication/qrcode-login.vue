@@ -44,8 +44,8 @@ watch(
           margin: 2,
           width: 220,
         });
-      } catch (err) {
-        console.error('[ScanLogin] Generate QR data URL error:', err);
+      } catch (error) {
+        console.error('[ScanLogin] Generate QR data URL error:', error);
       }
     } else {
       qrcodeDataUrl.value = '';
@@ -344,7 +344,10 @@ onMounted(() => {
         class="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground"
       >
         <span>
-          二维码有效时间：<strong class="text-primary">{{ remainingSeconds }}</strong> 秒
+          二维码有效时间：<strong class="text-primary">{{
+            remainingSeconds
+          }}</strong>
+          秒
         </span>
         <span>·</span>
         <button

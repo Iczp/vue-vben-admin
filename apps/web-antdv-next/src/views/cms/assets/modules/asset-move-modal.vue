@@ -56,7 +56,9 @@ async function loadFolders(scope?: number) {
       ...buildTreeSelectData(list),
     ];
   } catch {
-    folderTreeData.value = [{ key: '', title: '📁 根目录（未归档）', value: '' }];
+    folderTreeData.value = [
+      { key: '', title: '📁 根目录（未归档）', value: '' },
+    ];
   }
 }
 
@@ -76,7 +78,8 @@ async function handleConfirm() {
     emit('success');
     modalApi.close();
   } catch (error: any) {
-    const msg = error?.response?.data?.error?.message || error?.message || '移动失败';
+    const msg =
+      error?.response?.data?.error?.message || error?.message || '移动失败';
     message.error(msg);
   } finally {
     loading.value = false;
@@ -108,7 +111,9 @@ const [Modal, modalApi] = useVbenModal({
     <Spin :spinning="loading">
       <div class="py-2">
         <p class="text-muted-foreground mb-4 text-sm">
-          已选中 <span class="text-primary font-bold">{{ assetIds.length }}</span> 个素材，请选择目标文件夹：
+          已选中
+          <span class="text-primary font-bold">{{ assetIds.length }}</span>
+          个素材，请选择目标文件夹：
         </p>
 
         <Form layout="vertical">

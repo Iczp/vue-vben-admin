@@ -7,11 +7,11 @@ import type {
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { Alert } from 'antdv-next';
 import {
   Button as AButton,
   Card as ACard,
   Col as ACol,
+  Alert,
   Row as ARow,
   Tag as ATag,
 } from 'antdv-next';

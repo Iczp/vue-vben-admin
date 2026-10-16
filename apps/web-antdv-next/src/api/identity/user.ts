@@ -1,4 +1,3 @@
-import type { ListResultDto, PagedResultDto } from '#/api/abp/types';
 import type {
   GetIdentityUsersInput,
   IdentityRoleDto,
@@ -7,16 +6,17 @@ import type {
   IdentityUserUpdateDto,
 } from './types';
 
+import type { ListResultDto, PagedResultDto } from '#/api/abp/types';
+
 import { requestClient } from '#/api/request';
 
 /**
  * 分页获取用户列表
  */
 export async function getUsersApi(params?: GetIdentityUsersInput) {
-  return requestClient.get<PagedResultDto<IdentityUserDto>>(
-    '/identity/users',
-    { params },
-  );
+  return requestClient.get<PagedResultDto<IdentityUserDto>>('/identity/users', {
+    params,
+  });
 }
 
 /**

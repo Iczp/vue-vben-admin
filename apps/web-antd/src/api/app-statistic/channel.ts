@@ -1,6 +1,6 @@
-import { requestClient } from '#/api/request';
-
 import type { AppStatisticQueryInput, ChannelAnalysisDto } from './types';
+
+import { requestClient } from '#/api/request';
 
 /**
  * 获取渠道分析统计

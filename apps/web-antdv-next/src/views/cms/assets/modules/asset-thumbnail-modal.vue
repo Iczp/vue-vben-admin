@@ -24,12 +24,11 @@ import {
   extractVideoFrame,
 } from '#/api/cms/media-metadata';
 
-const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
-const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
-
 const emit = defineEmits<{
   success: [asset: AssetDto];
 }>();
+const VideoIcon = markRaw(createIconifyIcon('lucide:video'));
+const ImageIcon = markRaw(createIconifyIcon('lucide:image'));
 
 const currentAsset = ref<AssetDto | null>(null);
 const loading = ref(false);
@@ -94,7 +93,7 @@ async function onCustomCoverSelected(file: File) {
     currentThumbnailFile.value = thumb.file;
     currentThumbnailUrl.value = URL.createObjectURL(thumb.file);
     message.success('已应用自定义封面图片');
-  } catch (e) {
+  } catch {
     message.error('封面图片处理失败');
   } finally {
     extracting.value = false;
@@ -131,7 +130,7 @@ const [Modal, modalApi] = useVbenModal({
   fullscreenButton: false,
   onOpenChange(isOpen) {
     if (isOpen) {
-      const data = modalApi.getData() as { asset?: AssetDto } | undefined;
+      const data = modalApi.getData() as undefined | { asset?: AssetDto };
       if (data?.asset) {
         currentAsset.value = data.asset;
         resetState();
@@ -151,17 +150,27 @@ const [Modal, modalApi] = useVbenModal({
     <Spin :spinning="loading">
       <div v-if="currentAsset" class="py-2 space-y-4">
         <!-- 视频资产基本信息条 -->
-        <div class="flex items-center justify-between p-3 border rounded bg-muted/20">
+        <div
+          class="flex items-center justify-between p-3 border rounded bg-muted/20"
+        >
           <div class="flex items-center gap-3 overflow-hidden">
             <div class="p-2 rounded bg-primary/10 text-primary shrink-0">
               <VideoIcon class="size-6" />
             </div>
             <div class="overflow-hidden">
-              <div class="font-medium text-sm truncate" :title="currentAsset.fileName">
+              <div
+                class="font-medium text-sm truncate"
+                :title="currentAsset.fileName"
+              >
                 {{ currentAsset.fileName }}
               </div>
-              <div class="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                <span>{{ (currentAsset.fileSize / 1024 / 1024).toFixed(2) }} MB</span>
+              <div
+                class="text-xs text-muted-foreground mt-0.5 flex items-center gap-2"
+              >
+                <span>{{
+                    (currentAsset.fileSize / 1024 / 1024).toFixed(2)
+                  }}
+                  MB</span>
                 <Tag color="blue">视频素材</Tag>
                 <span v-if="videoDuration > 0">时长: {{ videoDuration.toFixed(1) }} 秒</span>
               </div>
@@ -179,7 +188,11 @@ const [Modal, modalApi] = useVbenModal({
               </span>
             </span>
 
-            <RadioGroup v-model:value="coverMode" size="small" button-style="solid">
+            <RadioGroup
+              v-model:value="coverMode"
+              size="small"
+              button-style="solid"
+            >
               <RadioButton value="auto">从视频截取</RadioButton>
               <RadioButton value="custom">自定义上传图片</RadioButton>
             </RadioGroup>
@@ -217,27 +230,42 @@ const [Modal, modalApi] = useVbenModal({
                 <Slider
                   v-model:value="captureTime"
                   :min="0"
-                  :max="videoDuration > 0 ? Number(videoDuration.toFixed(1)) : 10"
+                  :max="
+                    videoDuration > 0 ? Number(videoDuration.toFixed(1)) : 10
+                  "
                   :step="0.5"
                   @after-change="onSliderChange"
                 />
-                <div class="flex justify-between items-center text-xs text-muted-foreground">
+                <div
+                  class="flex justify-between items-center text-xs text-muted-foreground"
+                >
                   <span>截取点: {{ captureTime }} 秒</span>
-                  <span>总时长: {{ videoDuration > 0 ? `${videoDuration.toFixed(1)} 秒` : '获取中...' }}</span>
+                  <span>总时长:
+                    {{
+                      videoDuration > 0
+                        ? `${videoDuration.toFixed(1)} 秒`
+                        : '获取中...'
+                    }}</span>
                 </div>
                 <div class="flex gap-2 pt-1">
-                  <Button size="small" @click="onSliderChange(0.1)">首帧</Button>
+                  <Button size="small" @click="onSliderChange(0.1)">
+首帧
+</Button>
                   <Button
                     v-if="videoDuration > 1"
                     size="small"
-                    @click="onSliderChange(Number((videoDuration * 0.25).toFixed(1)))"
+                    @click="
+                      onSliderChange(Number((videoDuration * 0.25).toFixed(1)))
+                    "
                   >
                     1/4 处
                   </Button>
                   <Button
                     v-if="videoDuration > 2"
                     size="small"
-                    @click="onSliderChange(Number((videoDuration * 0.5).toFixed(1)))"
+                    @click="
+                      onSliderChange(Number((videoDuration * 0.5).toFixed(1)))
+                    "
                   >
                     居中帧
                   </Button>

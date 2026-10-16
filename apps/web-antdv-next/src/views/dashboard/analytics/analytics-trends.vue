@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
+
 import type { MessageReportDto } from '#/api/chat/message-report';
 
 import { onMounted, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import { Empty, Spin } from 'antdv-next';
 
 import {
@@ -55,7 +57,7 @@ async function loadTrendData() {
     items.forEach((item) => {
       bucketSet.add(item.dateBucket);
     });
-    const sortedBuckets = Array.from(bucketSet).sort((a, b) => a - b);
+    const sortedBuckets = [...bucketSet].sort((a, b) => a - b);
     const xAxisData = sortedBuckets.map((b) => formatDateBucket(b));
 
     // 2. 统计各时间桶的总消息数、文本消息、多媒体消息 (图片/语音/视频/文件)
@@ -64,10 +66,10 @@ async function loadTrendData() {
     const mediaMap = new Map<number, number>();
 
     const mediaTypes = new Set([
+      MessageTypes.File,
       MessageTypes.Image,
       MessageTypes.Sound,
       MessageTypes.Video,
-      MessageTypes.File,
     ]);
 
     items.forEach((item) => {
@@ -214,7 +216,10 @@ onMounted(() => {
 <template>
   <div class="relative h-[320px] w-full">
     <Spin :spinning="loading" class="h-full w-full">
-      <div v-if="!hasData && !loading" class="flex h-[300px] items-center justify-center">
+      <div
+        v-if="!hasData && !loading"
+        class="flex h-[300px] items-center justify-center"
+      >
         <Empty description="暂无该统计维度的消息报表数据" />
       </div>
       <EchartsUI v-else ref="chartRef" />

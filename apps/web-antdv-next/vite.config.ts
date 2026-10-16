@@ -25,7 +25,7 @@ function serviceProxy(target: string, serviceName: string): ProxyOptions {
               return cookie;
             return cookie
               .replace(/^XSRF-TOKEN=/, `${serviceName}.XSRF-TOKEN=`)
-              .replace(/;\s*samesite=none/gi, '; SameSite=Strict');
+              .replaceAll(/;\s*samesite=none/gi, '; SameSite=Strict');
           });
       });
     },

@@ -41,7 +41,9 @@ const [Modal, modalApi] = useVbenModal<DeviceDto | null>({
   async onOpenChange(isOpen) {
     if (isOpen) {
       deviceModel.value = modalApi.getData() || null;
-      selectedGroupIds.value = [...(deviceModel.value?.deviceGroupIdList || [])];
+      selectedGroupIds.value = [
+        ...(deviceModel.value?.deviceGroupIdList || []),
+      ];
       loading.value = true;
       try {
         const groups = await getDeviceGroupsApi();
@@ -68,8 +70,14 @@ defineExpose({ modalApi });
           请勾选该设备归属的分组，可同时加入多个分组：
         </div>
 
-        <div v-if="allGroups.length > 0" class="max-h-72 overflow-y-auto space-y-2 pr-1">
-          <CheckboxGroup v-model:value="selectedGroupIds" class="w-full space-y-2">
+        <div
+          v-if="allGroups.length > 0"
+          class="max-h-72 overflow-y-auto space-y-2 pr-1"
+        >
+          <CheckboxGroup
+            v-model:value="selectedGroupIds"
+            class="w-full space-y-2"
+          >
             <div
               v-for="grp in allGroups"
               :key="grp.id"
@@ -78,13 +86,21 @@ defineExpose({ modalApi });
               <Checkbox :value="grp.id" class="text-sm font-medium">
                 {{ grp.name }}
               </Checkbox>
-              <span v-if="grp.description" class="text-xs text-muted-foreground truncate max-w-[200px]" :title="grp.description">
+              <span
+                v-if="grp.description"
+                class="text-xs text-muted-foreground truncate max-w-[200px]"
+                :title="grp.description"
+              >
                 {{ grp.description }}
               </span>
             </div>
           </CheckboxGroup>
         </div>
-        <Empty v-else description="暂无设备分组，请先在左侧新建分组" class="my-4" />
+        <Empty
+          v-else
+          description="暂无设备分组，请先在左侧新建分组"
+          class="my-4"
+        />
       </div>
     </Spin>
   </Modal>

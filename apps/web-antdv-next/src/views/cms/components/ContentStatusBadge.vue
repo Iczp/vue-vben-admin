@@ -11,26 +11,26 @@ const props = defineProps<{
 
 const statusConfig = computed(() => {
   switch (props.status) {
-    case ArticleStatus.Draft: {
-      return { color: 'default', text: '草稿' };
-    }
-    case ArticleStatus.PendingReview: {
-      return { color: 'processing', text: '审核中' };
-    }
     case ArticleStatus.Approved: {
       return { color: 'cyan', text: '已审核' };
     }
-    case ArticleStatus.Scheduled: {
-      return { color: 'purple', text: '定时发布' };
+    case ArticleStatus.Archived: {
+      return { color: 'error', text: '已归档' };
     }
-    case ArticleStatus.Published: {
-      return { color: 'success', text: '已发布' };
+    case ArticleStatus.Draft: {
+      return { color: 'default', text: '草稿' };
     }
     case ArticleStatus.Offline: {
       return { color: 'warning', text: '已下线' };
     }
-    case ArticleStatus.Archived: {
-      return { color: 'error', text: '已归档' };
+    case ArticleStatus.PendingReview: {
+      return { color: 'processing', text: '审核中' };
+    }
+    case ArticleStatus.Published: {
+      return { color: 'success', text: '已发布' };
+    }
+    case ArticleStatus.Scheduled: {
+      return { color: 'purple', text: '定时发布' };
     }
     default: {
       return { color: 'default', text: '未知' };

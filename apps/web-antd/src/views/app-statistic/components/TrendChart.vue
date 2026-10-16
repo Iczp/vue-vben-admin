@@ -1,16 +1,17 @@
 <script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
 
+import type { StatisticTrendDto } from '#/api/app-statistic/types';
+
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
+
 import {
   Card as ACard,
   Checkbox as ACheckbox,
   Spin as ASpin,
 } from 'ant-design-vue';
-
-import type { StatisticTrendDto } from '#/api/app-statistic/types';
 
 import StatisticEmpty from './StatisticEmpty.vue';
 
@@ -54,7 +55,7 @@ const activeMetrics = ref<string[]>(
 
 function toggleMetric(key: string) {
   const index = activeMetrics.value.indexOf(key);
-  if (index > -1) {
+  if (index !== -1) {
     if (activeMetrics.value.length > 1) {
       activeMetrics.value.splice(index, 1);
     }
@@ -71,7 +72,7 @@ const distinctDates = computed(() => {
   props.data.forEach((item) => {
     if (item.date) dateSet.add(item.date);
   });
-  return Array.from(dateSet).sort();
+  return [...dateSet].sort();
 });
 
 const hasData = computed(() => props.data && props.data.length > 0);

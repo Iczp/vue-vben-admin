@@ -63,7 +63,11 @@ export function useColumns(
         },
         name: 'CellOperation',
         options: [
-          { code: 'toggle', text: (row: SensitiveWordWhitelistDto) => (row.isEnabled ? '禁用' : '启用') },
+          {
+            code: 'toggle',
+            text: (row: SensitiveWordWhitelistDto) =>
+              row.isEnabled ? '禁用' : '启用',
+          },
           { code: 'edit', text: '编辑' },
           {
             code: 'delete',
