@@ -17,6 +17,12 @@ const routes: RouteRecordRaw[] = [
         path: 'article-message',
       },
       {
+        component: () => import('#/views/chat/message-template/index.vue'),
+        meta: { icon: 'lucide:layout-template', title: '自定义模板消息' },
+        name: 'ChatMessageTemplate',
+        path: 'message-template',
+      },
+      {
         component: () => import('#/views/chat/chat-object/index.vue'),
         meta: {
           icon: 'lucide:contact-2',

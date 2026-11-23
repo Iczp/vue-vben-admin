@@ -4,3 +4,4 @@ export * from './chat-object';
 export * from './dictionary';
 export * from './online';
 export * from './security';
+export * from './message-template';
