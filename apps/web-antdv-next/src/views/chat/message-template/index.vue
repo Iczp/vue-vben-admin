@@ -1,658 +1,777 @@
 <script setup lang="ts">
+import type { TemplateField } from './template-draft';
+
+import type { ArticleSenderSession } from '#/api/chat/article-message';
+import type { ChatObjectDto } from '#/api/chat/chat-object';
 import type {
   MessageTemplateDefinitionDto,
-  MessageTemplateGetListInput,
+  MessageTemplateDetailDto,
   MessageTemplateRevisionDto,
 } from '#/api/chat/message-template';
 
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 
 import {
+  Alert,
   Button,
   Card,
-  Col,
   Drawer,
-  Form,
-  FormItem,
   Input,
-  message,
   Modal,
-  Popconfirm,
-  Row,
   Select,
-  SelectOption,
   Space,
   Table,
   Tag,
 } from 'antdv-next';
 
+import { getArticleSenderSessionsApi } from '#/api/chat/article-message';
 import {
   createMessageTemplateApi,
-  deleteMessageTemplateApi,
-  disableMessageTemplateApi,
-  enableMessageTemplateApi,
   getMessageTemplateApi,
   getMessageTemplateListApi,
+  getMessageTemplateRevisionApi,
+  getMessageTemplateRevisionsApi,
+  getTemplateSenderAccountsApi,
+  previewMessageTemplateApi,
   publishMessageTemplateApi,
   sendTemplateContentMessageApi,
+  setMessageTemplateEnabledApi,
+  templatePermission,
   updateMessageTemplateApi,
 } from '#/api/chat/message-template';
+import { getRequestErrorMessage } from '#/utils/request-error';
 
+import {
+  exampleData,
+  fieldsFromDefinition,
+  newDefinition,
+  parseDataObject,
+  TemplateSendAttempt,
+  validateFieldData,
+} from './template-draft';
 import TemplatePreview from './template-preview.vue';
 
-// 列表查询条件
-const queryParams = reactive<MessageTemplateGetListInput>({
-  keyword: '',
-  status: undefined,
-  visibility: undefined,
-  maxResultCount: 10,
-  skipCount: 0,
-});
-
-const loading = ref(false);
+const { hasAccessByCodes } = useAccess();
+const can = (action: string) =>
+  hasAccessByCodes([`${templatePermission}.${action}`]);
+const busy = ref(false);
+const error = ref('');
+const notice = ref('');
+const items = ref<MessageTemplateDefinitionDto[]>([]);
 const total = ref(0);
-const templateList = ref<MessageTemplateDefinitionDto[]>([]);
-
-// 表格列定义
-const columns = [
-  { title: '模板名称', dataIndex: 'name', key: 'name', width: 160 },
-  { title: '分类', dataIndex: 'category', key: 'category', width: 110 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '可见范围', dataIndex: 'visibility', key: 'visibility', width: 100 },
-  { title: '当前版本', dataIndex: 'currentVersion', key: 'currentVersion', width: 90 },
-  {
-    title: '发布版本',
-    dataIndex: 'latestPublishedVersion',
-    key: 'latestPublishedVersion',
-    width: 90,
-  },
-  { title: '创建时间', dataIndex: 'creationTime', key: 'creationTime', width: 170 },
-  { title: '操作', key: 'action', width: 260, fixed: 'right' as const },
-];
-
-// 加载数据
-async function loadData() {
-  loading.value = true;
+const page = ref(1);
+const keyword = ref('');
+const scope = ref<'owned' | 'usable'>('owned');
+const accounts = ref<ChatObjectDto[]>([]);
+const accountTotal = ref(0);
+const accountKeyword = ref('');
+const accountOptions = computed(() =>
+  accounts.value.map((a) => ({
+    label: `${a.displayName || a.name} (${a.id})`,
+    value: String(a.id),
+  })),
+);
+async function run(action: () => Promise<void>) {
+  if (busy.value) return;
+  busy.value = true;
+  error.value = '';
+  notice.value = '';
   try {
-    const res = await getMessageTemplateListApi(queryParams);
-    templateList.value = res.items || [];
-    total.value = res.totalCount || 0;
-  } catch (err: any) {
-    message.error(err?.message || '加载模板列表失败');
+    await action();
+  } catch (err) {
+    error.value = getRequestErrorMessage(err).message;
   } finally {
-    loading.value = false;
+    busy.value = false;
   }
 }
-
-function handleSearch() {
-  queryParams.skipCount = 0;
-  loadData();
+async function loadList() {
+  const result = await getMessageTemplateListApi({
+    keyword: keyword.value,
+    scope: scope.value,
+    skipCount: (page.value - 1) * 10,
+    maxResultCount: 10,
+  });
+  items.value = result.items;
+  total.value = result.totalCount;
 }
-
-function handleReset() {
-  queryParams.keyword = '';
-  queryParams.status = undefined;
-  queryParams.visibility = undefined;
-  queryParams.skipCount = 0;
-  loadData();
+async function loadAccounts(append = false) {
+  const result = await getTemplateSenderAccountsApi({
+    isEnabled: true,
+    keyword: accountKeyword.value,
+    maxResultCount: 50,
+    skipCount: append ? accounts.value.length : 0,
+  });
+  accounts.value = append ? [...accounts.value, ...result.items] : result.items;
+  accountTotal.value = result.totalCount;
 }
-
-function handleTableChange(pag: any) {
-  queryParams.skipCount = ((pag.current || 1) - 1) * (pag.pageSize || 10);
-  queryParams.maxResultCount = pag.pageSize || 10;
-  loadData();
-}
-
-// 示例 JSON
-const sampleMinimalCard = JSON.stringify(
-  {
-    fields: [{ name: 'title', type: 'string', required: true }],
-    layout: {
-      type: 'card',
-      children: [{ type: 'text', bind: 'title', style: 'heading' }],
-    },
-    actions: [],
-  },
-  null,
-  2,
-);
-
-const sampleFullCard = JSON.stringify(
-  {
-    fields: [
-      { name: 'title', type: 'string', required: true },
-      { name: 'orderNo', type: 'string', required: true },
-      { name: 'status', type: 'string', required: true },
-      { name: 'detailUrl', type: 'string', format: 'url', required: true },
-    ],
-    layout: {
-      type: 'card',
-      children: [
-        { type: 'text', bind: 'title', style: 'heading' },
-        { type: 'field', label: '工单编号', bind: 'orderNo' },
-        { type: 'badge', bind: 'status', tone: 'neutral' },
-        { type: 'divider' },
-        { type: 'button', label: '查看详情', actionId: 'viewDetail' },
-      ],
-    },
-    actions: [{ id: 'viewDetail', type: 'openUrl', bind: 'detailUrl' }],
-  },
-  null,
-  2,
-);
-
-// 编辑/新建抽屉状态
-const drawerVisible = ref(false);
-const isEditing = ref(false);
-const currentEditId = ref('');
-const saving = ref(false);
-
-const formData = reactive({
+const columns = [
+  { title: '模板名称', dataIndex: 'name' },
+  { title: '所属账号', dataIndex: 'ownerId' },
+  { title: '状态', key: 'status' },
+  { title: '可见范围', key: 'visibility' },
+  { title: '发布版本', dataIndex: 'publishedVersion' },
+  { title: '操作', key: 'action' },
+];
+const editorOpen = ref(false);
+const current = ref<MessageTemplateDetailDto>();
+const form = reactive({
+  ownerId: '',
   name: '',
-  category: '',
   description: '',
-  visibility: 0,
-  draftJson: sampleMinimalCard,
+  visibility: 0 as 0 | 1,
+  definition: newDefinition(),
 });
-
-// 解析预览用的实时计算属性
-const previewLayout = computed(() => {
+const sampleData = ref('{}');
+const fields = computed(() => fieldsFromDefinition(form.definition));
+const previewSnapshot = computed(() => {
   try {
-    const parsed = JSON.parse(formData.draftJson);
-    return parsed.layout || { type: 'card', children: [] };
+    return {
+      ...JSON.parse(form.definition),
+      data: parseDataObject(sampleData.value),
+      templateId: current.value?.id || '00000000-0000-0000-0000-000000000000',
+      templateVersion: 1,
+      templateName: form.name,
+      fallbackText: '[模板预览]',
+    };
   } catch {
-    return { type: 'card', children: [] };
+    return null;
   }
 });
-
-const previewActions = computed(() => {
+function openCreate() {
+  current.value = undefined;
+  Object.assign(form, {
+    ownerId: '',
+    name: '',
+    description: '',
+    visibility: 0,
+    definition: newDefinition(),
+  });
+  sampleData.value = '{"title":"示例通知"}';
+  editorOpen.value = true;
+}
+function openEdit(record: MessageTemplateDefinitionDto) {
+  void run(async () => {
+    const detail = await getMessageTemplateApi(record.id);
+    current.value = detail;
+    Object.assign(form, {
+      ownerId: String(detail.ownerId),
+      name: detail.name,
+      description: detail.description || '',
+      visibility: detail.visibility,
+      definition: detail.draftJson,
+    });
+    sampleData.value = '{}';
+    editorOpen.value = true;
+  });
+}
+function save() {
+  void run(async () => {
+    if (!form.ownerId || !form.name.trim())
+      throw new Error('请选择所属账号并填写模板名称。');
+    const definition = JSON.stringify({
+      ...JSON.parse(form.definition),
+      name: form.name.trim(),
+    });
+    const input = {
+      name: form.name.trim(),
+      description: form.description,
+      visibility: form.visibility,
+      definition,
+    };
+    const detail = current.value
+      ? await updateMessageTemplateApi(current.value.id, {
+          ...input,
+          concurrencyStamp: current.value.concurrencyStamp,
+        })
+      : await createMessageTemplateApi({ ...input, ownerId: form.ownerId });
+    current.value = detail;
+    form.definition = detail.draftJson;
+    notice.value = '草稿已保存；并发冲突时保留本地内容，请对比后重新打开。';
+    await loadList();
+  });
+}
+function validatePreview() {
+  void run(async () => {
+    if (!current.value) throw new Error('请先保存草稿再正式校验。');
+    const result = await previewMessageTemplateApi({
+      templateId: current.value.id,
+      definition: form.definition,
+      data: parseDataObject(sampleData.value),
+    });
+    if (!result.isValid) throw new Error(result.errorMessage || '模板校验失败');
+    notice.value = '服务端正式校验通过。';
+  });
+}
+function publish(record: MessageTemplateDefinitionDto) {
+  void run(async () => {
+    const detail = await getMessageTemplateApi(record.id);
+    const validation = await previewMessageTemplateApi({
+      templateId: record.id,
+      definition: detail.draftJson,
+      data: exampleData(fieldsFromDefinition(detail.draftJson)),
+    });
+    if (!validation.isValid)
+      throw new Error(
+        validation.errorMessage ||
+          '发布前正式校验失败，请在编辑器检查示例数据。',
+      );
+    await publishMessageTemplateApi(record.id, {
+      concurrencyStamp: record.concurrencyStamp,
+    });
+    await loadList();
+    notice.value = '模板已发布。';
+  });
+}
+function toggle(record: MessageTemplateDefinitionDto) {
+  void run(async () => {
+    await setMessageTemplateEnabledApi(record.id, {
+      concurrencyStamp: record.concurrencyStamp,
+      isEnabled: !record.isEnabled,
+    });
+    await loadList();
+  });
+}
+const componentType = ref('text');
+const binding = ref('');
+const fieldName = ref('');
+const fieldType = ref<TemplateField['type']>('string');
+const fieldRequired = ref('true');
+const fieldFormat = ref('text');
+function addField() {
   try {
-    const parsed = JSON.parse(formData.draftJson);
-    return parsed.actions || [];
+    if (
+      !/^[A-Za-z_]\w{0,63}$/.test(fieldName.value) ||
+      ['__proto__', 'constructor', 'prototype'].includes(fieldName.value)
+    )
+      throw new Error('字段名须为1至64位安全标识符。');
+    const definition = JSON.parse(form.definition);
+    definition.fields ||= [];
+    if (
+      definition.fields.length >= 30 ||
+      definition.fields.some((f: TemplateField) => f.name === fieldName.value)
+    )
+      throw new Error('字段名重复或已达30个字段。');
+    definition.fields.push({
+      name: fieldName.value,
+      type: fieldType.value,
+      required: fieldRequired.value === 'true',
+      ...(fieldType.value === 'string'
+        ? {
+            maxLength: fieldFormat.value === 'url' ? 500 : 2000,
+            format: fieldFormat.value,
+          }
+        : {}),
+    });
+    form.definition = JSON.stringify(definition, null, 2);
+  } catch (err) {
+    error.value = getRequestErrorMessage(err).message;
+  }
+}
+function changeNode(index: number, attribute: string, value: string) {
+  try {
+    const definition = JSON.parse(form.definition);
+    definition.layout.children[index][attribute] = value;
+    form.definition = JSON.stringify(definition, null, 2);
+  } catch {
+    error.value = '请先修正草稿JSON。';
+  }
+}
+function editLayout(action: 'add' | 'down' | 'remove' | 'up', index = 0) {
+  try {
+    const definition = JSON.parse(form.definition);
+    const children: Record<string, unknown>[] =
+      definition.layout.children || [];
+    if (action === 'add') {
+      const type = componentType.value;
+      children.push(
+        type === 'divider'
+          ? { type }
+          : ['column', 'row'].includes(type)
+            ? { type, children: [] }
+            : type === 'button'
+              ? { type, label: '操作', actionId: binding.value }
+              : {
+                  type,
+                  bind: binding.value,
+                  ...(type === 'field' ? { label: '字段' } : {}),
+                },
+      );
+    } else if (action === 'remove') children.splice(index, 1);
+    else {
+      const target = index + (action === 'up' ? -1 : 1);
+      if (target >= 0 && target < children.length)
+        [children[index], children[target]] = [
+          children[target]!,
+          children[index]!,
+        ];
+    }
+    definition.layout.children = children;
+    form.definition = JSON.stringify(definition, null, 2);
+  } catch {
+    error.value = '请先修正草稿JSON。';
+  }
+}
+const rootNodes = computed(() => {
+  try {
+    return JSON.parse(form.definition).layout.children as Record<
+      string,
+      unknown
+    >[];
   } catch {
     return [];
   }
 });
-
-const mockData = computed(() => {
-  try {
-    const parsed = JSON.parse(formData.draftJson);
-    const mock: Record<string, any> = {};
-    if (Array.isArray(parsed.fields)) {
-      for (const f of parsed.fields) {
-        if (f.format === 'url') {
-          mock[f.name] = 'https://example.com/tickets/1001';
-        } else {
-          mock[f.name] = `示例${f.name}`;
-        }
-      }
-    }
-    return mock;
-  } catch {
-    return {};
-  }
+const historyOpen = ref(false);
+const historyTemplate = ref('');
+const history = ref<MessageTemplateRevisionDto[]>([]);
+const historyTotal = ref(0);
+const revisionJson = ref('');
+function viewHistory(record: MessageTemplateDefinitionDto) {
+  void run(async () => {
+    historyTemplate.value = record.id;
+    const result = await getMessageTemplateRevisionsApi(record.id);
+    history.value = result.items;
+    historyTotal.value = result.totalCount;
+    revisionJson.value = '';
+    historyOpen.value = true;
+  });
+}
+function moreHistory() {
+  void run(async () => {
+    const result = await getMessageTemplateRevisionsApi(
+      historyTemplate.value,
+      history.value.length,
+    );
+    history.value.push(...result.items);
+    historyTotal.value = result.totalCount;
+  });
+}
+function readRevision(version: number) {
+  void run(async () => {
+    revisionJson.value = (
+      await getMessageTemplateRevisionApi(historyTemplate.value, version)
+    ).definitionJson;
+  });
+}
+const sendOpen = ref(false);
+const sendTemplate = ref<MessageTemplateDefinitionDto>();
+const sendOwner = ref('');
+const sendSession = ref('');
+const sessions = ref<ArticleSenderSession[]>([]);
+const sessionsTotal = ref(0);
+const sessionKeyword = ref('');
+const sendDefinition = ref('');
+const sendData = reactive<Record<string, unknown>>({});
+const sendFields = computed(() => fieldsFromDefinition(sendDefinition.value));
+const attempt = new TemplateSendAttempt();
+const sessionOptions = computed(() =>
+  sessions.value.map((s) => ({
+    value: s.id,
+    label: `${s.destination?.displayName || s.destination?.name || s.sessionId} (${s.id})`,
+  })),
+);
+async function loadSessions(append = false) {
+  if (!sendOwner.value) return;
+  const result = await getArticleSenderSessionsApi(
+    sendOwner.value,
+    append ? sessions.value.length : 0,
+    sessionKeyword.value,
+  );
+  sessions.value = append ? [...sessions.value, ...result.items] : result.items;
+  sessionsTotal.value = result.totalCount;
+}
+watch(sendOwner, () => {
+  sendSession.value = '';
+  sessions.value = [];
+  if (!busy.value) void run(() => loadSessions());
 });
-
-function handleOpenCreate() {
-  isEditing.value = false;
-  currentEditId.value = '';
-  formData.name = '';
-  formData.category = '业务通知';
-  formData.description = '';
-  formData.visibility = 0;
-  formData.draftJson = sampleFullCard;
-  drawerVisible.value = true;
+function openSend(record: MessageTemplateDefinitionDto) {
+  void run(async () => {
+    if (!record.publishedVersion) throw new Error('请先发布模板。');
+    sendDefinition.value = (
+      await getMessageTemplateRevisionApi(record.id, record.publishedVersion)
+    ).definitionJson;
+    sendTemplate.value = record;
+    for (const key of Object.keys(sendData)) delete sendData[key];
+    sendOwner.value = String(record.ownerId);
+    sendSession.value = '';
+    await loadSessions();
+    sendOpen.value = true;
+    attempt.reset();
+  });
 }
-
-async function handleOpenEdit(record: MessageTemplateDefinitionDto) {
-  isEditing.value = true;
-  currentEditId.value = record.id;
-  formData.name = record.name;
-  formData.category = record.category || '';
-  formData.description = record.description || '';
-  formData.visibility = record.visibility;
-  formData.draftJson = record.draftJson || '{}';
-  drawerVisible.value = true;
+function setField(field: TemplateField, value: string) {
+  if (value === '' && !field.required) delete sendData[field.name];
+  else
+    sendData[field.name] =
+      field.type === 'number' || field.type === 'integer'
+        ? Number(value)
+        : value;
 }
-
-function handleFormatJson() {
-  try {
-    const parsed = JSON.parse(formData.draftJson);
-    formData.draftJson = JSON.stringify(parsed, null, 2);
-    message.success('JSON 格式化成功');
-  } catch (err: any) {
-    message.error(`JSON 语法错误: ${err?.message}`);
-  }
+function send() {
+  void run(async () => {
+    const record = sendTemplate.value;
+    if (!record?.publishedVersion || !sendSession.value)
+      throw new Error('请选择实际发送账号与会话。');
+    const selected = sessions.value.find((s) => s.id === sendSession.value);
+    if (!selected || String(selected.ownerId) !== sendOwner.value)
+      throw new Error('发送会话与账号不一致，请重新选择。');
+    validateFieldData(sendFields.value, sendData);
+    await sendTemplateContentMessageApi(
+      sendSession.value,
+      attempt.prepare(
+        sendSession.value,
+        record.id,
+        record.publishedVersion,
+        sendData,
+      ),
+    );
+    sendOpen.value = false;
+    attempt.reset();
+    notice.value = '模板消息已发送。';
+  });
 }
-
-async function handleSave() {
-  if (!formData.name.trim()) {
-    message.warning('请输入模板名称');
-    return;
-  }
-  try {
-    JSON.parse(formData.draftJson);
-  } catch (err: any) {
-    message.error(`草稿 JSON 格式不合法: ${err?.message}`);
-    return;
-  }
-
-  saving.value = true;
-  try {
-    if (isEditing.value) {
-      await updateMessageTemplateApi(currentEditId.value, {
-        name: formData.name.trim(),
-        category: formData.category.trim() || undefined,
-        description: formData.description.trim() || undefined,
-        visibility: formData.visibility,
-        draftJson: formData.draftJson,
-      });
-      message.success('模板草稿更新成功');
-    } else {
-      await createMessageTemplateApi({
-        name: formData.name.trim(),
-        category: formData.category.trim() || undefined,
-        description: formData.description.trim() || undefined,
-        visibility: formData.visibility,
-        draftJson: formData.draftJson,
-      });
-      message.success('模板创建成功');
-    }
-    drawerVisible.value = false;
-    loadData();
-  } catch (err: any) {
-    message.error(err?.message || '保存失败');
-  } finally {
-    saving.value = false;
-  }
-}
-
-// 发布对话框
-const publishModalVisible = ref(false);
-const publishId = ref('');
-const publishDesc = ref('');
-const publishing = ref(false);
-
-function handleOpenPublish(record: MessageTemplateDefinitionDto) {
-  publishId.value = record.id;
-  publishDesc.value = `发布 v${record.currentVersion} 版本`;
-  publishModalVisible.value = true;
-}
-
-async function handleConfirmPublish() {
-  publishing.value = true;
-  try {
-    await publishMessageTemplateApi(publishId.value, {
-      description: publishDesc.value.trim() || undefined,
-    });
-    message.success('模板发布成功');
-    publishModalVisible.value = false;
-    loadData();
-  } catch (err: any) {
-    message.error(err?.message || '发布失败');
-  } finally {
-    publishing.value = false;
-  }
-}
-
-// 启用 / 停用 / 删除
-async function handleToggleStatus(record: MessageTemplateDefinitionDto) {
-  try {
-    if (record.status === 2) {
-      await enableMessageTemplateApi(record.id);
-      message.success('模板已启用');
-    } else {
-      await disableMessageTemplateApi(record.id);
-      message.success('模板已停用');
-    }
-    loadData();
-  } catch (err: any) {
-    message.error(err?.message || '操作失败');
-  }
-}
-
-async function handleDelete(record: MessageTemplateDefinitionDto) {
-  try {
-    await deleteMessageTemplateApi(record.id);
-    message.success('模板已删除');
-    loadData();
-  } catch (err: any) {
-    message.error(err?.message || '删除失败');
-  }
-}
-
-// 历史版本对话框
-const historyModalVisible = ref(false);
-const historyRevisions = ref<MessageTemplateRevisionDto[]>([]);
-const historyTemplateName = ref('');
-
-async function handleViewHistory(record: MessageTemplateDefinitionDto) {
-  try {
-    const detail = await getMessageTemplateApi(record.id);
-    historyTemplateName.value = detail.name;
-    historyRevisions.value = detail.revisions || [];
-    historyModalVisible.value = true;
-  } catch (err: any) {
-    message.error(err?.message || '获取历史版本失败');
-  }
-}
-
-// 测试发送对话框
-const testSendModalVisible = ref(false);
-const sendSessionUnitId = ref('');
-const sendTemplateId = ref('');
-const sendTemplateVersion = ref(1);
-const sendDataJson = ref('{}');
-const sending = ref(false);
-
-function handleOpenTestSend(record: MessageTemplateDefinitionDto) {
-  sendTemplateId.value = record.id;
-  sendTemplateVersion.value = record.latestPublishedVersion || 1;
-  sendSessionUnitId.value = '';
-
-  try {
-    const parsed = JSON.parse(record.draftJson);
-    const mock: Record<string, any> = {};
-    if (Array.isArray(parsed.fields)) {
-      for (const f of parsed.fields) {
-        if (f.format === 'url') {
-          mock[f.name] = 'https://workorder.example.com/tickets/WX001';
-        } else {
-          mock[f.name] = `测试${f.name}`;
-        }
-      }
-    }
-    sendDataJson.value = JSON.stringify(mock, null, 2);
-  } catch {
-    sendDataJson.value = '{}';
-  }
-
-  testSendModalVisible.value = true;
-}
-
-async function handleConfirmSend() {
-  if (!sendSessionUnitId.value.trim()) {
-    message.warning('请输入目标 SessionUnitId');
-    return;
-  }
-  let payloadData: Record<string, any> = {};
-  try {
-    payloadData = JSON.parse(sendDataJson.value);
-  } catch (err: any) {
-    message.error(`数据 JSON 语法错误: ${err?.message}`);
-    return;
-  }
-
-  sending.value = true;
-  try {
-    const clientMessageId = `cmsg_test_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    await sendTemplateContentMessageApi(sendSessionUnitId.value.trim(), {
-      clientMessageId,
-      templateId: sendTemplateId.value,
-      templateVersion: sendTemplateVersion.value,
-      data: payloadData,
-      ignoreVersion: false,
-    });
-    message.success('测试模板消息发送成功');
-    testSendModalVisible.value = false;
-  } catch (err: any) {
-    message.error(err?.message || '发送失败');
-  } finally {
-    sending.value = false;
-  }
-}
-
 onMounted(() => {
-  loadData();
+  void run(async () => {
+    await loadList();
+    await loadAccounts();
+  });
 });
 </script>
 
 <template>
-  <Page title="自定义模板消息管理">
-    <Card :bordered="false" class="mb-4">
+  <Page title="自定义模板消息">
+    <Alert v-if="error" :message="error" type="error" class="mb-3" />
+    <Alert v-if="notice" :message="notice" type="success" class="mb-3" />
+    <Card>
       <Space wrap>
         <Input
-          v-model:value="queryParams.keyword"
-          placeholder="搜索模板名称/分类"
-          allow-clear
-          style="width: 200px"
-          @press-enter="handleSearch"
-        />
-        <Select
-          v-model:value="queryParams.status"
-          placeholder="模板状态"
-          allow-clear
-          style="width: 130px"
+          v-model:value="keyword"
+          placeholder="搜索名称或说明"
+          @press-enter="
+            page = 1;
+            run(loadList);
+          "
+        /><Select
+          v-model:value="scope"
+          :options="[
+            { label: '管理范围', value: 'owned' },
+            { label: '可使用', value: 'usable' },
+          ]"
+        /><Button
+          :loading="busy"
+          @click="
+            page = 1;
+            run(loadList);
+          "
         >
-          <SelectOption :value="0">草稿 (Draft)</SelectOption>
-          <SelectOption :value="1">已发布 (Published)</SelectOption>
-          <SelectOption :value="2">已停用 (Disabled)</SelectOption>
-          <SelectOption :value="3">已废弃 (Deprecated)</SelectOption>
-        </Select>
-        <Select
-          v-model:value="queryParams.visibility"
-          placeholder="可见范围"
-          allow-clear
-          style="width: 130px"
+          查询
+</Button><Button v-if="can('Create')" @click="openCreate"> 新建模板 </Button>
+      </Space>
+      <Table
+        :columns="columns"
+        :data-source="items"
+        :loading="busy"
+        :pagination="false"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+          <Tag v-if="column.key === 'status'">
+            {{
+              !record.isEnabled
+                ? '已停用'
+                : record.publishedVersion
+                  ? '已发布'
+                  : '草稿'
+            }}
+          </Tag>
+          <span v-else-if="column.key === 'visibility'">{{
+            record.visibility === 1 ? '租户共享' : '私有'
+          }}</span>
+          <Space v-else-if="column.key === 'action'" wrap>
+            <Button
+              v-if="can('Update')"
+              :disabled="busy"
+              @click="openEdit(record)"
+            >
+              编辑
+</Button><Button
+              v-if="can('Publish')"
+              :disabled="busy"
+              @click="publish(record)"
+            >
+              发布
+</Button><Button
+              v-if="can('Update')"
+              :disabled="busy"
+              @click="toggle(record)"
+            >
+              {{ record.isEnabled ? '停用' : '启用' }}
+</Button><Button
+              v-if="can('Use') && record.isEnabled && record.publishedVersion"
+              :disabled="busy"
+              @click="openSend(record)"
+            >
+              填写并发送
+</Button><Button :disabled="busy" @click="viewHistory(record)">版本</Button>
+          </Space>
+        </template>
+      </Table>
+      <Space>
+        <Button
+          :disabled="busy || page <= 1"
+          @click="
+            page--;
+            run(loadList);
+          "
         >
-          <SelectOption :value="0">私有 (Private)</SelectOption>
-          <SelectOption :value="1">共享 (Shared)</SelectOption>
-          <SelectOption :value="2">系统 (System)</SelectOption>
-        </Select>
-        <Button type="primary" @click="handleSearch">查询</Button>
-        <Button @click="handleReset">重置</Button>
-        <Button type="primary" style="background-color: #52c41a" @click="handleOpenCreate">
-          + 新建模板
+          上一页
+</Button><span>第 {{ page }} 页，共 {{ total }} 项</span><Button
+          :disabled="busy || page * 10 >= total"
+          @click="
+            page++;
+            run(loadList);
+          "
+        >
+          下一页
         </Button>
       </Space>
     </Card>
-
-    <Card :bordered="false">
-      <Table
-        :columns="columns"
-        :data-source="templateList"
-        :loading="loading"
-        :pagination="{
-          total,
-          current: Math.floor(queryParams.skipCount! / queryParams.maxResultCount!) + 1,
-          pageSize: queryParams.maxResultCount,
-          showSizeChanger: true,
-        }"
-        row-key="id"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record }">
-          <!-- 状态 -->
-          <template v-if="column.key === 'status'">
-            <Tag v-if="record.status === 0" color="default">草稿</Tag>
-            <Tag v-else-if="record.status === 1" color="success">已发布</Tag>
-            <Tag v-else-if="record.status === 2" color="error">已停用</Tag>
-            <Tag v-else-if="record.status === 3" color="warning">已废弃</Tag>
-          </template>
-
-          <!-- 可见范围 -->
-          <template v-else-if="column.key === 'visibility'">
-            <Tag v-if="record.visibility === 0" color="default">私有</Tag>
-            <Tag v-else-if="record.visibility === 1" color="blue">共享</Tag>
-            <Tag v-else-if="record.visibility === 2" color="purple">系统</Tag>
-          </template>
-
-          <!-- 操作栏 -->
-          <template v-else-if="column.key === 'action'">
-            <Space size="small">
-              <Button type="link" size="small" @click="handleOpenEdit(record)">编辑</Button>
-              <Button type="link" size="small" @click="handleOpenPublish(record)">发布</Button>
-              <Button
-                type="link"
-                size="small"
-                :style="{ color: record.status === 2 ? '#52c41a' : '#faad14' }"
-                @click="handleToggleStatus(record)"
-              >
-                {{ record.status === 2 ? '启用' : '停用' }}
-              </Button>
-              <Button
-                v-if="record.latestPublishedVersion > 0"
-                type="link"
-                size="small"
-                @click="handleOpenTestSend(record)"
-              >
-                测试发送
-              </Button>
-              <Button type="link" size="small" @click="handleViewHistory(record)">版本</Button>
-              <Popconfirm title="确定删除该模板吗？" @confirm="handleDelete(record)">
-                <Button type="link" danger size="small">删除</Button>
-              </Popconfirm>
-            </Space>
-          </template>
-        </template>
-      </Table>
-    </Card>
-
-    <!-- 编辑/创建抽屉 -->
     <Drawer
-      v-model:open="drawerVisible"
-      :title="isEditing ? '编辑模板草稿' : '新建模板'"
-      width="780"
-      placement="right"
+      v-model:open="editorOpen"
+      title="模板草稿"
+      width="min(960px, 100vw)"
     >
-      <Form layout="vertical">
-        <Row :gutter="16">
-          <Col :span="12">
-            <FormItem label="模板名称" required>
-              <Input v-model:value="formData.name" placeholder="例如：报修工单通知" />
-            </FormItem>
-          </Col>
-          <Col :span="6">
-            <FormItem label="业务分类">
-              <Input v-model:value="formData.category" placeholder="例如：运维告警" />
-            </FormItem>
-          </Col>
-          <Col :span="6">
-            <FormItem label="可见范围">
-              <Select v-model:value="formData.visibility">
-                <SelectOption :value="0">私有 (Private)</SelectOption>
-                <SelectOption :value="1">共享 (Shared)</SelectOption>
-                <SelectOption :value="2">系统 (System)</SelectOption>
-              </Select>
-            </FormItem>
-          </Col>
-        </Row>
-
-        <FormItem label="模板描述">
-          <Input v-model:value="formData.description" placeholder="描述该模板的用途" />
-        </FormItem>
-
-        <Row :gutter="16">
-          <!-- 左侧：草稿 JSON 编辑器 -->
-          <Col :span="14">
-            <div class="flex items-center justify-between mb-2">
-              <span class="font-medium">草稿定义 JSON (fields, layout, actions)</span>
-              <Space size="small">
-                <Button size="small" @click="formData.draftJson = sampleMinimalCard">最小卡片</Button>
-                <Button size="small" @click="formData.draftJson = sampleFullCard">完整工单</Button>
-                <Button size="small" type="dashed" @click="handleFormatJson">格式化</Button>
-              </Space>
-            </div>
-            <Input.TextArea
-              v-model:value="formData.draftJson"
-              :rows="18"
-              style="font-family: monospace; font-size: 12px"
-              placeholder="请输入包含 fields, layout, actions 的 JSON 定义"
-            />
-          </Col>
-
-          <!-- 右侧：实时渲染卡片预览 -->
-          <Col :span="10">
-            <div class="mb-2 font-medium">受控卡片实时预览 (Live Preview)</div>
-            <div class="p-3 bg-gray-50 rounded border border-gray-200 min-h-[300px] flex items-center justify-center">
-              <TemplatePreview
-                :layout="previewLayout"
-                :data="mockData"
-                :actions="previewActions"
-                :template-name="formData.name || '模板预览'"
-              />
-            </div>
-          </Col>
-        </Row>
-      </Form>
-
-      <template #footer>
-        <Space class="float-right">
-          <Button @click="drawerVisible = false">取消</Button>
-          <Button type="primary" :loading="saving" @click="handleSave">保存草稿</Button>
-        </Space>
-      </template>
-    </Drawer>
-
-    <!-- 发布新版本弹窗 -->
-    <Modal
-      v-model:open="publishModalVisible"
-      title="发布模板版本"
-      :confirm-loading="publishing"
-      @ok="handleConfirmPublish"
-    >
-      <Form layout="vertical">
-        <FormItem label="版本说明 / 变更日志">
-          <Input v-model:value="publishDesc" placeholder="简要说明本次版本的改动内容" />
-        </FormItem>
-        <p class="text-xs text-gray-500">
-          发布后将对草稿定义进行不可篡改归档（生成只读快照和 SHA-256 签名），版本号自动自增。
-        </p>
-      </Form>
-    </Modal>
-
-    <!-- 历史版本弹窗 -->
-    <Modal
-      v-model:open="historyModalVisible"
-      :title="`[${historyTemplateName}] 历史版本列表`"
-      :footer="null"
-      width="680"
-    >
-      <Table
-        :data-source="historyRevisions"
-        :columns="[
-          { title: '版本号', dataIndex: 'version', key: 'version', width: 90 },
-          { title: '版本摘要/说明', dataIndex: 'description', key: 'description' },
-          { title: '哈希摘要 (SHA-256)', dataIndex: 'definitionHash', key: 'definitionHash', width: 140 },
-          { title: '发布时间', dataIndex: 'creationTime', key: 'creationTime', width: 170 },
+      <Alert v-if="error" :message="error" type="error" /><Alert
+        v-if="notice"
+        :message="notice"
+        type="success"
+      />
+      <Space wrap class="mb-3">
+        <Input v-model:value="accountKeyword" placeholder="搜索账号" /><Button
+          @click="run(() => loadAccounts())"
+        >
+          查询账号
+</Button><Select
+          v-model:value="form.ownerId"
+          :disabled="!!current"
+          :options="accountOptions"
+          placeholder="所属账号"
+          style="min-width: 240px"
+        /><Button
+          v-if="accounts.length < accountTotal"
+          @click="run(() => loadAccounts(true))"
+        >
+          更多账号
+        </Button>
+      </Space>
+      <label class="block">模板名称<Input v-model:value="form.name" :maxlength="80" /></label><label class="block">说明<Input v-model:value="form.description" :maxlength="256" /></label>
+      <Select
+        v-model:value="form.visibility"
+        :options="[
+          { label: '私有', value: 0 },
+          ...(can('Share') ? [{ label: '租户共享', value: 1 }] : []),
         ]"
-        row-key="id"
-        :pagination="false"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'version'">
-            <Tag color="blue">v{{ record.version }}</Tag>
-          </template>
-          <template v-else-if="column.key === 'definitionHash'">
-            <span class="text-xs font-mono text-gray-500" :title="record.definitionHash">
-              {{ record.definitionHash?.slice(0, 12) }}...
-            </span>
-          </template>
-        </template>
-      </Table>
-    </Modal>
-
-    <!-- 测试发送弹窗 -->
-    <Modal
-      v-model:open="testSendModalVisible"
-      title="发送测试模板消息"
-      :confirm-loading="sending"
-      @ok="handleConfirmSend"
-    >
-      <Form layout="vertical">
-        <FormItem label="目标会话单元 ID (SessionUnitId)" required>
-          <Input v-model:value="sendSessionUnitId" placeholder="输入要发送到的 SessionUnitId (Guid)" />
-        </FormItem>
-        <FormItem label="填入数据 JSON (Data Payload)" required>
-          <Input.TextArea
-            v-model:value="sendDataJson"
-            :rows="8"
-            style="font-family: monospace; font-size: 12px"
+      />
+      <p class="my-3">
+        添加组件后可排序；字段、属性、动作及嵌套布局在下方定义中编辑。
+      </p>
+      <Space wrap class="my-3">
+        <Input v-model:value="fieldName" placeholder="新字段名" />
+        <Select
+          v-model:value="fieldType"
+          :options="
+            ['string', 'integer', 'number', 'boolean'].map((value) => ({
+              label: value,
+              value,
+            }))
+          "
+        />
+        <Select
+          v-model:value="fieldRequired"
+          :options="[
+            { label: '必填', value: 'true' },
+            { label: '可选', value: 'false' },
+          ]"
+        />
+        <Select
+          v-if="fieldType === 'string'"
+          v-model:value="fieldFormat"
+          :options="[
+            { label: '文本', value: 'text' },
+            { label: 'HTTP链接', value: 'url' },
+          ]"
+        />
+        <Button @click="addField">添加字段</Button>
+      </Space>
+      <Space wrap>
+        <Select
+          v-model:value="componentType"
+          :options="
+            [
+              'text',
+              'field',
+              'badge',
+              'image',
+              'divider',
+              'row',
+              'column',
+              'button',
+            ].map((value) => ({ label: value, value }))
+          "
+        /><Input
+          v-model:value="binding"
+          placeholder="绑定字段名或动作ID"
+        /><Button @click="editLayout('add')">添加组件</Button>
+      </Space>
+      <div v-for="(node, index) in rootNodes" :key="index" class="my-2">
+        <Space>
+          <span>{{ node.type }}</span><Button @click="editLayout('up', index)">上移</Button><Button @click="editLayout('down', index)">下移</Button><Button @click="editLayout('remove', index)">移除</Button>
+        </Space>
+        <Space
+          v-if="!['divider', 'row', 'column'].includes(String(node.type))"
+          wrap
+        >
+          <Input
+            v-if="node.type !== 'button'"
+            :value="String(node.bind ?? '')"
+            placeholder="绑定字段"
+            @update:value="(value) => changeNode(index, 'bind', value)"
           />
-        </FormItem>
-      </Form>
+          <Input
+            v-if="node.type === 'field' || node.type === 'button'"
+            :value="String(node.label ?? '')"
+            placeholder="标签"
+            @update:value="(value) => changeNode(index, 'label', value)"
+          />
+          <Input
+            v-if="node.type === 'button'"
+            :value="String(node.actionId ?? '')"
+            placeholder="动作ID"
+            @update:value="(value) => changeNode(index, 'actionId', value)"
+          />
+          <Select
+            v-if="node.type === 'text'"
+            :value="String(node.style ?? 'body')"
+            :options="
+              ['heading', 'body', 'secondary'].map((value) => ({
+                label: value,
+                value,
+              }))
+            "
+            @change="(value) => changeNode(index, 'style', String(value))"
+          />
+          <Select
+            v-if="node.type === 'badge'"
+            :value="String(node.tone ?? 'neutral')"
+            :options="
+              ['neutral', 'success', 'warning', 'danger'].map((value) => ({
+                label: value,
+                value,
+              }))
+            "
+            @change="(value) => changeNode(index, 'tone', String(value))"
+          />
+        </Space>
+      </div>
+      <label class="block">模板定义<Input.TextArea v-model:value="form.definition" :rows="16" /></label>
+      <p>
+        字段：{{
+          fields.map((f) => `${f.name} (${f.type})`).join('，') ||
+          '暂无合法字段'
+        }}
+      </p>
+      <label class="block">示例数据<Input.TextArea v-model:value="sampleData" :rows="4" /></label><TemplatePreview :snapshot="previewSnapshot" />
+      <Space class="mt-3">
+        <Button :loading="busy" @click="save">保存草稿</Button><Button :disabled="!current || busy" @click="validatePreview">
+          服务端正式校验
+        </Button>
+      </Space>
+    </Drawer>
+    <Modal v-model:open="historyOpen" title="已发布版本" :footer="null">
+      <Alert v-if="error" :message="error" type="error" />
+      <div v-for="revision in history" :key="revision.id">
+        <Button @click="readRevision(revision.version)">
+          版本 {{ revision.version }}
+</Button><span>{{ revision.creationTime }}</span>
+      </div>
+      <Button
+        v-if="history.length < historyTotal"
+        :disabled="busy"
+        @click="moreHistory"
+      >
+        更多版本
+      </Button>
+      <pre class="max-h-96 overflow-auto whitespace-pre-wrap">{{
+        revisionJson
+      }}</pre>
+    </Modal>
+    <Modal
+      v-model:open="sendOpen"
+      title="发送模板消息"
+      :confirm-loading="busy"
+      @ok="send"
+    >
+      <Alert v-if="error" :message="error" type="error" />
+      <p>
+        {{ sendTemplate?.name }} · 固定版本 {{ sendTemplate?.publishedVersion }}
+      </p>
+      <label>发送账号<Select
+          v-model:value="sendOwner"
+          :options="accountOptions"
+          style="width: 100%"
+/></label><Space>
+        <Input v-model:value="sessionKeyword" placeholder="搜索会话" /><Button
+          @click="run(() => loadSessions())"
+        >
+          查询
+        </Button>
+</Space><Select
+        v-model:value="sendSession"
+        :options="sessionOptions"
+        placeholder="请选择实际发送会话"
+        style="width: 100%"
+      /><Button
+        v-if="sessions.length < sessionsTotal"
+        @click="run(() => loadSessions(true))"
+      >
+        更多会话
+      </Button>
+      <label v-for="field in sendFields" :key="field.name" class="my-2 block">{{ field.name }}{{ field.required ? ' *' : '' }}
+        <Select
+          v-if="field.enum"
+          :value="sendData[field.name]"
+          :options="field.enum.map((value) => ({ label: value, value }))"
+          style="width: 100%"
+          @change="(value) => (sendData[field.name] = value)"
+        />
+        <Select
+          v-else-if="field.type === 'boolean'"
+          :value="
+            sendData[field.name] === undefined
+              ? undefined
+              : String(sendData[field.name])
+          "
+          :options="[
+            { label: '是', value: 'true' },
+            { label: '否', value: 'false' },
+          ]"
+          style="width: 100%"
+          @change="(value) => (sendData[field.name] = value === 'true')"
+        />
+        <Input
+          v-else
+          :value="String(sendData[field.name] ?? '')"
+          :maxlength="field.maxLength || 2000"
+          @update:value="(value) => setField(field, value)"
+        />
+      </label>
+      <p class="text-muted-foreground">
+        提交失败后再次发送将复用原标识；修改数据、账号或会话后视为新消息。
+      </p>
     </Modal>
   </Page>
 </template>

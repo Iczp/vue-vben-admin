@@ -1,403 +1,172 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import type { TemplateNode, TemplateSnapshot } from './template-message';
 
-import { Copy, ExternalLink } from '@vben/icons';
-import { message as antMessage } from 'antdv-next';
+import { computed, h } from 'vue';
 
-const props = withDefaults(
-  defineProps<{
-    layout?: Record<string, any>;
-    data?: Record<string, any>;
-    actions?: Array<{ id: string; type: string; bind: string }>;
-    templateName?: string;
-  }>(),
-  {
-    layout: () => ({ type: 'card', children: [] }),
-    data: () => ({}),
-    actions: () => [],
-    templateName: '',
-  },
-);
+import {
+  formatTemplateValue,
+  isSafeHttpUrl,
+  parseTemplateSnapshot,
+} from './template-message';
 
-const dataObj = computed(() => props.data || {});
-const layoutObj = computed(() => props.layout || { type: 'card', children: [] });
-const actionsList = computed(() => props.actions || []);
-
-function resolveValue(bind?: string): string {
-  if (!bind) return '';
-  const val = dataObj.value[bind];
-  return val === undefined || val === null ? '' : String(val);
-}
-
-function findAction(actionId: string) {
-  return actionsList.value.find((a) => a.id === actionId);
-}
-
-function handleAction(actionId: string) {
-  const act = findAction(actionId);
-  if (!act) return;
-  const val = resolveValue(act.bind);
-  if (!val) {
-    antMessage.warning('动作绑定的数据为空');
-    return;
+const props = defineProps<{ snapshot: unknown }>();
+const parsed = computed(() => parseTemplateSnapshot(props.snapshot));
+function renderNode(
+  node: TemplateNode,
+  snapshot: TemplateSnapshot,
+): null | ReturnType<typeof h> {
+  const data = snapshot.data;
+  const value = 'bind' in node ? data[node.bind || ''] : undefined;
+  if (['card', 'column', 'row'].includes(node.type)) {
+    const container = node as Extract<
+      TemplateNode,
+      { children: TemplateNode[] }
+    >;
+    const gap = 'gap' in container ? container.gap : 'medium';
+    return h(
+      'div',
+      { class: [`node-${node.type}`, `gap-${gap || 'medium'}`] },
+      container.children.map((child) => renderNode(child, snapshot)),
+    );
   }
-  if (act.type === 'copyText') {
-    navigator.clipboard?.writeText(val);
-    antMessage.success(`已复制: ${val}`);
-  } else if (act.type === 'openUrl') {
-    window.open(val, '_blank');
+  if (node.type === 'text')
+    return h(
+      'p',
+      { class: `text-${node.style || 'body'}` },
+      node.text ?? formatTemplateValue(value),
+    );
+  if (node.type === 'field')
+    return value === undefined || value === null
+      ? null
+      : h('div', { class: 'node-field' }, [
+          h('span', node.label),
+          h('span', formatTemplateValue(value)),
+        ]);
+  if (node.type === 'badge')
+    return h(
+      'span',
+      { class: `tone-${node.tone || 'neutral'}` },
+      node.text ?? formatTemplateValue(value),
+    );
+  if (node.type === 'divider') return h('hr');
+  if (node.type === 'image')
+    return h(
+      'div',
+      { class: `node-image aspect-${node.aspectRatio || 'landscape'}` },
+      isSafeHttpUrl(value)
+        ? [
+            h('img', {
+              src: value,
+              alt: '模板图片',
+              referrerpolicy: 'no-referrer',
+              onError: (event: Event) => {
+                (event.target as HTMLImageElement).hidden = true;
+              },
+            }),
+          ]
+        : '图片暂不可用',
+    );
+  if (node.type === 'button') {
+    const action = snapshot.actions?.find((a) => a.id === node.actionId);
+    if (
+      !action ||
+      data[action.bind] === undefined ||
+      data[action.bind] === null ||
+      data[action.bind] === ''
+    )
+      return null;
+    // 编辑预览只展示按钮，不执行链接或复制，实际聊天动作由客户端安全入口处理。
+    return h(
+      'button',
+      { type: 'button', disabled: true, title: '预览模式不执行动作' },
+      node.label,
+    );
   }
+  return null;
 }
+const PreviewTree = () =>
+  parsed.value.valid && parsed.value.snapshot
+    ? renderNode(parsed.value.snapshot.layout, parsed.value.snapshot)
+    : h('p', { role: 'status' }, parsed.value.fallbackText);
 </script>
 
 <template>
-  <div class="template-preview-card">
-    <!-- Header -->
-    <div v-if="props.templateName" class="card-header">
-      <span class="card-tag">模板</span>
-      <span class="card-title">{{ props.templateName }}</span>
-    </div>
-
-    <!-- Body -->
-    <div class="card-body">
-      <template v-for="(child, idx) in layoutObj.children || []" :key="idx">
-        <!-- text -->
-        <div
-          v-if="child.type === 'text'"
-          class="node-text"
-          :class="`text-${child.style || 'body'}`"
-        >
-          {{ child.text || resolveValue(child.bind) }}
-        </div>
-
-        <!-- field -->
-        <div
-          v-else-if="child.type === 'field' && resolveValue(child.bind)"
-          class="node-field"
-        >
-          <span class="field-label">{{ child.label }}</span>
-          <span class="field-value">{{ resolveValue(child.bind) }}</span>
-        </div>
-
-        <!-- badge -->
-        <div
-          v-else-if="child.type === 'badge' && (child.text || resolveValue(child.bind))"
-          class="node-badge"
-        >
-          <span class="badge-pill" :class="`tone-${child.tone || 'neutral'}`">
-            {{ child.text || resolveValue(child.bind) }}
-          </span>
-        </div>
-
-        <!-- image -->
-        <div
-          v-else-if="child.type === 'image' && resolveValue(child.bind)"
-          class="node-image"
-          :class="`aspect-${child.aspectRatio || 'landscape'}`"
-        >
-          <img :src="resolveValue(child.bind)" alt="preview" />
-        </div>
-
-        <!-- divider -->
-        <div v-else-if="child.type === 'divider'" class="node-divider" />
-
-        <!-- row -->
-        <div
-          v-else-if="child.type === 'row'"
-          class="node-row"
-          :class="`gap-${child.gap || 'medium'}`"
-        >
-          <template v-for="(rChild, rIdx) in (child.children || []).slice(0, 3)" :key="rIdx">
-            <div
-              v-if="rChild.type === 'text'"
-              class="node-text row-item"
-              :class="`text-${rChild.style || 'body'}`"
-            >
-              {{ rChild.text || resolveValue(rChild.bind) }}
-            </div>
-            <div
-              v-else-if="rChild.type === 'field' && resolveValue(rChild.bind)"
-              class="node-field row-item"
-            >
-              <span class="field-label">{{ rChild.label }}</span>
-              <span class="field-value">{{ resolveValue(rChild.bind) }}</span>
-            </div>
-            <div
-              v-else-if="rChild.type === 'badge' && (rChild.text || resolveValue(rChild.bind))"
-              class="node-badge row-item"
-            >
-              <span class="badge-pill" :class="`tone-${rChild.tone || 'neutral'}`">
-                {{ rChild.text || resolveValue(rChild.bind) }}
-              </span>
-            </div>
-            <button
-              v-else-if="rChild.type === 'button' && findAction(rChild.actionId) && resolveValue(findAction(rChild.actionId)?.bind)"
-              type="button"
-              class="preview-btn row-item"
-              @click="handleAction(rChild.actionId)"
-            >
-              <ExternalLink v-if="findAction(rChild.actionId)?.type === 'openUrl'" />
-              <Copy v-else />
-              <span>{{ rChild.label }}</span>
-            </button>
-          </template>
-        </div>
-
-        <!-- column -->
-        <div
-          v-else-if="child.type === 'column'"
-          class="node-column"
-          :class="`gap-${child.gap || 'medium'}`"
-        >
-          <template v-for="(cChild, cIdx) in child.children || []" :key="cIdx">
-            <div
-              v-if="cChild.type === 'text'"
-              class="node-text"
-              :class="`text-${cChild.style || 'body'}`"
-            >
-              {{ cChild.text || resolveValue(cChild.bind) }}
-            </div>
-            <div
-              v-else-if="cChild.type === 'field' && resolveValue(cChild.bind)"
-              class="node-field"
-            >
-              <span class="field-label">{{ cChild.label }}</span>
-              <span class="field-value">{{ resolveValue(cChild.bind) }}</span>
-            </div>
-            <div
-              v-else-if="cChild.type === 'badge' && (cChild.text || resolveValue(cChild.bind))"
-              class="node-badge"
-            >
-              <span class="badge-pill" :class="`tone-${cChild.tone || 'neutral'}`">
-                {{ cChild.text || resolveValue(cChild.bind) }}
-              </span>
-            </div>
-          </template>
-        </div>
-
-        <!-- button -->
-        <button
-          v-else-if="child.type === 'button' && findAction(child.actionId) && resolveValue(findAction(child.actionId)?.bind)"
-          type="button"
-          class="preview-btn block-btn"
-          @click="handleAction(child.actionId)"
-        >
-          <ExternalLink v-if="findAction(child.actionId)?.type === 'openUrl'" />
-          <Copy v-else />
-          <span>{{ child.label }}</span>
-        </button>
-      </template>
-    </div>
-  </div>
+  <div class="template-preview"><PreviewTree /></div>
 </template>
 
 <style scoped>
-.template-preview-card {
-  width: 100%;
-  max-width: 340px;
-  background: #ffffff;
-  border: 1px solid #e8e8e8;
+.template-preview {
+  max-width: 360px;
+  padding: 16px;
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
 }
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: #fafafa;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.card-tag {
-  font-size: 11px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: #e6f4ff;
-  color: #1677ff;
-  font-weight: 500;
-}
-
-.card-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #262626;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.card-body {
-  padding: 12px;
+.template-preview :deep(.node-card),
+.template-preview :deep(.node-column) {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-
-.node-text {
-  word-break: break-word;
-  line-height: 1.5;
-}
-
-.text-heading {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f1f1f;
-}
-
-.text-body {
-  font-size: 13px;
-  color: #262626;
-}
-
-.text-secondary {
-  font-size: 12px;
-  color: #8c8c8c;
-}
-
-.node-field {
+.template-preview :deep(.node-row) {
   display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+}
+.template-preview :deep(.node-row > *) {
+  flex: 1 1 100px;
+  min-width: 0;
+}
+.template-preview :deep(.node-field) {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-start;
-  font-size: 13px;
-  line-height: 1.4;
-  gap: 12px;
+  gap: 8px;
 }
-
-.field-label {
-  color: #8c8c8c;
-  flex-shrink: 0;
+.template-preview :deep(.gap-small) {
+  gap: 4px;
 }
-
-.field-value {
-  color: #262626;
-  font-weight: 500;
-  text-align: right;
-  word-break: break-all;
+.template-preview :deep(.gap-medium) {
+  gap: 8px;
 }
-
-.node-badge {
-  display: inline-flex;
+.template-preview :deep(.gap-large) {
+  gap: 16px;
 }
-
-.badge-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 500;
+.template-preview :deep(.text-heading) {
+  font-size: 1.15em;
+  font-weight: 600;
 }
-
-.tone-neutral {
-  background: #f0f0f0;
-  color: #595959;
+.template-preview :deep(.text-secondary) {
+  opacity: 0.65;
 }
-
-.tone-success {
-  background: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+.template-preview :deep(.tone-warning) {
+  color: #b45309;
 }
-
-.tone-warning {
-  background: #fffbe6;
-  color: #faad14;
-  border: 1px solid #ffe58f;
+.template-preview :deep(.tone-success) {
+  color: #15803d;
 }
-
-.tone-danger {
-  background: #fff2f0;
-  color: #ff4d4f;
-  border: 1px solid #ffccc7;
+.template-preview :deep(.tone-danger) {
+  color: #dc2626;
 }
-
-.node-image {
+.template-preview :deep(.node-image) {
+  background: hsl(var(--muted));
   width: 100%;
-  border-radius: 6px;
   overflow: hidden;
-  background: #fafafa;
 }
-
-.node-image img {
+.template-preview :deep(img) {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
-
-.aspect-square {
-  aspect-ratio: 1 / 1;
-}
-
-.aspect-landscape {
+.template-preview :deep(.aspect-landscape) {
   aspect-ratio: 16 / 9;
 }
-
-.aspect-portrait {
+.template-preview :deep(.aspect-square) {
+  aspect-ratio: 1;
+}
+.template-preview :deep(.aspect-portrait) {
   aspect-ratio: 3 / 4;
-}
-
-.node-divider {
-  width: 100%;
-  height: 1px;
-  background: #f0f0f0;
-  margin: 4px 0;
-}
-
-.node-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.node-column {
-  display: flex;
-  flex-direction: column;
-}
-
-.gap-small {
-  gap: 4px;
-}
-
-.gap-medium {
-  gap: 8px;
-}
-
-.gap-large {
-  gap: 16px;
-}
-
-.row-item {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.preview-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1677ff;
-  background: #f0f7ff;
-  border: 1px solid #bae0ff;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.preview-btn:hover {
-  background: #e6f4ff;
-  border-color: #91caff;
-}
-
-.block-btn {
-  width: 100%;
-  margin-top: 4px;
 }
 </style>
