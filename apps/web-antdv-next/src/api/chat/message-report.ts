@@ -97,44 +97,48 @@ export interface FlushMessageReportInput {
 }
 
 /**
- * 分页获取消息报表明细 (GET /api/chat/message-report)
+ * 分页获取消息报表明细 (GET /api/chat/admin/message-report)
  */
 export async function getMessageReportListApi(params: GetMessageReportInput) {
   return requestClient.get<PagedResultDto<MessageReportDto>>(
-    '/chat/message-report',
+    '/chat/admin/message-report',
     { params },
   );
 }
 
 /**
- * 分页获取消息统计汇总 (GET /api/chat/message-report/summary)
+ * 分页获取消息统计汇总 (GET /api/chat/admin/message-report/summary)
  */
 export async function getMessageReportSummaryApi(
   params: GetMessageSummaryInput,
 ) {
   return requestClient.get<PagedResultDto<MessageSummaryDto>>(
-    '/chat/message-report/summary',
+    '/chat/admin/message-report/summary',
     { params },
   );
 }
 
 /**
- * 获取消息报表选项配置 (GET /api/chat/message-report/options)
+ * 获取消息报表选项配置 (GET /api/chat/admin/message-report/options)
  */
 export async function getMessageReportOptionsApi() {
   return requestClient.get<MessageReportOptions>(
-    '/chat/message-report/options',
+    '/chat/admin/message-report/options',
   );
 }
 
 /**
- * 统计落库 (POST /api/chat/message-report/flush)
+ * 统计落库 (POST /api/chat/admin/message-report/flush)
  */
 export async function flushMessageReportApi(params: FlushMessageReportInput) {
-  return requestClient.post<boolean>('/chat/message-report/flush', null, {
-    params: {
-      dateBucket: params.dateBucket,
-      type: params.type,
+  return requestClient.post<boolean>(
+    '/chat/admin/message-report/flush',
+    null,
+    {
+      params: {
+        dateBucket: params.dateBucket,
+        type: params.type,
+      },
     },
-  });
+  );
 }

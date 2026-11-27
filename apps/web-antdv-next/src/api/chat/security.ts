@@ -143,100 +143,109 @@ export interface SecurityReportHandleInput {
 }
 
 /**
- * 分页查询 URL 安全规则列表 (GET /api/chat/security/rules)
+ * 分页查询 URL 安全规则列表 (GET /api/chat/admin/url-security-rule)
  */
 export async function getUrlSecurityRulesApi(
   params: UrlSecurityRuleGetListInput,
 ) {
   return requestClient.get<PagedResultDto<UrlSecurityRuleDto>>(
-    '/chat/security/rules',
+    '/chat/admin/url-security-rule',
     { params },
   );
 }
 
 /**
- * 获取单个 URL 安全规则 (GET /api/chat/security/rule/:id)
+ * 获取单个 URL 安全规则 (GET /api/chat/admin/url-security-rule/:id)
  */
 export async function getUrlSecurityRuleApi(id: string) {
-  return requestClient.get<UrlSecurityRuleDto>(`/chat/security/rule/${id}`);
+  return requestClient.get<UrlSecurityRuleDto>(
+    `/chat/admin/url-security-rule/${id}`,
+  );
 }
 
 /**
- * 创建 URL 安全规则 (POST /api/chat/security/rule)
+ * 创建 URL 安全规则 (POST /api/chat/admin/url-security-rule)
  */
 export async function createUrlSecurityRuleApi(
   data: UrlSecurityRuleCreateInput,
 ) {
-  return requestClient.post<UrlSecurityRuleDto>('/chat/security/rule', data);
+  return requestClient.post<UrlSecurityRuleDto>(
+    '/chat/admin/url-security-rule',
+    data,
+  );
 }
 
 /**
- * 更新 URL 安全规则 (PUT /api/chat/security/rule/:id)
+ * 更新 URL 安全规则 (PUT /api/chat/admin/url-security-rule/:id)
  */
 export async function updateUrlSecurityRuleApi(
   id: string,
   data: UrlSecurityRuleUpdateInput,
 ) {
   return requestClient.put<UrlSecurityRuleDto>(
-    `/chat/security/rule/${id}`,
+    `/chat/admin/url-security-rule/${id}`,
     data,
   );
 }
 
 /**
- * 删除 URL 安全规则 (DELETE /api/chat/security/rule/:id)
+ * 删除 URL 安全规则 (DELETE /api/chat/admin/url-security-rule/:id)
  */
 export async function deleteUrlSecurityRuleApi(id: string) {
-  return requestClient.delete(`/chat/security/rule/${id}`);
+  return requestClient.delete(`/chat/admin/url-security-rule/${id}`);
 }
 
 /**
- * 启停 URL 安全规则 (POST /api/chat/security/rule/:id/set-enabled)
+ * 启停 URL 安全规则 (POST /api/chat/admin/url-security-rule/:id/set-enabled)
  */
 export async function setUrlSecurityRuleEnabledApi(
   id: string,
   isEnabled: boolean,
 ) {
-  return requestClient.post(`/chat/security/rule/${id}/set-enabled`, null, {
-    params: { isEnabled },
-  });
+  return requestClient.post(
+    `/chat/admin/url-security-rule/${id}/set-enabled`,
+    { isEnabled },
+  );
 }
 
 /**
- * 刷新风控规则至 Redis 缓存 (POST /api/chat/security/refresh-cache)
+ * 刷新风控规则至 Redis 缓存 (POST /api/chat/admin/url-security-rule/refresh-cache)
  */
 export async function refreshUrlSecurityCacheApi() {
-  return requestClient.post('/chat/security/refresh-cache');
+  return requestClient.post('/chat/admin/url-security-rule/refresh-cache');
 }
 
 /**
- * 在线检测 URL 安全风险 (POST /api/chat/security/check-url)
+ * 在线检测 URL 安全风险 (POST /api/chat/admin/url-security-rule/check-url)
  */
 export async function checkUrlSecurityApi(data: UrlCheckInput) {
-  return requestClient.post<UrlCheckOutput>('/chat/security/check-url', data);
+  return requestClient.post<UrlCheckOutput>(
+    '/chat/admin/url-security-rule/check-url',
+    data,
+  );
 }
 
 /**
- * 分页查询用户举报记录 (GET /api/chat/security/reports)
+ * 分页查询用户举报记录 (GET /api/chat/admin/security-report)
  */
 export async function getSecurityReportsApi(
   params: SecurityReportGetListInput,
 ) {
   return requestClient.get<PagedResultDto<SecurityReportDto>>(
-    '/chat/security/reports',
+    '/chat/admin/security-report',
     { params },
   );
 }
 
 /**
- * 审核处理用户举报 (POST /api/chat/security/report/:id/handle)
+ * 审核处理用户举报 (POST /api/chat/admin/security-report/:id/handle)
  */
 export async function handleSecurityReportApi(
   id: string,
   data: SecurityReportHandleInput,
 ) {
   return requestClient.post<SecurityReportDto>(
-    `/chat/security/report/${id}/handle`,
+    `/chat/admin/security-report/${id}/handle`,
     data,
   );
 }

@@ -79,7 +79,7 @@ export interface ChatObjectTypeUpdateInput {
   name: string;
 }
 
-// ==================== 分类 API ====================
+// ==================== 分类 API (ChatAdmin) ====================
 
 /**
  * 分页获取分类列表
@@ -88,7 +88,7 @@ export async function getCategoriesApi(
   params?: PagedAndSortedResultRequestDto,
 ) {
   return requestClient.get<PagedResultDto<ChatObjectCategoryDto>>(
-    '/chat/chat-object-category',
+    '/chat/admin/chat-object-category',
     { params },
   );
 }
@@ -98,7 +98,7 @@ export async function getCategoriesApi(
  */
 export async function getCategoryTreeApi() {
   const res = await requestClient.get<PagedResultDto<ChatObjectCategoryDto>>(
-    '/chat/chat-object-category',
+    '/chat/admin/chat-object-category',
     {
       params: {
         maxResultCount: 1000,
@@ -114,7 +114,7 @@ export async function getCategoryTreeApi() {
  */
 export async function getCategoryDetailApi(id: string) {
   return requestClient.get<ChatObjectCategoryDto>(
-    `/chat/chat-object-category/${id}`,
+    `/chat/admin/chat-object-category/${id}`,
   );
 }
 
@@ -123,7 +123,7 @@ export async function getCategoryDetailApi(id: string) {
  */
 export async function createCategoryApi(data: ChatObjectCategoryCreateInput) {
   return requestClient.post<ChatObjectCategoryDto>(
-    '/chat/chat-object-category',
+    '/chat/admin/chat-object-category',
     data,
   );
 }
@@ -135,8 +135,8 @@ export async function updateCategoryApi(
   id: string,
   data: ChatObjectCategoryUpdateInput,
 ) {
-  return requestClient.post<ChatObjectCategoryDto>(
-    `/chat/chat-object-category/${id}/update`,
+  return requestClient.put<ChatObjectCategoryDto>(
+    `/chat/admin/chat-object-category/${id}`,
     data,
   );
 }
@@ -145,10 +145,10 @@ export async function updateCategoryApi(
  * 删除分类
  */
 export async function deleteCategoryApi(id: string) {
-  return requestClient.post(`/chat/chat-object-category/${id}/delete`);
+  return requestClient.delete(`/chat/admin/chat-object-category/${id}`);
 }
 
-// ==================== 类型 API ====================
+// ==================== 类型 API (ChatAdmin) ====================
 
 /**
  * 分页获取聊天对象类型列表
@@ -157,7 +157,7 @@ export async function getChatObjectTypesApi(
   params?: PagedAndSortedResultRequestDto,
 ) {
   return requestClient.get<PagedResultDto<ChatObjectTypeDto>>(
-    '/chat/chat-object-type',
+    '/chat/admin/chat-object-type',
     { params },
   );
 }
@@ -166,14 +166,19 @@ export async function getChatObjectTypesApi(
  * 获取聊天对象类型详情
  */
 export async function getChatObjectTypeDetailApi(id: string) {
-  return requestClient.get<ChatObjectTypeDto>(`/chat/chat-object-type/${id}`);
+  return requestClient.get<ChatObjectTypeDto>(
+    `/chat/admin/chat-object-type/${id}`,
+  );
 }
 
 /**
  * 创建聊天对象类型
  */
 export async function createChatObjectTypeApi(data: ChatObjectTypeCreateInput) {
-  return requestClient.post<ChatObjectTypeDto>('/chat/chat-object-type', data);
+  return requestClient.post<ChatObjectTypeDto>(
+    '/chat/admin/chat-object-type',
+    data,
+  );
 }
 
 /**
@@ -183,8 +188,8 @@ export async function updateChatObjectTypeApi(
   id: string,
   data: ChatObjectTypeUpdateInput,
 ) {
-  return requestClient.post<ChatObjectTypeDto>(
-    `/chat/chat-object-type/${id}/update`,
+  return requestClient.put<ChatObjectTypeDto>(
+    `/chat/admin/chat-object-type/${id}`,
     data,
   );
 }
@@ -193,5 +198,5 @@ export async function updateChatObjectTypeApi(
  * 删除聊天对象类型
  */
 export async function deleteChatObjectTypeApi(id: string) {
-  return requestClient.post(`/chat/chat-object-type/${id}/delete`);
+  return requestClient.delete(`/chat/admin/chat-object-type/${id}`);
 }

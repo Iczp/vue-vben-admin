@@ -12,14 +12,18 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         component: () => import('#/views/chat/article-message/index.vue'),
-        meta: { icon: 'lucide:newspaper', title: '文章消息' },
+        meta: {
+          authority: ['ChatAdmin.ArticleMessages.Manage'],
+          icon: 'lucide:newspaper',
+          title: '文章消息',
+        },
         name: 'ChatArticleMessage',
         path: 'article-message',
       },
       {
         component: () => import('#/views/chat/message-template/index.vue'),
         meta: {
-          authority: ['ChatPermissions.MessageTemplatePermission'],
+          authority: ['ChatAdmin.MessageTemplates'],
           icon: 'lucide:layout-template',
           title: '自定义模板消息',
         },
@@ -29,6 +33,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/chat-object/index.vue'),
         meta: {
+          authority: ['ChatAdmin.ChatObjects'],
           icon: 'lucide:contact-2',
           title: '聊天对象管理',
         },
@@ -38,6 +43,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/category-type/index.vue'),
         meta: {
+          authority: ['ChatAdmin.ChatObjectCategories'],
           icon: 'lucide:folder-tree',
           title: '分类与类型',
         },
@@ -47,6 +53,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/dictionary/index.vue'),
         meta: {
+          authority: ['ChatAdmin.EntryNames'],
           icon: 'lucide:book-open-check',
           title: '数据字典管理',
         },
@@ -56,6 +63,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/online/index.vue'),
         meta: {
+          authority: ['ChatAdmin.Online'],
           icon: 'lucide:activity',
           title: '在线连接池',
         },
@@ -65,6 +73,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/invitation-code/index.vue'),
         meta: {
+          authority: ['ChatAdmin.InvitationCodes'],
           icon: 'lucide:ticket',
           title: '邀请码管理',
         },
@@ -74,6 +83,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/message-report/index.vue'),
         meta: {
+          authority: ['ChatAdmin.MessageReports'],
           icon: 'lucide:bar-chart-3',
           title: '消息报表统计',
         },
@@ -83,6 +93,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/blob/index.vue'),
         meta: {
+          authority: ['ChatAdmin.Blobs'],
           icon: 'lucide:database',
           title: '对象存储 (Blob)',
         },
@@ -92,6 +103,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/scan-code/index.vue'),
         meta: {
+          authority: ['ChatAdmin.ScanCodes'],
           icon: 'lucide:qr-code',
           title: '扫码服务流水',
         },
@@ -101,6 +113,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/ai-run/index.vue'),
         meta: {
+          authority: ['ChatAdmin.AiRuns'],
           icon: 'lucide:bot',
           title: 'AI任务执行记录',
         },
@@ -110,6 +123,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/url-security-rule/index.vue'),
         meta: {
+          authority: ['ChatAdmin.UrlSecurityRules'],
           icon: 'lucide:shield-alert',
           title: 'URL 风控规则',
         },
@@ -119,6 +133,7 @@ const routes: RouteRecordRaw[] = [
       {
         component: () => import('#/views/chat/security-report/index.vue'),
         meta: {
+          authority: ['ChatAdmin.SecurityReports'],
           icon: 'lucide:flag',
           title: '违规举报工单',
         },

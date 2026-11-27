@@ -6,7 +6,7 @@ import { requestClient } from '#/api/request';
 
 import { parseArticleResponse } from './article-message';
 
-export const templatePermission = 'ChatPermissions.MessageTemplatePermission';
+export const templatePermission = 'ChatAdmin.MessageTemplates';
 export interface MessageTemplateDefinitionDto {
   concurrencyStamp: string;
   creationTime: string;
@@ -63,13 +63,16 @@ export interface TemplatePreviewOutput {
   isValid: boolean;
   snapshot?: unknown;
 }
-const root = '/chat/message-template';
+const root = '/chat/admin/message-template';
 const responseOptions = { transformResponse: [parseArticleResponse] };
 export function getTemplateSenderAccountsApi(params: GetChatObjectInput) {
-  return requestClient.get<PagedResultDto<ChatObjectDto>>('/chat/chat-object', {
-    ...responseOptions,
-    params,
-  });
+  return requestClient.get<PagedResultDto<ChatObjectDto>>(
+    '/chat/admin/chat-object',
+    {
+      ...responseOptions,
+      params,
+    },
+  );
 }
 
 export function getMessageTemplateListApi(params: MessageTemplateGetListInput) {
@@ -130,7 +133,8 @@ export function getMessageTemplateRevisionsApi(id: string, skipCount = 0) {
 }
 export function getMessageTemplateRevisionApi(id: string, version: number) {
   return requestClient.get<MessageTemplateRevisionDetailDto>(
-    `${root}/${id}/revisions/${version}`,
+    `${root}/${id}/revision`,
+    { params: { version } },
   );
 }
 export function previewMessageTemplateApi(input: {
@@ -149,7 +153,7 @@ export function sendTemplateContentMessageApi(
   input: SendTemplateMessageInput,
 ) {
   return requestClient.post<{ id: string }>(
-    `/chat/message-sender/send-template-content-message/${sessionUnitId}`,
+    `/chat/admin/message/send-template-content-message/${sessionUnitId}`,
     input,
     responseOptions,
   );

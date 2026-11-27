@@ -5,7 +5,7 @@ import type { PagedResultDto } from '#/api/abp/types';
 import { requestClient } from '#/api/request';
 
 export const articleManagementPermission =
-  'ChatPermissions.MessageSenderPermission.ManageArticle';
+  'ChatAdmin.ArticleMessages.Manage';
 export interface ArticleMessageItem {
   author: string;
   coverImageUrl: string;
@@ -88,9 +88,13 @@ export function findArticleSenderSessionApi(
   ownerId: number | string,
   destinactionId: number | string,
 ) {
-  return requestClient.get<string>('/chat/session-unit/find-id', {
-    params: { ownerId, destinactionId },
-  });
+  return requestClient.post<string>(
+    '/chat/admin/session-unit/find-id',
+    undefined,
+    {
+      params: { ownerId, destinactionId },
+    },
+  );
 }
 
 export function getArticleSenderSessionsApi(
@@ -99,7 +103,7 @@ export function getArticleSenderSessionsApi(
   keyword = '',
 ) {
   return requestClient.get<PagedResultDto<ArticleSenderSession>>(
-    '/chat/session-unit',
+    '/chat/admin/session-unit',
     {
       ...responseOptions,
       params: {
@@ -117,7 +121,7 @@ export function sendArticleMessageApi(
   input: ArticleMessageInput,
 ) {
   return requestClient.post<ArticleChatMessage>(
-    `/chat/message-sender/send-article-content-message/${sessionUnitId}`,
+    `/chat/admin/message/send-article-content-message/${sessionUnitId}`,
     input,
     responseOptions,
   );
@@ -126,14 +130,17 @@ export function getArticleChatHistoryApi(
   sessionUnitId: string,
   maxMessageId?: number | string,
 ) {
-  return requestClient.get<ArticleHistoryResult>('/chat/message/history', {
-    ...responseOptions,
-    params: { maxMessageId, maxResultCount: 20, sessionUnitId },
-  });
+  return requestClient.get<ArticleHistoryResult>(
+    '/chat/admin/message/history',
+    {
+      ...responseOptions,
+      params: { maxMessageId, maxResultCount: 20, sessionUnitId },
+    },
+  );
 }
 export function rollbackArticleMessageApi(messageId: number | string) {
   return requestClient.post<Record<string, number | string>>(
-    `/chat/message-sender/rollback/${messageId}`,
+    `/chat/admin/message/rollback/${messageId}`,
     undefined,
     responseOptions,
   );
@@ -145,7 +152,7 @@ export function createArticleScheduleApi(input: {
   senderSessionUnitId: string;
 }) {
   return requestClient.post<ArticleSchedule>(
-    '/chat/article-message-schedule',
+    '/chat/admin/article-message-schedule',
     input,
     responseOptions,
   );
@@ -155,7 +162,7 @@ export function getArticleSchedulesApi(
   skipCount = 0,
 ) {
   return requestClient.get<PagedResultDto<ArticleSchedule>>(
-    '/chat/article-message-schedule',
+    '/chat/admin/article-message-schedule',
     {
       ...responseOptions,
       params: { maxResultCount: 20, senderSessionUnitId, skipCount },
@@ -168,7 +175,7 @@ export function changeArticleScheduleApi(
   scheduledAt?: string,
 ) {
   return requestClient.post<ArticleSchedule>(
-    `/chat/article-message-schedule/${id}/${action}`,
+    `/chat/admin/article-message-schedule/${id}/${action}`,
     scheduledAt ? { scheduledAt } : undefined,
     responseOptions,
   );

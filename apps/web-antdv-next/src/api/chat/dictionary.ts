@@ -46,7 +46,7 @@ export interface EntryNameCreateInput {
   defaultValue?: string;
   description?: string;
   help?: string;
-  inputType?: EntryInputTypeEnums;
+  inputType?: EntryInputTypeEnums | string;
   isChoice?: boolean;
   isRequired?: boolean;
   name: string;
@@ -60,7 +60,7 @@ export interface EntryNameUpdateInput {
   defaultValue?: string;
   description?: string;
   help?: string;
-  inputType?: EntryInputTypeEnums;
+  inputType?: EntryInputTypeEnums | string;
   isChoice?: boolean;
   isRequired?: boolean;
   name: string;
@@ -102,7 +102,7 @@ export interface GetEntryValueInput extends PagedAndSortedResultRequestDto {
   keyword?: string;
 }
 
-// ==================== EntryName 字典键 API ====================
+// ==================== EntryName 字典键 API (ChatAdmin) ====================
 
 /**
  * 分页获取字典键列表
@@ -110,9 +110,12 @@ export interface GetEntryValueInput extends PagedAndSortedResultRequestDto {
 export async function getEntryNamesApi(
   params?: PagedAndSortedResultRequestDto,
 ) {
-  return requestClient.get<PagedResultDto<EntryNameDto>>('/chat/entry-name', {
-    params,
-  });
+  return requestClient.get<PagedResultDto<EntryNameDto>>(
+    '/chat/admin/entry-name',
+    {
+      params,
+    },
+  );
 }
 
 /**
@@ -120,7 +123,7 @@ export async function getEntryNamesApi(
  */
 export async function getEntryNameTreeApi() {
   const res = await requestClient.get<PagedResultDto<EntryNameDto>>(
-    '/chat/entry-name',
+    '/chat/admin/entry-name',
     {
       params: {
         maxResultCount: 1000,
@@ -135,14 +138,18 @@ export async function getEntryNameTreeApi() {
  * 获取字典键详情
  */
 export async function getEntryNameDetailApi(id: string) {
-  return requestClient.get<EntryNameDto>(`/chat/entry-name/${id}`);
+  return requestClient.get<EntryNameDto>(`/chat/admin/entry-name/${id}`);
 }
 
 /**
  * 创建字典键
  */
 export async function createEntryNameApi(data: EntryNameCreateInput) {
-  return requestClient.post<EntryNameDto>('/chat/entry-name', data);
+  return requestClient.post<EntryNameDto>('/chat/admin/entry-name', {
+    ...data,
+    inputType:
+      data.inputType === undefined ? undefined : String(data.inputType),
+  });
 }
 
 /**
@@ -152,42 +159,46 @@ export async function updateEntryNameApi(
   id: string,
   data: EntryNameUpdateInput,
 ) {
-  return requestClient.post<EntryNameDto>(
-    `/chat/entry-name/${id}/update`,
-    data,
-  );
+  return requestClient.put<EntryNameDto>(`/chat/admin/entry-name/${id}`, {
+    ...data,
+    inputType:
+      data.inputType === undefined ? undefined : String(data.inputType),
+  });
 }
 
 /**
  * 删除字典键
  */
 export async function deleteEntryNameApi(id: string) {
-  return requestClient.post(`/chat/entry-name/${id}/delete`);
+  return requestClient.delete(`/chat/admin/entry-name/${id}`);
 }
 
-// ==================== EntryValue 字典项 API ====================
+// ==================== EntryValue 字典项 API (ChatAdmin) ====================
 
 /**
  * 分页获取字典项列表
  */
 export async function getEntryValuesApi(params?: GetEntryValueInput) {
-  return requestClient.get<PagedResultDto<EntryValueDto>>('/chat/entry-value', {
-    params,
-  });
+  return requestClient.get<PagedResultDto<EntryValueDto>>(
+    '/chat/admin/entry-value',
+    {
+      params,
+    },
+  );
 }
 
 /**
  * 获取字典项详情
  */
 export async function getEntryValueDetailApi(id: string) {
-  return requestClient.get<EntryValueDto>(`/chat/entry-value/${id}`);
+  return requestClient.get<EntryValueDto>(`/chat/admin/entry-value/${id}`);
 }
 
 /**
  * 创建字典项
  */
 export async function createEntryValueApi(data: EntryValueCreateInput) {
-  return requestClient.post<EntryValueDto>('/chat/entry-value', data);
+  return requestClient.post<EntryValueDto>('/chat/admin/entry-value', data);
 }
 
 /**
@@ -197,8 +208,8 @@ export async function updateEntryValueApi(
   id: string,
   data: EntryValueUpdateInput,
 ) {
-  return requestClient.post<EntryValueDto>(
-    `/chat/entry-value/${id}/update`,
+  return requestClient.put<EntryValueDto>(
+    `/chat/admin/entry-value/${id}`,
     data,
   );
 }
@@ -207,5 +218,5 @@ export async function updateEntryValueApi(
  * 删除字典项
  */
 export async function deleteEntryValueApi(id: string) {
-  return requestClient.post(`/chat/entry-value/${id}/delete`);
+  return requestClient.delete(`/chat/admin/entry-value/${id}`);
 }

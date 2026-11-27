@@ -52,24 +52,27 @@ export interface GetScanCodeInput extends PagedAndSortedResultRequestDto {
 }
 
 /**
- * 分页获取扫码日志记录
+ * 分页获取扫码日志记录 (ChatAdmin)
  */
 export async function getScanCodeListApi(params?: GetScanCodeInput) {
-  return requestClient.get<PagedResultDto<ScanCodeDto>>('/chat/scan-code', {
-    params,
-  });
+  return requestClient.get<PagedResultDto<ScanCodeDto>>(
+    '/chat/admin/scan-code',
+    {
+      params,
+    },
+  );
 }
 
 /**
- * 获取扫码记录详情
+ * 获取扫码记录详情 (ChatAdmin)
  */
 export async function getScanCodeDetailApi(id: string) {
-  return requestClient.get<ScanCodeDetailDto>(`/chat/scan-code/${id}`);
+  return requestClient.get<ScanCodeDetailDto>(`/chat/admin/scan-code/${id}`);
 }
 
 /**
- * 模拟/触发扫码动作测试
+ * 模拟/触发扫码动作测试 (ChatAdmin)
  */
 export async function simulateScanCodeApi(data: ScanCodeInput) {
-  return requestClient.post<any>('/chat/scan-code/scan', data);
+  return requestClient.post<any>('/chat/admin/scan-code/scan', data);
 }

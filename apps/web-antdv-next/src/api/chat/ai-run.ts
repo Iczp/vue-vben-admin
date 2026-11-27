@@ -79,96 +79,81 @@ export interface AiRunUpdateInput {
 }
 
 /**
- * 获取 AI 任务分页列表 (GET /api/chat/ai-run)
+ * 获取 AI 任务分页列表 (GET /api/chat/admin/ai-run)
  */
 export async function getAiRunListApi(params?: AiRunGetListInput) {
-  return requestClient.get<PagedResultDto<AiRunDto>>('/chat/ai-run', {
+  return requestClient.get<PagedResultDto<AiRunDto>>('/chat/admin/ai-run', {
     params,
   });
 }
 
 /**
- * 获取 AI 任务详情 (GET /api/chat/ai-run/{id})
+ * 获取 AI 任务详情 (GET /api/chat/admin/ai-run/{id})
  */
 export async function getAiRunDetailApi(id: string) {
-  return requestClient.get<AiRunDetailDto>(`/chat/ai-run/${id}`);
+  return requestClient.get<AiRunDetailDto>(`/chat/admin/ai-run/${id}`);
 }
 
 /**
- * 根据源消息 Id 获取 AI 执行记录 (GET /api/chat/ai-run/by-source-message-id/{sourceMessageId})
+ * 根据源消息 Id 获取 AI 执行记录 (GET /api/chat/admin/ai-run/by-source-message-id/{sourceMessageId})
  */
 export async function getAiRunBySourceMessageIdApi(
   sourceMessageId: number | string,
 ) {
   return requestClient.get<AiRunDetailDto>(
-    `/chat/ai-run/by-source-message-id/${sourceMessageId}`,
+    `/chat/admin/ai-run/by-source-message-id/${sourceMessageId}`,
   );
 }
 
 /**
- * 获取指定会话的 AI 执行记录列表 (GET /api/chat/ai-run/by-session/{sessionId})
+ * 获取指定会话的 AI 执行记录列表 (GET /api/chat/admin/ai-run/by-session/{sessionId})
  */
 export async function getAiRunListBySessionApi(
   sessionId: string,
   params?: AiRunGetListInput,
 ) {
   return requestClient.get<PagedResultDto<AiRunDto>>(
-    `/chat/ai-run/by-session/${sessionId}`,
+    `/chat/admin/ai-run/by-session/${sessionId}`,
     { params },
   );
 }
 
 /**
- * 获取多条数据 (GET /api/chat/ai-run/many)
- */
-export async function getAiRunManyApi(idList: string[]) {
-  return requestClient.get<AiRunDto[]>('/chat/ai-run/many', {
-    params: { idList },
-  });
-}
-
-/**
- * 创建 AI 执行记录 (POST /api/chat/ai-run)
+ * 创建 AI 执行记录 (POST /api/chat/admin/ai-run)
  */
 export async function createAiRunApi(data: AiRunCreateInput) {
-  return requestClient.post<AiRunDetailDto>('/chat/ai-run', data);
+  return requestClient.post<AiRunDetailDto>('/chat/admin/ai-run', data);
 }
 
 /**
- * 修改 AI 任务 (POST /api/chat/ai-run/{id}/update)
- */
-export async function updateAiRunApi(id: string, data: AiRunUpdateInput) {
-  return requestClient.post<AiRunDetailDto>(`/chat/ai-run/${id}/update`, data);
-}
-
-/**
- * 人工重试执行失败或超时的任务 (POST /api/chat/ai-run/{id}/retry)
+ * 人工重试执行失败或超时的任务 (POST /api/chat/admin/ai-run/{id}/retry)
  */
 export async function retryAiRunApi(id: string) {
-  return requestClient.post<AiRunDetailDto>(`/chat/ai-run/${id}/retry`);
+  return requestClient.post<AiRunDetailDto>(`/chat/admin/ai-run/${id}/retry`);
 }
 
 /**
- * 取消任务 (POST /api/chat/ai-run/{id}/cancel)
+ * 取消任务 (POST /api/chat/admin/ai-run/{id}/cancel)
  */
 export async function cancelAiRunApi(id: string, reason?: string) {
-  return requestClient.post<AiRunDetailDto>(`/chat/ai-run/${id}/cancel`, null, {
-    params: { reason },
-  });
+  return requestClient.post<AiRunDetailDto>(
+    `/chat/admin/ai-run/${id}/cancel`,
+    reason ? { reason } : undefined,
+  );
 }
 
 /**
- * 删除一条数据 (POST /api/chat/ai-run/{id}/delete)
+ * 删除一条数据 (DELETE /api/chat/admin/ai-run/{id})
  */
 export async function deleteAiRunApi(id: string) {
-  return requestClient.post(`/chat/ai-run/${id}/delete`);
+  return requestClient.delete(`/chat/admin/ai-run/${id}`);
 }
 
 /**
- * 批量删除数据 (POST /api/chat/ai-run/delete-many)
+ * 批量删除数据 (POST /api/chat/admin/ai-run/delete-many)
  */
 export async function deleteAiRunManyApi(idList: string[]) {
-  return requestClient.post('/chat/ai-run/delete-many', idList);
+  return requestClient.post('/chat/admin/ai-run/delete-many', idList);
 }
 
 export const deleteManyAiRunApi = deleteAiRunManyApi;

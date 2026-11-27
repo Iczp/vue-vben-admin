@@ -14,7 +14,12 @@ import {
   Select,
 } from 'antdv-next';
 
-import { AiRunStatus, createAiRunApi, updateAiRunApi } from '#/api/chat/ai-run';
+import {
+  AiRunStatus,
+  cancelAiRunApi,
+  createAiRunApi,
+  retryAiRunApi,
+} from '#/api/chat/ai-run';
 
 const emit = defineEmits<{
   (e: 'success'): void;
@@ -60,12 +65,16 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.lock();
     try {
       if (isEdit.value) {
-        await updateAiRunApi(recordId.value, {
-          maxAttempts: updateFormState.value.maxAttempts,
-          nextAttemptAt: updateFormState.value.nextAttemptAt || undefined,
-          status: updateFormState.value.status,
-        });
-        message.success('修改 AI 任务成功');
+        if (updateFormState.value.status === AiRunStatus.Cancelled) {
+          await cancelAiRunApi(recordId.value, '管理端编辑状态为取消');
+          message.success('已取消 AI 任务');
+        } else if (updateFormState.value.status === AiRunStatus.Queued) {
+          await retryAiRunApi(recordId.value);
+          message.success('已重新排队 AI 任务');
+        } else {
+          message.warning('仅支持通过管理端将任务重置为排队中或取消');
+          return;
+        }
       } else {
         if (!createFormState.value.sourceMessageId) {
           message.warning('请输入源消息 ID');

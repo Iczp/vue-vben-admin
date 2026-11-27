@@ -59,13 +59,22 @@ export interface ChatObjectDetailDto extends ChatObjectDto {
 }
 
 export interface GetChatObjectInput extends PagedAndSortedResultRequestDto {
+  appUserId?: string;
+  categoryIdList?: string[];
   categoryIds?: string[];
   chatObjectTypeId?: string;
+  code?: string;
   gender?: number;
+  includeChildCategories?: boolean;
+  isActive?: boolean;
+  isDefault?: boolean;
+  isDeveloper?: boolean;
   isEnabled?: boolean;
   isPublic?: boolean;
+  isStatic?: boolean;
   keyword?: string;
   objectType?: ChatObjectTypeEnums;
+  objectTypes?: ChatObjectTypeEnums[];
   verificationMethod?: VerificationMethodEnums;
 }
 
@@ -106,27 +115,34 @@ export interface SetVerificationMethodInput {
 }
 
 /**
- * 分页获取聊天对象列表
+ * 分页获取聊天对象列表 (ChatAdmin)
  */
 export async function getChatObjectsApi(params?: GetChatObjectInput) {
-  return requestClient.get<PagedResultDto<ChatObjectDto>>('/chat/chat-object', {
-    params,
-  });
+  const { categoryIds, ...rest } = params || {};
+  return requestClient.get<PagedResultDto<ChatObjectDto>>(
+    '/chat/admin/chat-object',
+    {
+      params: {
+        ...rest,
+        categoryIdList: rest.categoryIdList ?? categoryIds,
+      },
+    },
+  );
 }
 
 /**
- * 获取聊天对象单条数据 (GET /api/chat/chat-object/{id})
+ * 获取聊天对象单条数据 (GET /api/chat/admin/chat-object/{id})
  */
 export async function getChatObjectApi(id: number | string) {
-  return requestClient.get<ChatObjectDto>(`/chat/chat-object/${id}`);
+  return requestClient.get<ChatObjectDto>(`/chat/admin/chat-object/${id}`);
 }
 
 /**
- * 获取聊天对象详情 (GET /api/chat/chat-object/{id}/detail)
+ * 获取聊天对象详情 (GET /api/chat/admin/chat-object/{id})
  */
 export async function getChatObjectDetailApi(id: number | string) {
   return requestClient.get<ChatObjectDetailDto>(
-    `/chat/chat-object/${id}/detail`,
+    `/chat/admin/chat-object/${id}`,
   );
 }
 
@@ -147,61 +163,72 @@ export function getChatObjectAvatarUrl(
 }
 
 /**
- * 创建聊天对象
+ * 创建聊天对象 (ChatAdmin)
  */
 export async function createChatObjectApi(data: ChatObjectCreateInput) {
-  return requestClient.post<ChatObjectDto>('/chat/chat-object', data);
+  return requestClient.post<ChatObjectDto>('/chat/admin/chat-object', data);
 }
 
 /**
- * 更新聊天对象基础信息
+ * 更新聊天对象基础信息 (ChatAdmin)
  */
 export async function updateChatObjectApi(
   id: number | string,
   data: ChatObjectUpdateInput,
 ) {
-  return requestClient.post<ChatObjectDto>(
-    `/chat/chat-object/${id}/update`,
+  return requestClient.put<ChatObjectDto>(
+    `/chat/admin/chat-object/${id}`,
     data,
   );
 }
 
 /**
- * 删除聊天对象
+ * 删除聊天对象 (ChatAdmin)
  */
 export async function deleteChatObjectApi(id: number | string) {
-  return requestClient.post(`/chat/chat-object/${id}/delete`);
+  return requestClient.delete(`/chat/admin/chat-object/${id}`);
 }
 
 /**
- * 设置聊天对象验证方式
+ * 设置聊天对象验证方式 (ChatAdmin)
  */
 export async function setVerificationMethodApi(
   data: SetVerificationMethodInput,
 ) {
   return requestClient.post<ChatObjectDto>(
-    `/chat/chat-object/${data.id}/set-verification-method`,
-    null,
+    `/chat/admin/chat-object/${data.id}/set-verification-method`,
     {
-      params: {
-        verificationMethod: data.verificationMethod,
-      },
+      verificationMethod: data.verificationMethod,
     },
   );
 }
 
 /**
- * 修改聊天对象名称
+ * 设置聊天对象启用/停用状态 (ChatAdmin)
+ */
+export async function setChatObjectIsEnabledApi(
+  id: number | string,
+  isEnabled: boolean,
+) {
+  return requestClient.post<ChatObjectDto>(
+    `/chat/admin/chat-object/${id}/set-is-enabled`,
+    {
+      isEnabled,
+    },
+  );
+}
+
+/**
+ * 修改聊天对象名称 (ChatAdmin)
  */
 export async function updateChatObjectNameApi(params: {
   id: number | string;
   name: string;
 }) {
-  return requestClient.post(
-    `/chat/chat-object/${params.id}/update-name`,
-    null,
+  return requestClient.put<ChatObjectDto>(
+    `/chat/admin/chat-object/${params.id}`,
     {
-      params: { name: params.name },
+      name: params.name,
     },
   );
 }

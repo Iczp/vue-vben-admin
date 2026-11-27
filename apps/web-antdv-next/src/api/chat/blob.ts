@@ -41,38 +41,40 @@ export interface GetBlobInput extends PagedAndSortedResultRequestDto {
 }
 
 /**
- * 分页获取二进制对象存储列表
+ * 分页获取二进制对象存储列表 (ChatAdmin)
  */
 export async function getBlobListApi(params?: GetBlobInput) {
-  return requestClient.get<PagedResultDto<BlobDto>>('/chat/blob', { params });
+  return requestClient.get<PagedResultDto<BlobDto>>('/chat/admin/blob', {
+    params,
+  });
 }
 
 /**
- * 获取二进制对象详情
+ * 获取二进制对象详情 (ChatAdmin)
  */
 export async function getBlobDetailApi(id: string) {
-  return requestClient.get<BlobDetailDto>(`/chat/blob/${id}`);
+  return requestClient.get<BlobDetailDto>(`/chat/admin/blob/${id}`);
 }
 
 /**
- * 获取多个指定 ID 的二进制对象
+ * 获取多个指定 ID 的二进制对象 (ChatAdmin)
  */
 export async function getBlobManyApi(idList?: string[]) {
-  return requestClient.get<BlobDto[]>('/chat/blob/many', {
+  return requestClient.get<BlobDto[]>('/chat/admin/blob/many', {
     params: { idList },
   });
 }
 
 /**
- * 更新二进制对象元数据
+ * 更新二进制对象元数据 (ChatAdmin)
  */
 export async function updateBlobApi(id: string, data: BlobUpdateInput) {
-  return requestClient.post<BlobDto>(`/chat/blob/${id}/update`, data);
+  return requestClient.put<BlobDto>(`/chat/admin/blob/${id}`, data);
 }
 
 /**
- * 删除二进制对象
+ * 删除二进制对象 (ChatAdmin)
  */
 export async function deleteBlobApi(id: string) {
-  return requestClient.post<void>(`/chat/blob/${id}/delete`);
+  return requestClient.delete<void>(`/chat/admin/blob/${id}`);
 }

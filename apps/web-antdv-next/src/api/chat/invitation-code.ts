@@ -6,70 +6,97 @@ import type {
 import { requestClient } from '#/api/request';
 
 /**
- * 邀请码 DTO
+ * 邀请码 DTO (ChatAdmin)
  */
 export interface InvitationCodeDto {
+  code?: string;
   creationTime?: string;
   creatorId?: string;
+  expirationTime?: string;
   extraProperties?: Record<string, any>;
   id: string;
+  isEnabled?: boolean;
+  maskedCode?: string;
   ownerId?: string;
   title: string;
 }
 
 export interface InvitationCodeCreateInput {
-  ownerId?: string;
+  expirationTime?: string;
+  ownerId?: number | string;
   title: string;
 }
 
 export interface InvitationCodeUpdateInput {
+  expirationTime?: string;
+  isEnabled?: boolean;
   title: string;
 }
 
 export interface GetInvitationCodeInput extends PagedAndSortedResultRequestDto {
+  isEnabled?: boolean;
   keyword?: string;
+  ownerId?: number | string;
 }
 
 /**
- * 分页获取邀请码列表
+ * 分页获取邀请码列表 (ChatAdmin)
  */
 export async function getInvitationCodesApi(params?: GetInvitationCodeInput) {
   return requestClient.get<PagedResultDto<InvitationCodeDto>>(
-    '/chat/invitation-code',
+    '/chat/admin/invitation-code',
     { params },
   );
 }
 
 /**
- * 获取邀请码详情
+ * 获取邀请码详情 (ChatAdmin)
  */
 export async function getInvitationCodeApi(id: string) {
-  return requestClient.get<InvitationCodeDto>(`/chat/invitation-code/${id}`);
+  return requestClient.get<InvitationCodeDto>(
+    `/chat/admin/invitation-code/${id}`,
+  );
 }
 
 /**
- * 创建邀请码
+ * 创建邀请码 (ChatAdmin)
  */
 export async function createInvitationCodeApi(data: InvitationCodeCreateInput) {
-  return requestClient.post<InvitationCodeDto>('/chat/invitation-code', data);
-}
-
-/**
- * 更新邀请码
- */
-export async function updateInvitationCodeApi(
-  id: string,
-  data: InvitationCodeUpdateInput,
-) {
   return requestClient.post<InvitationCodeDto>(
-    `/chat/invitation-code/${id}/update`,
+    '/chat/admin/invitation-code',
     data,
   );
 }
 
 /**
- * 删除邀请码
+ * 更新邀请码 (ChatAdmin)
+ */
+export async function updateInvitationCodeApi(
+  id: string,
+  data: InvitationCodeUpdateInput,
+) {
+  return requestClient.put<InvitationCodeDto>(
+    `/chat/admin/invitation-code/${id}`,
+    data,
+  );
+}
+
+/**
+ * 启停邀请码 (ChatAdmin)
+ */
+export async function setInvitationCodeIsEnabledApi(
+  id: string,
+  isEnabled: boolean,
+) {
+  return requestClient.post<InvitationCodeDto>(
+    `/chat/admin/invitation-code/${id}/set-is-enabled`,
+    { isEnabled },
+  );
+}
+
+/**
+ * 删除邀请码 (ChatAdmin)
  */
 export async function deleteInvitationCodeApi(id: string) {
-  return requestClient.post<void>(`/chat/invitation-code/${id}/delete`);
+  return requestClient.delete<void>(`/chat/admin/invitation-code/${id}`);
 }
