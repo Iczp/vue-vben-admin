@@ -37,14 +37,18 @@ describe('article draft', () => {
       articleClientMessageId('12345678-90ab-4cde-8f12-3456789abcdf'),
     ).not.toBe(id);
   });
-  it('uses the existing GET find-id API and its exact query parameter spelling', async () => {
-    requestGet.mockResolvedValue('session-guid');
+  it('uses the ChatAdmin POST find-id API and its exact query parameter spelling', async () => {
+    requestPost.mockResolvedValue('session-guid');
     expect(await findArticleSenderSessionApi('5874', '5874')).toBe(
       'session-guid',
     );
-    expect(requestGet).toHaveBeenCalledWith('/chat/session-unit/find-id', {
-      params: { ownerId: '5874', destinactionId: '5874' },
-    });
+    expect(requestPost).toHaveBeenCalledWith(
+      '/chat/admin/session-unit/find-id',
+      undefined,
+      {
+        params: { ownerId: '5874', destinactionId: '5874' },
+      },
+    );
   });
   it('directly posts article content to the session unit returned by find-id', async () => {
     const sessionUnitId = 'a413b11e-b942-47d2-a78d-a4d1ba71bd29';
@@ -60,14 +64,14 @@ describe('article draft', () => {
         ],
       },
     };
-    requestGet.mockResolvedValue(sessionUnitId);
+    requestPost.mockResolvedValueOnce(sessionUnitId);
     const selectedSessionUnitId = await findArticleSenderSessionApi(
       '5874',
       '5874',
     );
     await sendArticleMessageApi(selectedSessionUnitId, input);
     expect(requestPost).toHaveBeenCalledWith(
-      `/chat/message-sender/send-article-content-message/${sessionUnitId}`,
+      `/chat/admin/message/send-article-content-message/${sessionUnitId}`,
       input,
       expect.anything(),
     );

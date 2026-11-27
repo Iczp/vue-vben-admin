@@ -37,8 +37,7 @@ vi.mock('#/api/chat/chat-object', () => ({
   getChatObjectsApi: api.accounts,
 }));
 vi.mock('#/api/chat/article-message', () => ({
-  articleManagementPermission:
-    'ChatPermissions.MessageSenderPermission.ManageArticle',
+  articleManagementPermission: 'ChatAdmin.ArticleMessages.Manage',
   getArticleSenderSessionsApi: api.sessions,
   findArticleSenderSessionApi: api.findSession,
   sendArticleMessageApi: api.send,

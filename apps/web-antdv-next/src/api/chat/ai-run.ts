@@ -150,10 +150,12 @@ export async function deleteAiRunApi(id: string) {
 }
 
 /**
- * 批量删除数据 (POST /api/chat/admin/ai-run/delete-many)
+ * 批量删除数据 (DELETE /api/chat/admin/ai-run/many)
  */
 export async function deleteAiRunManyApi(idList: string[]) {
-  return requestClient.post('/chat/admin/ai-run/delete-many', idList);
+  return requestClient.delete('/chat/admin/ai-run/many', {
+    params: { idList },
+  });
 }
 
 export const deleteManyAiRunApi = deleteAiRunManyApi;

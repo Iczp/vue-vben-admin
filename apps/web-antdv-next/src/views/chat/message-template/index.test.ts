@@ -28,7 +28,7 @@ vi.mock('#/api/chat/article-message', () => ({
   getArticleSenderSessionsApi: vi.fn(),
 }));
 vi.mock('#/api/chat/message-template', () => ({
-  templatePermission: 'ChatPermissions.MessageTemplatePermission',
+  templatePermission: 'ChatAdmin.MessageTemplates',
   getMessageTemplateListApi: api.list,
   getMessageTemplateApi: api.detail,
   getTemplateSenderAccountsApi: api.accounts,

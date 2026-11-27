@@ -20,6 +20,7 @@ const calls = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn() }));
 vi.mock('#/api/request', () => ({ requestClient: calls }));
 import {
   createMessageTemplateApi,
+  getMessageTemplateRevisionApi,
   getMessageTemplateRevisionsApi,
   publishMessageTemplateApi,
   sendTemplateContentMessageApi,
@@ -97,22 +98,22 @@ describe('发送意图与合同', () => {
     };
     createMessageTemplateApi(input);
     expect(calls.post).toHaveBeenCalledWith(
-      '/chat/message-template',
+      '/chat/admin/message-template',
       input,
       expect.any(Object),
     );
     const update = { ...input, concurrencyStamp: 'stamp' };
     updateMessageTemplateApi('id', update);
     expect(calls.put).toHaveBeenCalledWith(
-      '/chat/message-template/id',
+      '/chat/admin/message-template/id',
       update,
       expect.any(Object),
     );
   });
-  it('发布启停和版本分页命中显式Controller路由', () => {
+  it('发布启停和版本分页命中ChatAdmin自动路由', () => {
     publishMessageTemplateApi('id', { concurrencyStamp: 'stamp' });
     expect(calls.post).toHaveBeenCalledWith(
-      '/chat/message-template/id/publish',
+      '/chat/admin/message-template/id/publish',
       { concurrencyStamp: 'stamp' },
     );
     setMessageTemplateEnabledApi('id', {
@@ -120,14 +121,19 @@ describe('发送意图与合同', () => {
       isEnabled: false,
     });
     expect(calls.post).toHaveBeenCalledWith(
-      '/chat/message-template/id/set-enabled',
+      '/chat/admin/message-template/id/set-enabled',
       { concurrencyStamp: 'stamp', isEnabled: false },
       expect.any(Object),
     );
     getMessageTemplateRevisionsApi('id', 20);
     expect(calls.get).toHaveBeenCalledWith(
-      '/chat/message-template/id/revisions',
+      '/chat/admin/message-template/id/revisions',
       { params: { maxResultCount: 20, skipCount: 20 } },
+    );
+    getMessageTemplateRevisionApi('id', 2);
+    expect(calls.get).toHaveBeenCalledWith(
+      '/chat/admin/message-template/id/revision',
+      { params: { version: 2 } },
     );
   });
   it('发送必须使用MessageInput.content包装，禁止旧ignoreVersion', () => {
@@ -136,7 +142,7 @@ describe('发送意图与合同', () => {
     });
     sendTemplateContentMessageApi('session', input);
     expect(calls.post).toHaveBeenCalledWith(
-      '/chat/message-sender/send-template-content-message/session',
+      '/chat/admin/message/send-template-content-message/session',
       expect.objectContaining({
         content: {
           templateId: 'template',
