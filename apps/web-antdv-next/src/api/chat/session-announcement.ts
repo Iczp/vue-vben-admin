@@ -47,3 +47,10 @@ export function getSessionAnnouncementDetailApi(id: string) {
     `/chat/admin/session-announcement/${id}`,
   );
 }
+
+export function setSessionAnnouncementPinnedApi(id: string, isPinned: boolean) {
+  return requestClient.post<SessionAnnouncementAdminDto>(
+    `/chat/admin/session-announcement/${id}/set-pinned`,
+    { isPinned },
+  );
+}

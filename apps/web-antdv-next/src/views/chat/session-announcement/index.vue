@@ -3,6 +3,7 @@ import type { SessionAnnouncementAdminDto } from '#/api/chat/session-announcemen
 
 import { onMounted, ref } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 
 import {
@@ -22,9 +23,11 @@ import {
 import {
   getSessionAnnouncementDetailApi,
   getSessionAnnouncementListApi,
+  setSessionAnnouncementPinnedApi,
 } from '#/api/chat/session-announcement';
 import { getRequestErrorMessage } from '#/utils/request-error';
 
+const { hasAccessByCodes } = useAccess();
 const loading = ref(false);
 const keyword = ref('');
 const isPinned = ref<string | undefined>(undefined);
@@ -69,6 +72,16 @@ async function openDetail(record: SessionAnnouncementAdminDto) {
   try {
     detail.value = await getSessionAnnouncementDetailApi(record.id);
     detailOpen.value = true;
+  } catch (err) {
+    message.error(getRequestErrorMessage(err).message);
+  }
+}
+
+async function togglePinned(record: SessionAnnouncementAdminDto) {
+  try {
+    await setSessionAnnouncementPinnedApi(record.id, !record.isPinned);
+    message.success(record.isPinned ? '已取消置顶' : '已置顶公告');
+    await loadList();
   } catch (err) {
     message.error(getRequestErrorMessage(err).message);
   }
@@ -145,9 +158,21 @@ onMounted(() => {
             {{ record.readCount }} / {{ record.confirmedCount }}
           </template>
           <template v-else-if="column.key === 'action'">
-            <Button size="small" type="link" @click="openDetail(record)">
-              详情
-            </Button>
+            <Space>
+              <Button size="small" type="link" @click="openDetail(record)">
+                详情
+              </Button>
+              <Button
+                v-if="
+                  hasAccessByCodes(['ChatAdmin.SessionAnnouncements.Update'])
+                "
+                size="small"
+                type="link"
+                @click="togglePinned(record)"
+              >
+                {{ record.isPinned ? '取消置顶' : '置顶' }}
+              </Button>
+            </Space>
           </template>
         </template>
       </Table>

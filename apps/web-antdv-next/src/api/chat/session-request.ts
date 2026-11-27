@@ -44,3 +44,13 @@ export function getSessionRequestDetailApi(id: string) {
     `/chat/admin/session-request/${id}`,
   );
 }
+
+export function handleSessionRequestApi(
+  id: string,
+  input: { handleMessage?: string; isAgreed: boolean },
+) {
+  return requestClient.post<SessionRequestAdminDto>(
+    `/chat/admin/session-request/${id}/handle`,
+    input,
+  );
+}

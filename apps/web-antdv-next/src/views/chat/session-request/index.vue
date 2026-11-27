@@ -3,6 +3,7 @@ import type { SessionRequestAdminDto } from '#/api/chat/session-request';
 
 import { onMounted, ref } from 'vue';
 
+import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 
 import {
@@ -13,6 +14,7 @@ import {
   Drawer,
   Input,
   message,
+  Modal,
   Select,
   Space,
   Table,
@@ -22,9 +24,11 @@ import {
 import {
   getSessionRequestDetailApi,
   getSessionRequestListApi,
+  handleSessionRequestApi,
 } from '#/api/chat/session-request';
 import { getRequestErrorMessage } from '#/utils/request-error';
 
+const { hasAccessByCodes } = useAccess();
 const loading = ref(false);
 const keyword = ref('');
 const isHandled = ref<string | undefined>(undefined);
@@ -70,6 +74,21 @@ async function openDetail(record: SessionRequestAdminDto) {
   } catch (err) {
     message.error(getRequestErrorMessage(err).message);
   }
+}
+
+function confirmHandle(record: SessionRequestAdminDto, isAgreed: boolean) {
+  Modal.confirm({
+    content: `确定${isAgreed ? '同意' : '拒绝'}来自 ${record.ownerName || record.ownerId} 的申请吗？`,
+    onOk: async () => {
+      await handleSessionRequestApi(record.id, {
+        handleMessage: isAgreed ? '管理员同意' : '管理员拒绝',
+        isAgreed,
+      });
+      message.success(isAgreed ? '已同意申请' : '已拒绝申请');
+      await loadList();
+    },
+    title: '审批确认',
+  });
 }
 
 onMounted(() => {
@@ -146,9 +165,36 @@ onMounted(() => {
             </Space>
           </template>
           <template v-else-if="column.key === 'action'">
-            <Button size="small" type="link" @click="openDetail(record)">
-              详情
-            </Button>
+            <Space>
+              <Button size="small" type="link" @click="openDetail(record)">
+                详情
+              </Button>
+              <Button
+                v-if="
+                  !record.isHandled &&
+                  !record.isExpired &&
+                  hasAccessByCodes(['ChatAdmin.SessionRequests.Handle'])
+                "
+                size="small"
+                type="link"
+                @click="confirmHandle(record, true)"
+              >
+                同意
+              </Button>
+              <Button
+                v-if="
+                  !record.isHandled &&
+                  !record.isExpired &&
+                  hasAccessByCodes(['ChatAdmin.SessionRequests.Handle'])
+                "
+                danger
+                size="small"
+                type="link"
+                @click="confirmHandle(record, false)"
+              >
+                拒绝
+              </Button>
+            </Space>
           </template>
         </template>
       </Table>

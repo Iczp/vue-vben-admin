@@ -46,6 +46,25 @@ const categoryTree = ref<any[]>([]);
 const typeOptions = ref<{ label: string; value: string }[]>([]);
 
 const isEdit = computed(() => !!currentRecord.value?.id);
+const objectTypeOptions = computed(() => {
+  const all = [
+    { label: '个人号 (Personal)', value: ChatObjectTypeEnums.Personal },
+    { label: '群聊/房间 (Room)', value: ChatObjectTypeEnums.Room },
+    { label: '官方服务号 (Official)', value: ChatObjectTypeEnums.Official },
+    { label: '订阅号 (Subscription)', value: ChatObjectTypeEnums.Subscription },
+    { label: '智能机器人 (Robot)', value: ChatObjectTypeEnums.Robot },
+    { label: '商户店长 (ShopKeeper)', value: ChatObjectTypeEnums.ShopKeeper },
+    { label: '商户店员 (ShopWaiter)', value: ChatObjectTypeEnums.ShopWaiter },
+    { label: '客户 (Customer)', value: ChatObjectTypeEnums.Customer },
+  ];
+  return isEdit.value
+    ? all
+    : all.filter(
+        (x) =>
+          x.value !== ChatObjectTypeEnums.Room &&
+          x.value !== ChatObjectTypeEnums.ShopWaiter,
+      );
+});
 const modalTitle = computed(() =>
   isEdit.value ? `编辑聊天对象 - ${currentRecord.value?.name}` : '新建聊天对象',
 );
@@ -182,31 +201,7 @@ defineExpose({ modalApi });
             v-model:value="objectType"
             :disabled="isEdit"
             class="w-full"
-            :options="[
-              {
-                label: '个人号 (Personal)',
-                value: ChatObjectTypeEnums.Personal,
-              },
-              { label: '群聊/房间 (Room)', value: ChatObjectTypeEnums.Room },
-              {
-                label: '官方服务号 (Official)',
-                value: ChatObjectTypeEnums.Official,
-              },
-              {
-                label: '订阅号 (Subscription)',
-                value: ChatObjectTypeEnums.Subscription,
-              },
-              { label: '智能机器人 (Robot)', value: ChatObjectTypeEnums.Robot },
-              {
-                label: '商户店长 (ShopKeeper)',
-                value: ChatObjectTypeEnums.ShopKeeper,
-              },
-              {
-                label: '商户店员 (ShopWaiter)',
-                value: ChatObjectTypeEnums.ShopWaiter,
-              },
-              { label: '客户 (Customer)', value: ChatObjectTypeEnums.Customer },
-            ]"
+            :options="objectTypeOptions"
           />
         </div>
         <div>

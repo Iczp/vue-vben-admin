@@ -46,3 +46,10 @@ export function setSessionIsEnabledApi(id: string, isEnabled: boolean) {
     { isEnabled },
   );
 }
+
+export function setSessionIsAllMutedApi(id: string, isAllMuted: boolean) {
+  return requestClient.post<SessionAdminDto>(
+    `/chat/admin/session/${id}/set-is-all-muted`,
+    { isAllMuted },
+  );
+}

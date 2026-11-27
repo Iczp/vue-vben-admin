@@ -23,6 +23,7 @@ import {
 import {
   getSessionDetailApi,
   getSessionListApi,
+  setSessionIsAllMutedApi,
   setSessionIsEnabledApi,
 } from '#/api/chat/session';
 import { getRequestErrorMessage } from '#/utils/request-error';
@@ -81,6 +82,16 @@ async function toggleEnabled(record: SessionAdminDto) {
   try {
     await setSessionIsEnabledApi(record.id, !record.isEnabled);
     message.success(record.isEnabled ? '会话已停用' : '会话已启用');
+    await loadList();
+  } catch (err) {
+    message.error(getRequestErrorMessage(err).message);
+  }
+}
+
+async function toggleAllMuted(record: SessionAdminDto) {
+  try {
+    await setSessionIsAllMutedApi(record.id, !record.isAllMuted);
+    message.success(record.isAllMuted ? '已解除全员禁言' : '已开启全员禁言');
     await loadList();
   } catch (err) {
     message.error(getRequestErrorMessage(err).message);
@@ -166,6 +177,14 @@ onMounted(() => {
                 @click="toggleEnabled(record)"
               >
                 {{ record.isEnabled ? '停用' : '启用' }}
+              </Button>
+              <Button
+                v-if="hasAccessByCodes(['ChatAdmin.Sessions.SetIsEnabled'])"
+                size="small"
+                type="link"
+                @click="toggleAllMuted(record)"
+              >
+                {{ record.isAllMuted ? '解除禁言' : '全员禁言' }}
               </Button>
             </Space>
           </template>
