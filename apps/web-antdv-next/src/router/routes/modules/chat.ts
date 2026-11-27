@@ -11,6 +11,66 @@ const routes: RouteRecordRaw[] = [
     path: '/chat',
     children: [
       {
+        component: () => import('#/views/chat/overview/index.vue'),
+        meta: {
+          authority: ['ChatAdmin.Overview'],
+          icon: 'lucide:layout-dashboard',
+          title: 'Chat 运营总览',
+        },
+        name: 'ChatOverview',
+        path: 'overview',
+      },
+      {
+        component: () => import('#/views/chat/session/index.vue'),
+        meta: {
+          authority: ['ChatAdmin.Sessions'],
+          icon: 'lucide:messages-square',
+          title: '会话档案管理',
+        },
+        name: 'ChatSession',
+        path: 'session',
+      },
+      {
+        component: () => import('#/views/chat/message/index.vue'),
+        meta: {
+          authority: ['ChatAdmin.Messages'],
+          icon: 'lucide:message-square-text',
+          title: '消息档案查询',
+        },
+        name: 'ChatMessageArchive',
+        path: 'message',
+      },
+      {
+        component: () => import('#/views/chat/session-request/index.vue'),
+        meta: {
+          authority: ['ChatAdmin.SessionRequests'],
+          icon: 'lucide:user-check',
+          title: '入群与好友申请',
+        },
+        name: 'ChatSessionRequest',
+        path: 'session-request',
+      },
+      {
+        component: () => import('#/views/chat/session-role/index.vue'),
+        meta: {
+          authority: ['ChatAdmin.SessionRoles'],
+          icon: 'lucide:shield-check',
+          title: '群角色管理',
+        },
+        name: 'ChatSessionRole',
+        path: 'session-role',
+      },
+      {
+        component: () => import('#/views/chat/session-announcement/index.vue'),
+        meta: {
+          authority: ['ChatAdmin.SessionAnnouncements'],
+          icon: 'lucide:megaphone',
+          title: '群公告管理',
+        },
+        name: 'ChatSessionAnnouncement',
+        path: 'session-announcement',
+      },
+      {
         component: () => import('#/views/chat/article-message/index.vue'),
         meta: {
           authority: ['ChatAdmin.ArticleMessages.Manage'],
