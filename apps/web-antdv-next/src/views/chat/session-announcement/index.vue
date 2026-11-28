@@ -164,7 +164,7 @@ onMounted(() => {
               </Button>
               <Button
                 v-if="
-                  hasAccessByCodes(['ChatAdmin.SessionAnnouncements.Update'])
+                  hasAccessByCodes(['ChatAdmin.SessionAnnouncements.Pin'])
                 "
                 size="small"
                 type="link"

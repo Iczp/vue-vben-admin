@@ -155,6 +155,7 @@ export async function deleteAiRunApi(id: string) {
 export async function deleteAiRunManyApi(idList: string[]) {
   return requestClient.delete('/chat/admin/ai-run/many', {
     params: { idList },
+    paramsSerializer: 'repeat',
   });
 }
 

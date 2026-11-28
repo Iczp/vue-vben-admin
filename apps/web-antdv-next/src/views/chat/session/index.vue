@@ -179,7 +179,7 @@ onMounted(() => {
                 {{ record.isEnabled ? '停用' : '启用' }}
               </Button>
               <Button
-                v-if="hasAccessByCodes(['ChatAdmin.Sessions.SetIsEnabled'])"
+                v-if="hasAccessByCodes(['ChatAdmin.Sessions.SetIsAllMuted'])"
                 size="small"
                 type="link"
                 @click="toggleAllMuted(record)"
